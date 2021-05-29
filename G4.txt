@@ -1,0 +1,24 @@
+Optimization completed.
+MaxObjectiveEvaluations of 100 reached.
+Total function evaluations: 100
+Total elapsed time: 62.7411 seconds.
+Total objective function evaluation time: 2.5809
+
+Best observed feasible point:
+       Kp           Ki            Kd   
+    ________    ___________    ________
+
+    -0.41776    -0.00056148    -0.16928
+
+Observed objective function value = 0.001
+Estimated objective function value = 0.50069
+Function evaluation time = 0.009259
+
+Best estimated feasible point (according to models):
+       Kp           Ki           Kd   
+    ________    ___________    _______
+
+    -0.41443    -9.5708e-06    -0.1899
+
+Estimated objective function value = -11.3745
+Estimated function evaluation time = 0.009515

@@ -17,7 +17,7 @@ G1 = tfest(data,np1);
 np2=2;
 G2 = tfest(data,np2);
 
-G=G2;
+G=G1;
 
 % auto tune
 % C_tuned = pidtune(G,'PID');
@@ -47,6 +47,11 @@ function [objective] = myObjfun(vars, G, epsilon)
 %     todo move some lines outside with handler@: faster?
 C=tf([vars.Kd,vars.Kp,vars.Ki], [1, 0]);
 CL=feedback(C*G, 1);
+
+C2=tf([0.26466, 0.49986, -4.3039e-05], [1, 0]);
+CL2=feedback(C2*G, 1);
+ste
+
 objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime)+epsilon;
 end
 
