@@ -48,6 +48,10 @@ Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 InitData=table(Kd0, Kp0, Ki0);
 
+uSurrogate=[];
+ySurrogate=[];
+sampleT=1;
+Tf=1e-6;
 for i=1:N0
     C=tf([Kd0(i),Kp0(i),Ki0(i)], [1, 0]);
     CL=feedback(C*G, 1);
@@ -56,13 +60,16 @@ for i=1:N0
         Kd0(i) = (Kd_max-Kd_min).*rand(1,1) + Kd_min;
         Kp0(i) = (Kp_max-Kp_min).*rand(1,1) + Kp_min;
         Ki0(i) = (Ki_max-Ki_min).*rand(1,1) + Ki_min;
-        C=tf([Kd0(i),Kp0(i),Ki0(i)], [1, 0]);
+        C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
         CL=feedback(C*G, 1);
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
-    
+    CLU=feedback(C, G);
+    ytmp=step(CL,0:sampleT);
+    utmp=step(CLU,0:sampleT);
+    ySurrogate=[ySurrogate,ytmp(2)];
+    uSurrogate=[uSurrogate,utmp(2)];
 end
-
 
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
@@ -90,7 +97,7 @@ if isempty(N)
     N=1;
 end
 %     todo move some lines outside with handler@: faster?
-C=tf([vars.Kd,vars.Kp,vars.Ki], [1, 0]);
+C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
 
 objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
