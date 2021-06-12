@@ -46,14 +46,12 @@ N0=10;
 Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
-InitData=table(Kd0, Kp0, Ki0);
-
 uSurrogate=[];
 ySurrogate=[];
 sampleT=1;
-Tf=1e-6;
+Tf=1e-4;
 for i=1:N0
-    C=tf([Kd0(i),Kp0(i),Ki0(i)], [1, 0]);
+    C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     while isnan(objective)
@@ -70,14 +68,16 @@ for i=1:N0
     ySurrogate=[ySurrogate,ytmp(2)];
     uSurrogate=[uSurrogate,utmp(2)];
 end
+InitData=table(Kd0, Kp0, Ki0);
+
 
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-fun = @(vars)myObjfun(vars, G);
-results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', 4);
+fun = @(vars)myObjfun(vars, G, Tf);
+results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, 'InitialX', InitData);
 
 
 % load carbig
@@ -91,7 +91,7 @@ results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', 4)
 % load iddata1 z1;
 end
 
-function [objective] = myObjfun(vars, G)
+function [objective] = myObjfun(vars, G, Tf)
 persistent N
 if isempty(N)
     N=1;
