@@ -11,15 +11,15 @@ clear all; clc; close all;
 % noise2= 0.1*randn(1,nbData_interp);
 % q_interp=q_interp+noise2;
 % data = iddata(q_interp',u_interp',Ts_interp);
-% 
+%
 % % full model
 % np1=8;
 % G1 = tfest(data,np1);
-% 
+%
 % % surrogate model
 % np2=2;
 % G2 = tfest(data,np2);
-% 
+%
 % % select the model
 % G=G1;
 
@@ -57,7 +57,7 @@ Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 % uSurrogate=[];
 % ySurrogate=[];
 sampleTf=20;
-sampleTs=1;
+sampleTs=sampleTf/(10-1);
 Tf=1e-4;
 for i=1:N0
     C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
@@ -74,11 +74,10 @@ for i=1:N0
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
     utmp=step(CLU,0:sampleTs:sampleTf);
-    datatmp = iddata(ytmp,utmp,Ts);
     if i==1
-        data = datatmp;  
+        data = iddata(ytmp,utmp,sampleTs);
     else
-        data = merge(data, datatmp);  
+        data = merge(data, iddata(ytmp,utmp,sampleTs));
     end
 end
 
@@ -88,13 +87,13 @@ G2 = tfest(data,np2);
 
 InitData=table(Kd0, Kp0, Ki0);
 
-
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-fun = @(vars)myObjfun(vars, G, Tf);
+fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, 'InitialX', InitData);
 
 
@@ -109,18 +108,38 @@ results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0
 % load iddata1 z1;
 end
 
-function [objective] = myObjfun(vars, G, Tf)
+function [objective] = myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
 persistent N
+persistent idx
+
 if isempty(N)
     N=1;
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    idx= 0;
+elseif idx==10
+    N
+    G2 = tfest(data,np2);
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    idx= 0;
+else
+    %     todo move some lines outside with handler@: faster?
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G, 1);
+    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime); 
+    
+    CLU=feedback(C, G);
+    ytmp=step(CL,0:sampleTs:sampleTf);
+    utmp=step(CLU,0:sampleTs:sampleTf);
+    data = merge(data, iddata(ytmp,utmp,sampleTs));
+    idx= idx +1;
 end
-%     todo move some lines outside with handler@: faster?
-C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-CL=feedback(C*G, 1);
-
-objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-
 N = N+1;
+
+
 end
 
 
