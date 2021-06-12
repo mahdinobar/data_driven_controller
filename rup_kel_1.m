@@ -1,27 +1,35 @@
 function rup_kel_1
 clear all; clc; close all;
 
-q6u6=load("/home/mahdi/RLI/codes/pbdlib-sandbox-matlab/demos/tmp/rupenyan/q6u6.mat");
-Ts=0.05;
-nbData_interp=100*4;
-Ts_interp=Ts/4;
-noise1= 0.1*randn(1,nbData_interp);
-q_interp=linspace(min(q6u6.q),max(q6u6.q),nbData_interp);
-u_interp = interp1(q6u6.q,q6u6.u,q_interp)+noise1;
-noise2= 0.1*randn(1,nbData_interp);
-q_interp=q_interp+noise2;
-data = iddata(q_interp',u_interp',Ts_interp);
+% q6u6=load("/home/mahdi/RLI/codes/pbdlib-sandbox-matlab/demos/tmp/rupenyan/q6u6.mat");
+% Ts=0.05;
+% nbData_interp=100*4;
+% Ts_interp=Ts/4;
+% noise1= 0.1*randn(1,nbData_interp);
+% q_interp=linspace(min(q6u6.q),max(q6u6.q),nbData_interp);
+% u_interp = interp1(q6u6.q,q6u6.u,q_interp)+noise1;
+% noise2= 0.1*randn(1,nbData_interp);
+% q_interp=q_interp+noise2;
+% data = iddata(q_interp',u_interp',Ts_interp);
+% 
+% % full model
+% np1=8;
+% G1 = tfest(data,np1);
+% 
+% % surrogate model
+% np2=2;
+% G2 = tfest(data,np2);
+% 
+% % select the model
+% G=G1;
 
-% full model
-np1=8;
-G1 = tfest(data,np1);
-
-% surrogate model
-np2=2;
-G2 = tfest(data,np2);
-
-% select the model
-G=G1;
+% KUKA LBR IIWA
+Jl=5.6;
+bc=55;
+Jc=1.03;
+K=18500;
+Td=5;
+G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
 
 % auto tune
 % C_tuned = pidtune(G,'PID');
@@ -46,9 +54,10 @@ N0=10;
 Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
-uSurrogate=[];
-ySurrogate=[];
-sampleT=1;
+% uSurrogate=[];
+% ySurrogate=[];
+sampleTf=20;
+sampleTs=1;
 Tf=1e-4;
 for i=1:N0
     C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
@@ -63,11 +72,20 @@ for i=1:N0
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     CLU=feedback(C, G);
-    ytmp=step(CL,0:sampleT);
-    utmp=step(CLU,0:sampleT);
-    ySurrogate=[ySurrogate,ytmp(2)];
-    uSurrogate=[uSurrogate,utmp(2)];
+    ytmp=step(CL,0:sampleTs:sampleTf);
+    utmp=step(CLU,0:sampleTs:sampleTf);
+    datatmp = iddata(ytmp,utmp,Ts);
+    if i==1
+        data = datatmp;  
+    else
+        data = merge(data, datatmp);  
+    end
 end
+
+% surrogate model
+np2=2;
+G2 = tfest(data,np2);
+
 InitData=table(Kd0, Kp0, Ki0);
 
 
