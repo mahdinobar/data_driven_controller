@@ -60,8 +60,9 @@ for i=1:N0
         CL=feedback(C*G, 1);
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
-    
 end
+
+
 
 
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
