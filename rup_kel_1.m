@@ -30,25 +30,27 @@ G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
 % Kpc=C_tuned.Kp;
 % Kic=C_tuned.Ki;
 
-% Kdc=0.;
 Kpc=0.;
 Kic=0.;
+Kdc=0.;
 
 % search_span_d=100;
-search_span_p=1;
-search_span_i=10.;
-% Kd_min=Kdc-search_span_d/2;
-% Kd_max=Kdc+search_span_d/2;
+search_span_p=1.;
+search_span_i=1.;
+search_span_d=1.;
+
 Kp_min=Kpc-search_span_p/2;
 Kp_max=Kpc+search_span_p/2;
 Ki_min=Kic-search_span_i/2;
 Ki_max=Kic+search_span_i/2;
+Kd_min=Kdc-search_span_d/2;
+Kd_max=Kdc+search_span_d/2;
 
 % initial values for GP of BO
 N0=10;
-% Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
+Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 sampleTf=20;
 sampleTs=sampleTf/(10-1);
 Tf=1e-8;
@@ -57,10 +59,10 @@ for i=1:N0
     CL=feedback(C*G, 1);
     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     while isnan(objective)
-%         Kd0(i) = (Kd_max-Kd_min).*rand(1,1) + Kd_min;
+        Kd0(i) = (Kd_max-Kd_min).*rand(1,1) + Kd_min;
         Kp0(i) = (Kp_max-Kp_min).*rand(1,1) + Kp_min;
         Ki0(i) = (Ki_max-Ki_min).*rand(1,1) + Ki_min;
-        C=tf([0+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
+        C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
         CL=feedback(C*G, 1);
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -78,18 +80,18 @@ end
 np2=2;
 G2 = tfest(data,np2);
 
-InitData=table(Kp0, Ki0);
+InitData=table(Kp0, Ki0, Kd0);
 
-% Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
+Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
-vars=[Kp, Ki];
+vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_3/G2_100iter_1Interval_withSurrogate.mat';
+FileName='demo_4/results.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
-    'PlotFcn', {@plotAcquisitionFunction, @plotConstraintModels, @plotObjectiveEvaluationTimeModel, @plotObjectiveModel, @plotObjective, @plotObjectiveEvaluationTime, @plotMinObjective, @plotElapsedTime}, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
+    'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
 % FinalBestResult = bestPoint(results)
 end
@@ -100,7 +102,7 @@ persistent idx
 
 if isempty(N)
     N=1;
-    C=tf([0+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
         objective = abs(0.01*stepinfo(CL).SettlingTime);
@@ -110,7 +112,7 @@ if isempty(N)
     idx= 0;
 elseif idx==10
     G2 = tfest(data,np2);
-    C=tf([0+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
         objective = abs(0.01*stepinfo(CL).SettlingTime);
@@ -120,7 +122,7 @@ elseif idx==10
     idx= 0;
 else
     %     todo move some lines outside with handler@: faster?
-    C=tf([0+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
         objective = abs(0.01*stepinfo(CL).SettlingTime);
@@ -140,7 +142,7 @@ end
 
 function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
 %     todo move some lines outside with handler@: faster?
-C=tf([0+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
 if abs(stepinfo(CL).Overshoot)<0.01
     objective = abs(0.01*stepinfo(CL).SettlingTime);
