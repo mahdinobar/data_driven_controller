@@ -1,12 +1,28 @@
 function rup_kel_1
 clear all; clc; close all;
-% KUKA LBR IIWA
-Jl=5.6;
-bc=55;
-Jc=1.03;
-K=18500;
-Td=5;
-G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
+% % KUKA LBR IIWA
+% Jl=5.6;
+% bc=55;
+% Jc=1.03;
+% K=18500;
+% Td=5;
+% G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
+
+% ball-screw system
+Kcp=60;
+Kci=1000;
+Kcd=18;
+Ra=9.02;
+La=0.0187;
+Kt=0.515;
+Kb=0.55;
+Jm=0.27e-4;
+Bm=0.0074;
+Jl=6.53e-4;
+Bml=0.014;
+Ks=3e7;
+G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
+
 
 % % auto tune
 % C_tuned = pidtune(G,'PID');
