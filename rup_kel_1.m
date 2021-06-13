@@ -87,9 +87,9 @@ Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_4/results.mat';
+% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+FileName='demo_5/results.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
     'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
