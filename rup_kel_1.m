@@ -85,11 +85,11 @@ Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 
 vars=[Kp, Ki];
-fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='G2_100iter_1Interval_withSurrogate.mat';
+% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+FileName='demo_2/G2_100iter_1Interval_withoutSurrogate.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
-    'PlotFcn', {@plotObjectiveModel,@plotMinObjective,@plotAcquisitionFunction,@plotConstraintModels}, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
+    'PlotFcn', {@plotAcquisitionFunction, @plotConstraintModels, @plotObjectiveEvaluationTimeModel, @plotObjectiveModel, @plotObjective, @plotObjectiveEvaluationTime, @plotMinObjective, @plotElapsedTime}, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
 % FinalBestResult = bestPoint(results)
 end
@@ -140,7 +140,7 @@ end
 
 function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
 %     todo move some lines outside with handler@: faster?
-C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+C=tf([0+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
 if abs(stepinfo(CL).Overshoot)<0.01
     objective = abs(0.01*stepinfo(CL).SettlingTime);
