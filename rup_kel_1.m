@@ -62,7 +62,7 @@ end
 np2=2;
 G2 = tfest(data,np2);
 
-InitData=table(Kd0, Kp0, Ki0);
+InitData=table(Kp0, Ki0, Kd0);
 
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
@@ -70,8 +70,8 @@ Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-FileName='G2_100iter_VarInterval.mat';
+% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+FileName='G2_100iter_VarInterval_withSurrogate.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
     'PlotFcn', {@plotObjectiveModel,@plotMinObjective,@plotAcquisitionFunction,@plotConstraintModels}, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
@@ -120,6 +120,18 @@ else
 end
 N = N+1;
 end
+
+
+% function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
+% %     todo move some lines outside with handler@: faster?
+% C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+% CL=feedback(C*G, 1);
+% if abs(stepinfo(CL).Overshoot)<0.01
+%     objective = abs(0.01*stepinfo(CL).SettlingTime);
+% else
+%     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+% end
+% end
 
 
 
