@@ -35,8 +35,8 @@ Kpc=0.;
 Kic=0.;
 
 % search_span_d=100;
-search_span_p=.1;
-search_span_i=1.;
+search_span_p=1;
+search_span_i=10.;
 % Kd_min=Kdc-search_span_d/2;
 % Kd_max=Kdc+search_span_d/2;
 Kp_min=Kpc-search_span_p/2;
@@ -85,9 +85,9 @@ Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 
 vars=[Kp, Ki];
-% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_2/G2_100iter_1Interval_withoutSurrogate.mat';
+fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+FileName='demo_3/G2_100iter_1Interval_withSurrogate.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
     'PlotFcn', {@plotAcquisitionFunction, @plotConstraintModels, @plotObjectiveEvaluationTimeModel, @plotObjectiveModel, @plotObjective, @plotObjectiveEvaluationTime, @plotMinObjective, @plotElapsedTime}, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
