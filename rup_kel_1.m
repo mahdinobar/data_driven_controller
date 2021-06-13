@@ -1,43 +1,43 @@
 function rup_kel_1
 clear all; clc; close all;
-% KUKA LBR IIWA
-Jl=5.6;
-bc=55;
-Jc=1.03;
-K=18500;
-Td=5;
-G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
+% % KUKA LBR IIWA
+% Jl=5.6;
+% bc=55;
+% Jc=1.03;
+% K=18500;
+% Td=5;
+% G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
 
-% % ball-screw system
-% Kcp=60;
-% Kci=1000;
-% Kcd=18;
-% Ra=9.02;
-% La=0.0187;
-% Kt=0.515;
-% Kb=0.55;
-% Jm=0.27e-4;
-% Bm=0.0074;
-% Jl=6.53e-4;
-% Bml=0.014;
-% Ks=3e7;
-% G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
+% ball-screw system
+Kcp=60;
+Kci=1000;
+Kcd=18;
+Ra=9.02;
+La=0.0187;
+Kt=0.515;
+Kb=0.55;
+Jm=0.27e-4;
+Bm=0.0074;
+Jl=6.53e-4;
+Bml=0.014;
+Ks=3e7;
+G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
 
 
 % % auto tune
-% C_tuned = pidtune(G,'PID');
+% C_tuned = pidtune(G,'PID')
 % Kdc=C_tuned.Kd;
 % Kpc=C_tuned.Kp;
 % Kic=C_tuned.Ki;
 
-Kpc=0.;
-Kic=0.;
+Kpc=1.;
+Kic=100.;
 Kdc=0.;
 
 % search_span_d=100;
-search_span_p=1.;
-search_span_i=1.;
-search_span_d=1.;
+search_span_p=2.;
+search_span_i=20.;
+search_span_d=.2;
 
 Kp_min=Kpc-search_span_p/2;
 Kp_max=Kpc+search_span_p/2;
@@ -51,7 +51,7 @@ N0=10;
 Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
-sampleTf=20;
+sampleTf=1;
 sampleTs=sampleTf/(10-1);
 Tf=1e-8;
 for i=1:N0
@@ -87,9 +87,9 @@ Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_5/results.mat';
+fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+FileName='demo_6/results.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
     'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
