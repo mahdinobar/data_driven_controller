@@ -22,13 +22,26 @@ Jl=6.53e-4;
 Bml=0.014;
 Ks=3e7;
 G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
+Tf=1e-8;
 
-
-% % auto tune
-% C_tuned = pidtune(G,'PID')
-% Kdc=C_tuned.Kd;
-% Kpc=C_tuned.Kp;
-% Kic=C_tuned.Ki;
+% Find stable bounds for gains
+% auto tune
+C_tuned = pidtune(G,'PID');
+Kd_nominal=C_tuned.Kd;
+Kp_nominal=C_tuned.Kp;
+Ki_nominal=C_tuned.Ki;
+% x=[Kp, Ki, Kd];
+d=1e-3;
+lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
+ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
+funPS_handle = @(x)funPS(x, G, Tf);
+x = particleswarm(funPS_handle,3,lb,ub);
+function [objective] = funPS(x, G, Tf)
+%     todo move some lines outside with handler@: faster?
+C=tf([x.Kd+Tf*x.Kp,x.Kp+Tf*x.Ki,x.Ki], [Tf, 1, 0]);
+CL=feedback(C*G, 1);
+objective=-abs(stepinfo(CL).Overshoot);
+end
 
 Kpc=1.;
 Kic=100.;
@@ -53,7 +66,6 @@ Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 sampleTf=1;
 sampleTs=sampleTf/(10-1);
-Tf=1e-8;
 for i=1:N0
     C=tf([0+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
@@ -87,10 +99,10 @@ Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
+fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
 FileName='demo_9/results.mat';
-results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
+results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 30, 'NumSeedPoints', N0, ...
     'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
 % FinalBestResult = bestPoint(results)
@@ -129,6 +141,11 @@ else
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
+    if isnan(objective)
+        objective=1e5;
+    end
+    objective=max(objective, 1e5);
+    
     
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
