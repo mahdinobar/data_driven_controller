@@ -34,7 +34,7 @@ Ki_nominal=C_tuned.Ki;
 
 d=1e-3;
 max_overshoot=0;
-while max_overshoot<1e4 || ~isnan(max_overshoot)
+while max_overshoot<1e4
     lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
     funPS_handle = @(x)funPS(x, G, Tf);
@@ -43,7 +43,7 @@ while max_overshoot<1e4 || ~isnan(max_overshoot)
     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
     CLtmp=feedback(Ctmp*G, 1);
     max_overshoot=stepinfo(CLtmp).Overshoot
-    d = d*1.5;
+    d = d*2;
 end
     function [objective] = funPS(x, G, Tf)
         %     todo move some lines outside with handler@: faster?
@@ -52,13 +52,13 @@ end
         objective=-abs(stepinfo(CL).Overshoot);
     end
 
-Kp_min=Kp_nominal-d/2;
-Kp_max=Kp_nominal+d/2;
-Ki_min=Ki_nominal-d/2;
-Ki_max=Ki_nominal+d/2;
-Kd_min=Kd_nominal-d/2;
-Kd_max=Kd_nominal+d/2;
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+Kp_min=Kpc-d/2;
+Kp_max=Kpc+d/2;
+Ki_min=Kic-d/2;
+Ki_max=Kic+d/2;
+Kd_min=Kdc-d/2;
+Kd_max=Kdc+d/2;
+save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/LKpKiKd.mat')
 
 Kpc=1.;
 Kic=100.;
