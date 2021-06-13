@@ -122,16 +122,16 @@ N = N+1;
 end
 
 
-% function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
-% %     todo move some lines outside with handler@: faster?
-% C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-% CL=feedback(C*G, 1);
-% if abs(stepinfo(CL).Overshoot)<0.01
-%     objective = abs(0.01*stepinfo(CL).SettlingTime);
-% else
-%     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-% end
-% end
+function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
+%     todo move some lines outside with handler@: faster?
+C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+CL=feedback(C*G, 1);
+if abs(stepinfo(CL).Overshoot)<0.01
+    objective = abs(0.01*stepinfo(CL).SettlingTime);
+else
+    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+end
+end
 
 
 
