@@ -47,7 +47,7 @@ Kd_min=Kdc-search_span_d/2;
 Kd_max=Kdc+search_span_d/2;
 
 % initial values for GP of BO
-N0=10;
+N0=100;
 Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -89,7 +89,7 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_7_2/results.mat';
+FileName='demo_7_3/results.mat';
 results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 100, 'NumSeedPoints', N0, ...
     'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 
