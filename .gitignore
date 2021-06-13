@@ -18,3 +18,4 @@ bin-release/
 # information for Eclipse / Flash Builder.
 
 data_driven_controller-main.zip
+tmp/
