@@ -37,7 +37,7 @@ Tf=1e-8;
 %     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
 %     funPS_handle = @(x)funPS(x, G, Tf);
 %     x = particleswarm(funPS_handle,3,lb,ub);
-%     
+%
 %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
 %     CLtmp=feedback(Ctmp*G, 1);
 %     max_overshoot=stepinfo(CLtmp).Overshoot
@@ -75,22 +75,23 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 
 % initial values for GP of BO
 N0=10;
-Kp0 = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
-Ki0 = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
-Kd0 = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
-sampleTf=1;
+Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
+Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
+Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
+objectiveData = zeros(N0,1);
+sampleTf=0.1;
 sampleTs=sampleTf/(10-1);
 for i=1:N0
-    C=tf([0+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
+    C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    while isnan(objective)
-        Kd0(i) = (Kd_max-Kd_min).*rand(1,1) + Kd_min;
-        Kp0(i) = (Kp_max-Kp_min).*rand(1,1) + Kp_min;
-        Ki0(i) = (Ki_max-Ki_min).*rand(1,1) + Ki_min;
-        C=tf([Kd0(i)+Tf*Kp0(i),Kp0(i)+Tf*Ki0(i),Ki0(i)], [Tf, 1, 0]);
+    objectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    while isnan(objectiveData(i))
+        Kd(i) = (Kd_max-Kd_min).*rand(1,1) + Kd_min;
+        Kp(i) = (Kp_max-Kp_min).*rand(1,1) + Kp_min;
+        Ki(i) = (Ki_max-Ki_min).*rand(1,1) + Ki_min;
+        C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
         CL=feedback(C*G, 1);
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+        objectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
@@ -106,20 +107,97 @@ end
 np2=2;
 G2 = tfest(data,np2);
 
-InitData=table(Kp0, Ki0, Kd0);
+InitData=table(Kp, Ki, Kd);
 
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-FileName='demo_9/results.mat';
-results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 30, 'NumSeedPoints', N0, ...
-    'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
+fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 
+N_iter=100;
+for iter=N0:N_iter
+    results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
+            'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
+    nanCheck = results.MinEstimatedObjective;
+    while isnan(nanCheck)
+        results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
+            'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
+        nanCheck = results.MinEstimatedObjective;
+        N0
+    end
+    InitData=[InitData; results.XAtMinEstimatedObjective];
+    objectiveData = [objectiveData; results.MinEstimatedObjective];
+    
+    N0=N0+1;
+    
+%     uncomment for surrogate model
+%     remove previos data of older surrogate model
+    if rem(N0,11)==0 && N0>11
+        InitData([N0-11],:)=[];
+        objectiveData([N0-11],:)=[];
+    end
+        
+    
+    %     FileName='results.mat';
+    %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
+    %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
+end
+
+plot(objectiveData)
 % FinalBestResult = bestPoint(results)
+end
+
+
+function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
+persistent N
+persistent idx
+
+if isempty(N)
+    N=1;
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= 0;
+elseif idx==10
+    G2 = tfest(data,np2);
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= 0;
+else
+    %     todo move some lines outside with handler@: faster?
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    if isnan(objective)
+        objective=1e5;
+    end
+    objective=max(objective, 1e5);
+    
+    
+    CLU=feedback(C, G);
+    ytmp=step(CL,0:sampleTs:sampleTf);
+    utmp=step(CLU,0:sampleTs:sampleTf);
+    data = merge(data, iddata(ytmp,utmp,sampleTs));
+    idx= idx +1;
+end
+N = N+1;
 end
 
 function [objective] = myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
