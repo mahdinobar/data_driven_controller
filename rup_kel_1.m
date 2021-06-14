@@ -79,7 +79,7 @@ Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 objectiveData = zeros(N0,1);
-sampleTf=0.1;
+sampleTf=0.07;
 sampleTs=sampleTf/(10-1);
 for i=1:N0
     C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
@@ -119,6 +119,7 @@ vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 
 N_iter=100;
+idx=0;
 for iter=N0:N_iter
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
@@ -133,13 +134,14 @@ for iter=N0:N_iter
     objectiveData = [objectiveData; results.MinEstimatedObjective];
     
     N0=N0+1;
-    
 %     uncomment for surrogate model
 %     remove previos data of older surrogate model
     if rem(N0,11)==0 && N0>11
+        idx=idx+1;
         InitData([N0-11],:)=[];
         objectiveData([N0-11],:)=[];
     end
+    counter=N0-idx;
         
     
     %     FileName='results.mat';

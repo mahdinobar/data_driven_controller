@@ -133,11 +133,13 @@ for iter=N0:N_iter
     objectiveData = [objectiveData; results.MinEstimatedObjective];
     
     N0=N0+1;
-    uncomment for 
+    counter=N0;
+%     uncomment for surrogate model
 %     remove previos data of older surrogate model
     if rem(N0,11)==0 && N0>11
         InitData([N0-11],:)=[];
         objectiveData([N0-11],:)=[];
+        counter=N0-1;
     end
         
     
