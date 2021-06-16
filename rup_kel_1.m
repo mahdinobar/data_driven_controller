@@ -25,39 +25,43 @@ G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
 Tf=1e-8;
 
 % uncomment to estimate stable gain bounds
-% % auto tune
-% C_tuned = pidtune(G,'PID');
-% Kd_nominal=C_tuned.Kd;
-% Kp_nominal=C_tuned.Kp;
-% Ki_nominal=C_tuned.Ki;
-% d=1e-3;
-% max_overshoot=0;
-% while max_overshoot<1e4 || ~isnan(max_overshoot)
-%     lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
-%     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
-%     funPS_handle = @(x)funPS(x, G, Tf);
-%     x = particleswarm(funPS_handle,3,lb,ub);
-%
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CLtmp=feedback(Ctmp*G, 1);
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-%     d = d*1.5;
-% end
-%     function [objective] = funPS(x, G, Tf)
-%         %     todo move some lines outside with handler@: faster?
-%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%         CL=feedback(C*G, 1);
-%         objective=-abs(stepinfo(CL).Overshoot);
-%     end
-% Kp_min=Kp_nominal-d/2;
-% Kp_max=Kp_nominal+d/2;
-% Ki_min=Ki_nominal-d/2;
-% Ki_max=Ki_nominal+d/2;
-% Kd_min=Kd_nominal-d/2;
-% Kd_max=Kd_nominal+d/2;
-% save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+% auto tune
+C_tuned = pidtune(G,'PID');
+Kd_nominal=C_tuned.Kd;
+Kp_nominal=C_tuned.Kp;
+Ki_nominal=C_tuned.Ki;
+d=1e-3;
+max_overshoot=0;
+while max_overshoot<9 && ~isnan(max_overshoot)
+    lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
+    ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
+    funPS_handle = @(x)funPS(x, G, Tf);
+    x = particleswarm(funPS_handle,3,lb,ub);
 
-load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
+    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+    CLtmp=feedback(Ctmp*G, 1);
+    max_overshoot=stepinfo(CLtmp).Overshoot
+    d = d*1.5;
+end
+    function [objective] = funPS(x, G, Tf)
+        %     todo move some lines outside with handler@: faster?
+        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+        CL=feedback(C*G, 1);
+        objective=-abs(stepinfo(CL).Overshoot);
+        if isnan(objective)
+            objective=-inf;
+        end
+    end
+d=d/1.5;
+Kp_min=Kp_nominal-d;
+Kp_max=Kp_nominal+d;
+Ki_min=Ki_nominal-d;
+Ki_max=Ki_nominal+d;
+Kd_min=Kd_nominal-d;
+Kd_max=Kd_nominal+d;
+save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+
+% load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
 
 % Kpc=1.;
 % Kic=100.;
@@ -72,6 +76,18 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 % Ki_max=Kic+search_span_i/2;
 % Kd_min=Kdc-search_span_d/2;
 % Kd_max=Kdc+search_span_d/2;
+
+% add extra safety margin
+safeFac=1e-3;
+rgKp=(Kp_max-Kp_min);
+Kp_min=Kp_min+safeFac*rgKp;
+Kp_max=Kp_max-safeFac*rgKp;
+rgKi=(Ki_max-Ki_min);
+Ki_min=Ki_min+safeFac*rgKi;
+Ki_max=Ki_max-safeFac*rgKi;
+rgKd=(Kd_max-Kd_min);
+Kd_min=Kd_min+safeFac*rgKd;
+Kd_max=Kd_max-safeFac*rgKd;
 
 % initial values for GP of BO
 N0=10;
@@ -121,17 +137,18 @@ fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
 N_iter=100;
 idx=0;
 for iter=N0:N_iter
+    iter
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-    nanCheck = results.MinEstimatedObjective;
+    nanCheck = results.MinObjective;
     while isnan(nanCheck)
         results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-        nanCheck = results.MinEstimatedObjective;
-        N0
+        nanCheck = results.MinObjective;
+        N=N-1;
     end
-    InitData=[InitData; results.XAtMinEstimatedObjective];
-    objectiveData = [objectiveData; results.MinEstimatedObjective];
+    InitData=[InitData; results.XAtMinObjective];
+    objectiveData = [objectiveData; results.MinObjective];
     
     N0=N0+1;
 %     uncomment for surrogate model
@@ -150,12 +167,13 @@ for iter=N0:N_iter
 end
 
 plot(objectiveData)
+pause;
 % FinalBestResult = bestPoint(results)
 end
 
 
 function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
-persistent N
+global N
 persistent idx
 
 if isempty(N)
@@ -187,10 +205,10 @@ else
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
-    if isnan(objective)
-        objective=1e5;
-    end
-    objective=max(objective, 1e5);
+%     if isnan(objective)
+%         objective=1e5;
+%     end
+%     objective=max(objective, 1e5);
     
     
     CLU=feedback(C, G);
