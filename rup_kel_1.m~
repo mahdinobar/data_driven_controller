@@ -61,10 +61,10 @@ Ki_nominal=C_tuned.Ki;
 % Kd_max=Kd_nominal+d;
 
 max_overshoot=0;
-dp=1e-3;
-di=1e-3;
+dp=1e-2;
+di=1e0;
 dd=1e-3;
-while max_overshoot<1e2 && ~isnan(max_overshoot)
+while max_overshoot<25 && ~isnan(max_overshoot)
     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
     funPS_handle = @(x)funPS(x, G, Tf);
@@ -73,11 +73,11 @@ while max_overshoot<1e2 && ~isnan(max_overshoot)
     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
     CLtmp=feedback(Ctmp*G, 1);
     max_overshoot=stepinfo(CLtmp).Overshoot
-    dp = dp*1.1
+    dp = dp*1.5
 end
-dp = dp/1.1;
+dp = dp/1.5;
 max_overshoot=0;
-while max_overshoot<1e2 && ~isnan(max_overshoot)
+while max_overshoot<50 && ~isnan(max_overshoot)
     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
     funPS_handle = @(x)funPS(x, G, Tf);
@@ -86,11 +86,11 @@ while max_overshoot<1e2 && ~isnan(max_overshoot)
     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
     CLtmp=feedback(Ctmp*G, 1);
     max_overshoot=stepinfo(CLtmp).Overshoot
-    di = di*1.1;
+    di = di*1.5
 end
-di = di/1.1;
+di = di/1.5;
 max_overshoot=0;
-while max_overshoot<1e2 && ~isnan(max_overshoot)
+while max_overshoot<75 && ~isnan(max_overshoot)
     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
     funPS_handle = @(x)funPS(x, G, Tf);
@@ -99,9 +99,9 @@ while max_overshoot<1e2 && ~isnan(max_overshoot)
     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
     CLtmp=feedback(Ctmp*G, 1);
     max_overshoot=stepinfo(CLtmp).Overshoot
-    dd = dd*1.1;
+    dd = dd*1.5
 end
-dd = dd/1.1;
+dd = dd/1.5;
     function [objective] = funPS(x, G, Tf)
         %     todo move some lines outside with handler@: faster?
         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
@@ -112,6 +112,12 @@ dd = dd/1.1;
         end
     end
 
+Kp_min=Kp_nominal-dp;
+Kp_max=Kp_nominal+dp;
+Ki_min=Ki_nominal-di;
+Ki_max=Ki_nominal+di;
+Kd_min=Kd_nominal-dd;
+Kd_max=Kd_nominal+dd;
 
 save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 
