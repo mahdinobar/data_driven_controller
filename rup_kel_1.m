@@ -60,7 +60,6 @@ Ki_nominal=C_tuned.Ki;
 % Kd_min=Kd_nominal-d;
 % Kd_max=Kd_nominal+d;
 
-
 max_overshoot=0;
 dp=1e-3;
 di=1e-3;
@@ -112,7 +111,15 @@ dd = dd/1.1;
             objective=-inf;
         end
     end
-
+dp=dp/1.1;
+di=di/1.1;
+dd=dd/1.1;
+Kp_min=Kp_nominal-dp;
+Kp_max=Kp_nominal+dp;
+Ki_min=Ki_nominal-di;
+Ki_max=Ki_nominal+di;
+Kd_min=Kd_nominal-dd;
+Kd_max=Kd_nominal+dd;
 
 save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 
