@@ -167,7 +167,7 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-N0=1;
+N0=10;
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -213,12 +213,12 @@ vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-N_iter=500;
-idx=0;
+N_iter=4+N0;
+idx=N0;
 global N
-for iter=N0:N_iter
+for iter=N0+1:N_iter
     iter
-    results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
+    results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', idx+1, 'NumSeedPoints', idx, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
     if isnan(nanCheck)
@@ -228,7 +228,7 @@ for iter=N0:N_iter
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
-    N0=N0+1;
+    idx=idx+1;
 % %     uncomment for surrogate model
 % %     remove previos data of older surrogate model
 %     if rem(N0,11)==0 && N0>11
@@ -243,10 +243,10 @@ for iter=N0:N_iter
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 end
 
-figure
-plot(objectiveData, 'b')
+figure(1);
+plot(objectiveData(N0+1:end), 'b')
 hold on
-plot(objectiveEstData, '--r')
+plot(objectiveEstData(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
@@ -254,8 +254,20 @@ idName= '13_6';
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
-objectiveData_dir=append(dir, idName, 'objectiveData');
-save(objectiveData_dir,objectiveData);
+figure(2);
+semilogy(objectiveData(N0+1:end), 'b')
+hold on
+semilogy(objectiveEstData(N0+1:end), '--r')
+legend('MinObjective','MinEstimatedObjective')
+xlabel('iteration')
+ylabel('objective')
+figName=append(dir, idName, '_log.png');
+saveas(gcf,figName)
+
+objectiveData_dir=append(dir, idName, 'objectiveData.mat');
+save(objectiveData_dir,'objectiveData');
+objectiveEstData_dir=append(dir, idName, 'objectiveEstData.mat');
+save(objectiveEstData_dir,'objectiveEstData');
 pause;
 % FinalBestResult = bestPoint(results)
 end
