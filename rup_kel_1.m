@@ -238,7 +238,10 @@ end
 figure
 plot(objectiveData, 'b')
 hold on
-plot(objectiveEstData, 'r')
+plot(objectiveEstData, '--r')
+legend('MinObjective','MinEstimatedObjective')
+xlabel('iteration')
+ylabel('objective')
 pause;
 % FinalBestResult = bestPoint(results)
 end
