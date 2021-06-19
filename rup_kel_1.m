@@ -198,8 +198,8 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun_Loop(vars, G, Tf);
+% fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
 N_iter=100;
 idx=0;
