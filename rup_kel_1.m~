@@ -241,11 +241,10 @@ for iter=N0+1:N_iter
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     %     uncomment for surrogate model
     %     remove previos data of older surrogate model
-    if rem(counter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-        iter-N0-1
-        InitData([iter-N0-1],:)=[];
-        objectiveData([iter-N0-1],:)=[];
-        objectiveEstData([iter-N0-1],:)=[];
+    if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
+        InitData([counter-N0-1],:)=[];
+        objectiveData([counter-N0-1],:)=[];
+        objectiveEstData([counter-N0-1],:)=[];
         counter=counter-1;
     end
     counter=counter+1;
