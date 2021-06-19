@@ -167,13 +167,17 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-N0=10;
+idName= '13_7';
+N0=100;
+N_iter=200;
+Nsample=100;
+
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
 objectiveData = zeros(N0,1);
-sampleTf=0.07;
-sampleTs=sampleTf/(10-1);
+sampleTf=0.1;
+sampleTs=sampleTf/(Nsample-1);
 for i=1:N0
     C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
@@ -213,11 +217,11 @@ vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-N_iter=4+N0;
 idx=N0;
 global N
+N_iter=N_iter+N0;
 for iter=N0+1:N_iter
-    iter
+    iteration=iter-N0
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', idx+1, 'NumSeedPoints', idx, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
@@ -250,7 +254,6 @@ plot(objectiveEstData(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
-idName= '13_6';
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
