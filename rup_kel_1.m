@@ -168,9 +168,10 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 
 % initial values for GP of BO
 idName= '13_7';
-N0=100;
+N0=10;
 N_iter=200;
 Nsample=100;
+N_surrogate_repeat=10;
 
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
@@ -203,7 +204,10 @@ objectiveEstData=objectiveData;
 
 % surrogate model
 np2=2;
-G2 = tfest(data,np2);
+G2tmp = n4sid(data,np2);
+[A,B,C,D,~] = idssdata(G2tmp);
+[num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+G2 = tf(num_surrogate, den_surrogate);
 
 InitData=table(Kp, Ki, Kd);
 
@@ -214,15 +218,15 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data, myObjfun_ApproxLoop);
 % fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-idx=N0;
 global N
 N_iter=N_iter+N0;
 for iter=N0+1:N_iter
     iteration=iter-N0
-    results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', idx+1, 'NumSeedPoints', idx, ...
+
+    results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', iter, 'NumSeedPoints', iter-1, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
     if isnan(nanCheck)
@@ -232,15 +236,14 @@ for iter=N0+1:N_iter
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
-    idx=idx+1;
-% %     uncomment for surrogate model
-% %     remove previos data of older surrogate model
-%     if rem(N0,11)==0 && N0>11
-%         idx=idx+1;
-%         InitData([N0-11],:)=[];
-%         objectiveData([N0-11],:)=[];
-%         objectiveEstData([N0-11],:)=[];
-%     end        
+%     uncomment for surrogate model
+%     remove previos data of older surrogate model
+    if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
+        idx=idx+1;
+        InitData([iter-N0-1],:)=[];
+        objectiveData([iter-N0-1],:)=[];
+        objectiveEstData([iter-N0-1],:)=[];
+    end        
     
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
@@ -276,7 +279,7 @@ pause;
 end
 
 
-function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
+function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data, N_surrogate_repeat)
 global N
 persistent idx
 
@@ -290,8 +293,11 @@ if isempty(N)
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= 0;
-elseif idx==10
-    G2 = tfest(data,np2);
+elseif idx==N_surrogate_repeat
+    G2tmp = n4sid(data,np2);
+    [A,B,C,D,~] = idssdata(G2tmp);
+    [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    G2 = tf(num_surrogate, den_surrogate);
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
