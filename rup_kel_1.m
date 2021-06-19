@@ -30,45 +30,45 @@ ts=1;
 G = d2c(tf(num,den, ts));
 
 
-% uncomment to estimate stable gain bounds
-% auto tune
-C_tuned = pidtune(G,'PID');
-Kd_nominal=C_tuned.Kd;
-Kp_nominal=C_tuned.Kp;
-Ki_nominal=C_tuned.Ki;
+% % uncomment to estimate stable gain bounds
+% % auto tune
+% C_tuned = pidtune(G,'PID');
+% Kd_nominal=C_tuned.Kd;
+% Kp_nominal=C_tuned.Kp;
+% Ki_nominal=C_tuned.Ki;
 
 Tf=1e-8;
-
-max_overshoot=0;
-d=1e-1;
-while max_overshoot<50 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
-    ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
-    funPS_handle = @(x)funPS(x, G, Tf);
-    x = particleswarm(funPS_handle,3,lb,ub);
-
-    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-    d
-    max_overshoot=stepinfo(CLtmp).Overshoot
-    d = d*1.1;
-end
-    function [objective] = funPS(x, G, Tf)
-        %     todo move some lines outside with handler@: faster?
-        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-        CL=feedback(C*G, 1);
-        objective=-abs(stepinfo(CL).Overshoot);
-        if isnan(objective)
-            objective=-1e10;
-        end
-    end
-d=d/1.1;
-Kp_min=Kp_nominal-d;
-Kp_max=Kp_nominal+d;
-Ki_min=Ki_nominal-d;
-Ki_max=Ki_nominal+d;
-Kd_min=Kd_nominal-d;
-Kd_max=Kd_nominal+d;
+ 
+% max_overshoot=0;
+% d=1e-1;
+% while max_overshoot<50 && ~isnan(max_overshoot)
+%     lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
+%     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
+%     funPS_handle = @(x)funPS(x, G, Tf);
+%     x = particleswarm(funPS_handle,3,lb,ub);
+% 
+%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     CLtmp=feedback(Ctmp*G, 1);
+%     d
+%     max_overshoot=stepinfo(CLtmp).Overshoot
+%     d = d*1.1;
+% end
+%     function [objective] = funPS(x, G, Tf)
+%         %     todo move some lines outside with handler@: faster?
+%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%         CL=feedback(C*G, 1);
+%         objective=-abs(stepinfo(CL).Overshoot);
+%         if isnan(objective)
+%             objective=-1e10;
+%         end
+%     end
+% d=d/1.1;
+% Kp_min=Kp_nominal-d;
+% Kp_max=Kp_nominal+d;
+% Ki_min=Ki_nominal-d;
+% Ki_max=Ki_nominal+d;
+% Kd_min=Kd_nominal-d;
+% Kd_max=Kd_nominal+d;
 
 % max_overshoot=0;
 % dp=1e-1;
@@ -132,10 +132,10 @@ Kd_max=Kd_nominal+d;
 % Kd_min=Kd_nominal-dd;
 % Kd_max=Kd_nominal+dd;
 
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+% save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 
 
-% load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
+load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat')
 
 % Kpc=1.;
 % Kic=100.;
