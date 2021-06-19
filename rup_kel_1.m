@@ -24,12 +24,13 @@ Ks=3e7;
 G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
 Tf=1e-8;
 
-% uncomment to estimate stable gain bounds
-% auto tune
-C_tuned = pidtune(G,'PID');
-Kd_nominal=C_tuned.Kd;
-Kp_nominal=C_tuned.Kp;
-Ki_nominal=C_tuned.Ki;
+% % uncomment to estimate stable gain bounds
+% % auto tune
+% C_tuned = pidtune(G,'PID');
+% Kd_nominal=C_tuned.Kd;
+% Kp_nominal=C_tuned.Kp;
+% Ki_nominal=C_tuned.Ki;
+
 % max_overshoot=0;
 % d=1e-3;
 % while max_overshoot<9 && ~isnan(max_overshoot)
@@ -60,68 +61,68 @@ Ki_nominal=C_tuned.Ki;
 % Kd_min=Kd_nominal-d;
 % Kd_max=Kd_nominal+d;
 
-max_overshoot=0;
-dp=1e-2;
-di=1e0;
-dd=1e-3;
-while max_overshoot<25 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-    ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-    funPS_handle = @(x)funPS(x, G, Tf);
-    x = particleswarm(funPS_handle,3,lb,ub);
+% max_overshoot=0;
+% dp=1e-2;
+% di=1e0;
+% dd=1e-3;
+% while max_overshoot<25 && ~isnan(max_overshoot)
+%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+%     funPS_handle = @(x)funPS(x, G, Tf);
+%     x = particleswarm(funPS_handle,3,lb,ub);
+% 
+%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     CLtmp=feedback(Ctmp*G, 1);
+%     max_overshoot=stepinfo(CLtmp).Overshoot
+%     dp = dp*1.5
+% end
+% dp = dp/1.5;
+% max_overshoot=0;
+% while max_overshoot<50 && ~isnan(max_overshoot)
+%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+%     funPS_handle = @(x)funPS(x, G, Tf);
+%     x = particleswarm(funPS_handle,3,lb,ub);
+% 
+%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     CLtmp=feedback(Ctmp*G, 1);
+%     max_overshoot=stepinfo(CLtmp).Overshoot
+%     di = di*1.5
+% end
+% di = di/1.5;
+% max_overshoot=0;
+% while max_overshoot<75 && ~isnan(max_overshoot)
+%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+%     funPS_handle = @(x)funPS(x, G, Tf);
+%     x = particleswarm(funPS_handle,3,lb,ub);
+% 
+%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     CLtmp=feedback(Ctmp*G, 1);
+%     max_overshoot=stepinfo(CLtmp).Overshoot
+%     dd = dd*1.5
+% end
+% dd = dd/1.5;
+%     function [objective] = funPS(x, G, Tf)
+%         %     todo move some lines outside with handler@: faster?
+%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%         CL=feedback(C*G, 1);
+%         objective=-abs(stepinfo(CL).Overshoot);
+%         if isnan(objective)
+%             objective=-inf;
+%         end
+%     end
+% 
+% Kp_min=Kp_nominal-dp;
+% Kp_max=Kp_nominal+dp;
+% Ki_min=Ki_nominal-di;
+% Ki_max=Ki_nominal+di;
+% Kd_min=Kd_nominal-dd;
+% Kd_max=Kd_nominal+dd;
+% 
+% save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 
-    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-    max_overshoot=stepinfo(CLtmp).Overshoot
-    dp = dp*1.5
-end
-dp = dp/1.5;
-max_overshoot=0;
-while max_overshoot<50 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-    ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-    funPS_handle = @(x)funPS(x, G, Tf);
-    x = particleswarm(funPS_handle,3,lb,ub);
-
-    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-    max_overshoot=stepinfo(CLtmp).Overshoot
-    di = di*1.5
-end
-di = di/1.5;
-max_overshoot=0;
-while max_overshoot<75 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-    ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-    funPS_handle = @(x)funPS(x, G, Tf);
-    x = particleswarm(funPS_handle,3,lb,ub);
-
-    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-    max_overshoot=stepinfo(CLtmp).Overshoot
-    dd = dd*1.5
-end
-dd = dd/1.5;
-    function [objective] = funPS(x, G, Tf)
-        %     todo move some lines outside with handler@: faster?
-        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-        CL=feedback(C*G, 1);
-        objective=-abs(stepinfo(CL).Overshoot);
-        if isnan(objective)
-            objective=-inf;
-        end
-    end
-
-Kp_min=Kp_nominal-dp;
-Kp_max=Kp_nominal+dp;
-Ki_min=Ki_nominal-di;
-Ki_max=Ki_nominal+di;
-Kd_min=Kd_nominal-dd;
-Kd_max=Kd_nominal+dd;
-
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
-
-% load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
+load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
 
 % Kpc=1.;
 % Kic=100.;
@@ -136,6 +137,7 @@ save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 % Ki_max=Kic+search_span_i/2;
 % Kd_min=Kdc-search_span_d/2;
 % Kd_max=Kdc+search_span_d/2;
+
 
 % add extra safety margin
 safeFac=1e-3;
@@ -196,6 +198,7 @@ fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
 
 N_iter=100;
 idx=0;
+global N
 for iter=N0:N_iter
     iter
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
