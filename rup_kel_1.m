@@ -155,7 +155,7 @@ Kd_min=Kd_min+safeFacd*rgKd;
 Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-N0=1;
+N0=10;
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -200,7 +200,7 @@ vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
 fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 
-N_iter=100;
+N_iter=50;
 idx=0;
 global N
 for iter=N0:N_iter
@@ -234,8 +234,10 @@ for iter=N0:N_iter
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 end
 
-plot(objectiveData)
-plot(objectiveEstData)
+figure
+plot(objectiveData, 'b')
+hold on
+plot(objectiveEstData, 'r')
 pause;
 % FinalBestResult = bestPoint(results)
 end
@@ -265,6 +267,7 @@ elseif idx==10
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= 0;
+    N = N+1;
 else
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
@@ -285,11 +288,11 @@ else
     utmp=step(CLU,0:sampleTs:sampleTf);
     data = merge(data, iddata(ytmp,utmp,sampleTs));
     idx= idx +1;
+    N = N+1;
 end
 if isnan(objective)
     objective=1e10
 end
-N = N+1;
 end
 
 function [objective] = myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
