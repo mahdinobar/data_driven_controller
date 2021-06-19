@@ -218,7 +218,7 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data, myObjfun_ApproxLoop);
+fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data, N_surrogate_repeat);
 % fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
 global N
@@ -239,7 +239,6 @@ for iter=N0+1:N_iter
 %     uncomment for surrogate model
 %     remove previos data of older surrogate model
     if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-        idx=idx+1;
         InitData([iter-N0-1],:)=[];
         objectiveData([iter-N0-1],:)=[];
         objectiveEstData([iter-N0-1],:)=[];
