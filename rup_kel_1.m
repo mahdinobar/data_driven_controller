@@ -167,10 +167,10 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_7';
+idName= '13_8';
 N0=100;
 N_iter=50;
-Nsample=20;
+Nsample=10;
 N_surrogate_repeat=10;
 np2=2;
 
@@ -261,9 +261,11 @@ plot(objectiveEstData(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
+ylim([-1 1])
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
+
 figure(2);
 semilogy(objectiveData(N0+1:end), 'b')
 hold on
@@ -274,9 +276,9 @@ ylabel('objective')
 figName=append(dir, idName, '_log.png');
 saveas(gcf,figName)
 
-objectiveData_dir=append(dir, idName, 'objectiveData.mat');
+objectiveData_dir=append(dir, idName, '_objectiveData.mat');
 save(objectiveData_dir,'objectiveData');
-objectiveEstData_dir=append(dir, idName, 'objectiveEstData.mat');
+objectiveEstData_dir=append(dir, idName, '_objectiveEstData.mat');
 save(objectiveEstData_dir,'objectiveEstData');
 pause;
 % FinalBestResult = bestPoint(results)
