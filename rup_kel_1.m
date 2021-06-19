@@ -8,63 +8,72 @@ clear all; clc; close all;
 % Td=5;
 % G = tf([Jl*bc, Jl*K],[Jc*Jl, Jl*bc, Jc*K+Jl*K],'InputDelay',Td);
 
-% ball-screw system
-Kcp=60;
-Kci=1000;
-Kcd=18;
-Ra=9.02;
-La=0.0187;
-Kt=0.515;
-Kb=0.55;
-Jm=0.27e-4;
-Bm=0.0074;
-Jl=6.53e-4;
-Bml=0.014;
-Ks=3e7;
-G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
+% % ball-screw system
+% Kcp=60;
+% Kci=1000;
+% Kcd=18;
+% Ra=9.02;
+% La=0.0187;
+% Kt=0.515;
+% Kb=0.55;
+% Jm=0.27e-4;
+% Bm=0.0074;
+% Jl=6.53e-4;
+% Bml=0.014;
+% Ks=3e7;
+% G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
+
+% Robot Arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
+num = [-0.0118, 0.0257, 0, 0, 0];
+den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
+ts=1;
+G = d2c(tf(num,den, ts));
+
+
+% uncomment to estimate stable gain bounds
+% auto tune
+C_tuned = pidtune(G,'PID');
+Kd_nominal=C_tuned.Kd;
+Kp_nominal=C_tuned.Kp;
+Ki_nominal=C_tuned.Ki;
+
 Tf=1e-8;
 
-% % uncomment to estimate stable gain bounds
-% % auto tune
-% C_tuned = pidtune(G,'PID');
-% Kd_nominal=C_tuned.Kd;
-% Kp_nominal=C_tuned.Kp;
-% Ki_nominal=C_tuned.Ki;
+max_overshoot=0;
+d=1e-1;
+while max_overshoot<50 && ~isnan(max_overshoot)
+    lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
+    ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
+    funPS_handle = @(x)funPS(x, G, Tf);
+    x = particleswarm(funPS_handle,3,lb,ub);
+
+    Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+    CLtmp=feedback(Ctmp*G, 1);
+    d
+    max_overshoot=stepinfo(CLtmp).Overshoot
+    d = d*1.1;
+end
+    function [objective] = funPS(x, G, Tf)
+        %     todo move some lines outside with handler@: faster?
+        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+        CL=feedback(C*G, 1);
+        objective=-abs(stepinfo(CL).Overshoot);
+        if isnan(objective)
+            objective=-1e10;
+        end
+    end
+d=d/1.1;
+Kp_min=Kp_nominal-d;
+Kp_max=Kp_nominal+d;
+Ki_min=Ki_nominal-d;
+Ki_max=Ki_nominal+d;
+Kd_min=Kd_nominal-d;
+Kd_max=Kd_nominal+d;
 
 % max_overshoot=0;
-% d=1e-3;
-% while max_overshoot<9 && ~isnan(max_overshoot)
-%     lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
-%     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
-%     funPS_handle = @(x)funPS(x, G, Tf);
-%     x = particleswarm(funPS_handle,3,lb,ub);
-% 
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CLtmp=feedback(Ctmp*G, 1);
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-%     d = d*1.5;
-% end
-%     function [objective] = funPS(x, G, Tf)
-%         %     todo move some lines outside with handler@: faster?
-%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%         CL=feedback(C*G, 1);
-%         objective=-abs(stepinfo(CL).Overshoot);
-%         if isnan(objective)
-%             objective=-inf;
-%         end
-%     end
-% d=d/1.5;
-% Kp_min=Kp_nominal-d;
-% Kp_max=Kp_nominal+d;
-% Ki_min=Ki_nominal-d;
-% Ki_max=Ki_nominal+d;
-% Kd_min=Kd_nominal-d;
-% Kd_max=Kd_nominal+d;
-
-% max_overshoot=0;
-% dp=1e-2;
-% di=1e0;
-% dd=1e-3;
+% dp=1e-1;
+% di=1e-6;
+% dd=1e-6;
 % while max_overshoot<25 && ~isnan(max_overshoot)
 %     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
 %     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
@@ -73,8 +82,9 @@ Tf=1e-8;
 % 
 %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
 %     CLtmp=feedback(Ctmp*G, 1);
+%     dp
 %     max_overshoot=stepinfo(CLtmp).Overshoot
-%     dp = dp*1.5
+%     dp = dp*1.5;
 % end
 % dp = dp/1.5;
 % max_overshoot=0;
@@ -86,8 +96,9 @@ Tf=1e-8;
 % 
 %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
 %     CLtmp=feedback(Ctmp*G, 1);
+%     di
 %     max_overshoot=stepinfo(CLtmp).Overshoot
-%     di = di*1.5
+%     di = di*1.5;
 % end
 % di = di/1.5;
 % max_overshoot=0;
@@ -99,8 +110,9 @@ Tf=1e-8;
 % 
 %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
 %     CLtmp=feedback(Ctmp*G, 1);
+%     dd
 %     max_overshoot=stepinfo(CLtmp).Overshoot
-%     dd = dd*1.5
+%     dd = dd*1.5;
 % end
 % dd = dd/1.5;
 %     function [objective] = funPS(x, G, Tf)
@@ -119,11 +131,11 @@ Tf=1e-8;
 % Ki_max=Ki_nominal+di;
 % Kd_min=Kd_nominal-dd;
 % Kd_max=Kd_nominal+dd;
-% 
-% save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+
+save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 
 
-load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
+% load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
 
 % Kpc=1.;
 % Kic=100.;
@@ -155,7 +167,7 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-N0=10;
+N0=1;
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -198,10 +210,10 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun_Loop(vars, G, Tf);
+% fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-N_iter=200;
+N_iter=100;
 idx=0;
 global N
 for iter=N0:N_iter
