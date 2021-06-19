@@ -140,19 +140,19 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 % Kd_max=Kdc+search_span_d/2;
 
 
-% add extra safety margin
-safeFacp=1e-1;
-safeFaci=1e-1;
-safeFacd=1e-1;
-rgKp=(Kp_max-Kp_min);
-Kp_min=Kp_min+safeFacp*rgKp;
-Kp_max=Kp_max-safeFacp*rgKp;
-rgKi=(Ki_max-Ki_min);
-Ki_min=Ki_min+safeFaci*rgKi;
-Ki_max=Ki_max-safeFaci*rgKi;
-rgKd=(Kd_max-Kd_min);
-Kd_min=Kd_min+safeFacd*rgKd;
-Kd_max=Kd_max-safeFacd*rgKd;
+% % add extra safety margin
+% safeFacp=1e-1;
+% safeFaci=1e-1;
+% safeFacd=1e-1;
+% rgKp=(Kp_max-Kp_min);
+% Kp_min=Kp_min+safeFacp*rgKp;
+% Kp_max=Kp_max-safeFacp*rgKp;
+% rgKi=(Ki_max-Ki_min);
+% Ki_min=Ki_min+safeFaci*rgKi;
+% Ki_max=Ki_max-safeFaci*rgKi;
+% rgKd=(Kd_max-Kd_min);
+% Kd_min=Kd_min+safeFacd*rgKd;
+% Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
 N0=10;
@@ -198,10 +198,10 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-% fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-fun = @(vars)myObjfun_Loop(vars, G, Tf);
+fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-N_iter=50;
+N_iter=100;
 idx=0;
 global N
 for iter=N0:N_iter
@@ -209,11 +209,8 @@ for iter=N0:N_iter
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
             'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
-    while isnan(nanCheck)
-        results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', N0+1, 'NumSeedPoints', N0, ...
-            'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-        nanCheck = results.MinObjective;
-        N=N-1;
+    if isnan(nanCheck)
+        error('nanCheck is NAN');
     end
     InitData=[InitData; results.XAtMinObjective];
     objectiveData = [objectiveData; results.MinObjective];
