@@ -109,7 +109,7 @@ Tf=1e-8;
 %         CL=feedback(C*G, 1);
 %         objective=-abs(stepinfo(CL).Overshoot);
 %         if isnan(objective)
-%             objective=-inf;
+%             objective=-1e10;
 %         end
 %     end
 % 
@@ -121,6 +121,7 @@ Tf=1e-8;
 % Kd_max=Kd_nominal+dd;
 % 
 % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+
 
 load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
 
@@ -140,19 +141,21 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/b
 
 
 % add extra safety margin
-safeFac=1e-3;
+safeFacp=1e-1;
+safeFaci=1e-1;
+safeFacd=1e-1;
 rgKp=(Kp_max-Kp_min);
-Kp_min=Kp_min+safeFac*rgKp;
-Kp_max=Kp_max-safeFac*rgKp;
+Kp_min=Kp_min+safeFacp*rgKp;
+Kp_max=Kp_max-safeFacp*rgKp;
 rgKi=(Ki_max-Ki_min);
-Ki_min=Ki_min+safeFac*rgKi;
-Ki_max=Ki_max-safeFac*rgKi;
+Ki_min=Ki_min+safeFaci*rgKi;
+Ki_max=Ki_max-safeFaci*rgKi;
 rgKd=(Kd_max-Kd_min);
-Kd_min=Kd_min+safeFac*rgKd;
-Kd_max=Kd_max-safeFac*rgKd;
+Kd_min=Kd_min+safeFacd*rgKd;
+Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-N0=10;
+N0=1;
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -180,6 +183,7 @@ for i=1:N0
         data = merge(data, iddata(ytmp,utmp,sampleTs));
     end
 end
+objectiveEstData=objectiveData;
 
 % surrogate model
 np2=2;
@@ -212,6 +216,7 @@ for iter=N0:N_iter
     end
     InitData=[InitData; results.XAtMinObjective];
     objectiveData = [objectiveData; results.MinObjective];
+    objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
     N0=N0+1;
 %     uncomment for surrogate model
@@ -230,6 +235,7 @@ for iter=N0:N_iter
 end
 
 plot(objectiveData)
+plot(objectiveEstData)
 pause;
 % FinalBestResult = bestPoint(results)
 end
@@ -279,6 +285,9 @@ else
     utmp=step(CLU,0:sampleTs:sampleTf);
     data = merge(data, iddata(ytmp,utmp,sampleTs));
     idx= idx +1;
+end
+if isnan(objective)
+    objective=1e10
 end
 N = N+1;
 end
