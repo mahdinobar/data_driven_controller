@@ -198,7 +198,8 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+% fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
+fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
 N_iter=50;
 idx=0;
@@ -219,16 +220,14 @@ for iter=N0:N_iter
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
     N0=N0+1;
-%     uncomment for surrogate model
-%     remove previos data of older surrogate model
-    if rem(N0,11)==0 && N0>11
-        idx=idx+1;
-        InitData([N0-11],:)=[];
-        objectiveData([N0-11],:)=[];
-        objectiveEstData([N0-11],:)=[];
-    end
-    counter=N0-idx;
-        
+% %     uncomment for surrogate model
+% %     remove previos data of older surrogate model
+%     if rem(N0,11)==0 && N0>11
+%         idx=idx+1;
+%         InitData([N0-11],:)=[];
+%         objectiveData([N0-11],:)=[];
+%         objectiveEstData([N0-11],:)=[];
+%     end        
     
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
@@ -299,31 +298,8 @@ if isnan(objective)
 end
 end
 
-function [objective] = myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data)
-persistent N
-persistent idx
+function [objective] = myObjfun_Loop(vars, G, Tf)
 
-if isempty(N)
-    N=1;
-    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-    CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    end
-    idx= 0;
-elseif idx==10
-    G2 = tfest(data,np2);
-    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-    CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    end
-    idx= 0;
-else
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
@@ -332,32 +308,8 @@ else
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
-    if isnan(objective)
-        objective=1e5;
-    end
-    objective=max(objective, 1e5);
-    
-    
-    CLU=feedback(C, G);
-    ytmp=step(CL,0:sampleTs:sampleTf);
-    utmp=step(CLU,0:sampleTs:sampleTf);
-    data = merge(data, iddata(ytmp,utmp,sampleTs));
-    idx= idx +1;
-end
-N = N+1;
-end
 
-
-function [objective] = myObjfun_withoutApproximateModel(vars, G, Tf)
-%     todo move some lines outside with handler@: faster?
-C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-CL=feedback(C*G, 1);
-if abs(stepinfo(CL).Overshoot)<0.01
-    objective = abs(0.01*stepinfo(CL).SettlingTime);
-else
-    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+if isnan(objective)
+    objective=1e10
 end
 end
-
-
-
