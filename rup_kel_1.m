@@ -167,10 +167,10 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_7_repeat_2';
-N0=5;
+idName= '13_7';
+N0=100;
 N_iter=50;
-Nsample=10;
+Nsample=20;
 N_surrogate_repeat=10;
 np2=2;
 
