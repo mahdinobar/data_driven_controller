@@ -225,6 +225,7 @@ for iter=N0:N_iter
         idx=idx+1;
         InitData([N0-11],:)=[];
         objectiveData([N0-11],:)=[];
+        objectiveEstData([N0-11],:)=[];
     end
     counter=N0-idx;
         
