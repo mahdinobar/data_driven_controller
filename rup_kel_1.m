@@ -213,7 +213,7 @@ vars=[Kp, Ki, Kd];
 fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_Loop(vars, G, Tf);
 
-N_iter=100;
+N_iter=500;
 idx=0;
 global N
 for iter=N0:N_iter
@@ -250,6 +250,14 @@ plot(objectiveEstData, '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
+idName= '13_6';
+dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
+figName=append(dir, idName, '.png');
+saveas(gcf,figName)
+objectiveData_dir=append(dir, idName, 'objectiveData');
+save(objectiveData_dir,objectiveData);
+objectiveEstData_dir=append(dir, idName, 'objectiveEstData');
+save(objectiveEstData_dir,objectiveEstData);
 pause;
 % FinalBestResult = bestPoint(results)
 end
