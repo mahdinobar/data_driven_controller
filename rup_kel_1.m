@@ -167,10 +167,10 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_13';
+idName= '13_15';
 N0=10;
-N_iter=300;
-Nsample=10;
+N_iter=50;
+Nsample=100;
 N_surrogate_repeat=10;
 np2=2;
 
@@ -242,7 +242,6 @@ for iter=N0+1:N_iter
     %     uncomment for surrogate model
     %     remove previos data of older surrogate model
     if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-        counter-N0-1
         InitData([counter-N0-1],:)=[];
         objectiveData([counter-N0-1],:)=[];
         objectiveEstData([counter-N0-1],:)=[];
@@ -262,7 +261,7 @@ plot(objectiveEstData(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
-ylim([-1 1])
+ylim([-0.01 0.01])
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
