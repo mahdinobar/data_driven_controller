@@ -168,10 +168,11 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 
 % initial values for GP of BO
 idName= '13_7';
-N0=10;
-N_iter=200;
-Nsample=100;
+N0=100;
+N_iter=50;
+Nsample=10;
 N_surrogate_repeat=10;
+np2=2;
 
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
@@ -203,11 +204,11 @@ end
 objectiveEstData=objectiveData;
 
 % surrogate model
-np2=2;
-G2tmp = n4sid(data,np2);
-[A,B,C,D,~] = idssdata(G2tmp);
-[num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
-G2 = tf(num_surrogate, den_surrogate);
+% G2tmp = n4sid(data,np2);
+% [A,B,C,D,~] = idssdata(G2tmp);
+% [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+% G2 = tf(num_surrogate, den_surrogate);
+G2 = tfest(data,np2);
 
 InitData=table(Kp, Ki, Kd);
 
@@ -293,10 +294,11 @@ if isempty(N)
     end
     idx= 0;
 elseif idx==N_surrogate_repeat
-    G2tmp = n4sid(data,np2);
-    [A,B,C,D,~] = idssdata(G2tmp);
-    [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
-    G2 = tf(num_surrogate, den_surrogate);
+%     G2tmp = n4sid(data,np2);
+%     [A,B,C,D,~] = idssdata(G2tmp);
+%     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+%     G2 = tf(num_surrogate, den_surrogate);
+    G2 = tfest(data,np2);
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -329,7 +331,7 @@ else
     N = N+1;
 end
 if isnan(objective)
-    objective=1e10
+    objective=1e10;
 end
 end
 
