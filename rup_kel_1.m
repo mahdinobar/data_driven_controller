@@ -167,9 +167,9 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_8';
-N0=100;
-N_iter=50;
+idName= '13_13';
+N0=10;
+N_iter=300;
 Nsample=10;
 N_surrogate_repeat=10;
 np2=2;
@@ -239,16 +239,17 @@ for iter=N0+1:N_iter
     InitData=[InitData; results.XAtMinObjective];
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
-    counter=counter+1;
     %     uncomment for surrogate model
     %     remove previos data of older surrogate model
     if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-        InitData([iter-N0-1],:)=[];
-        objectiveData([iter-N0-1],:)=[];
-        objectiveEstData([iter-N0-1],:)=[];
+        counter-N0-1
+        InitData([counter-N0-1],:)=[];
+        objectiveData([counter-N0-1],:)=[];
+        objectiveEstData([counter-N0-1],:)=[];
         counter=counter-1;
     end
-    
+    counter=counter+1;
+
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));

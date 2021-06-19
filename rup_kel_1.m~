@@ -167,9 +167,9 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_7_repeat_2';
-N0=5;
-N_iter=50;
+idName= '13_13';
+N0=10;
+N_iter=300;
 Nsample=10;
 N_surrogate_repeat=10;
 np2=2;
@@ -225,7 +225,7 @@ fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_sur
 
 global N
 N_iter=N_iter+N0;
-counter=N0++
+counter=N0+1;
 for iter=N0+1:N_iter
     iteration=iter-N0
     
@@ -239,15 +239,17 @@ for iter=N0+1:N_iter
     InitData=[InitData; results.XAtMinObjective];
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
-    
     %     uncomment for surrogate model
     %     remove previos data of older surrogate model
-    if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
+    if rem(counter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
+        iter-N0-1
         InitData([iter-N0-1],:)=[];
         objectiveData([iter-N0-1],:)=[];
         objectiveEstData([iter-N0-1],:)=[];
+        counter=counter-1;
     end
-    
+    counter=counter+1;
+
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
@@ -260,9 +262,11 @@ plot(objectiveEstData(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
+ylim([-1 1])
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
+
 figure(2);
 semilogy(objectiveData(N0+1:end), 'b')
 hold on
@@ -273,9 +277,9 @@ ylabel('objective')
 figName=append(dir, idName, '_log.png');
 saveas(gcf,figName)
 
-objectiveData_dir=append(dir, idName, 'objectiveData.mat');
+objectiveData_dir=append(dir, idName, '_objectiveData.mat');
 save(objectiveData_dir,'objectiveData');
-objectiveEstData_dir=append(dir, idName, 'objectiveEstData.mat');
+objectiveEstData_dir=append(dir, idName, '_objectiveEstData.mat');
 save(objectiveEstData_dir,'objectiveEstData');
 pause;
 % FinalBestResult = bestPoint(results)
