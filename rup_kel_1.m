@@ -170,7 +170,7 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 idName= '13_19';
 N0=5;
 N_iter=200;
-withSurrogate=True;
+withSurrogate=false;
 N_surrogate_repeat=10;
 Nsample=10;
 np2=2;
@@ -221,14 +221,14 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-if withSurrogate==True
+if withSurrogate==true
     fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat);
-    counter=N0+1;
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
 
 global N
+counter=N0+1;
 N_iter=N_iter+N0;
 for iter=N0+1:N_iter
     iteration=iter-N0
@@ -244,7 +244,7 @@ for iter=N0+1:N_iter
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
-    if withSurrogate==True
+    if withSurrogate==true
         %     uncomment for surrogate model
         %     remove previos data of older surrogate model
         if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
@@ -253,9 +253,8 @@ for iter=N0+1:N_iter
             objectiveEstData([counter-N0-1],:)=[];
             counter=counter-1;
         end
-        counter=counter+1;
     end
-
+    counter=counter+1;
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
