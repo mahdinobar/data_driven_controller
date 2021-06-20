@@ -5,7 +5,7 @@ clear all; clc; close all;
 idName= '15_1';
 N0=10;
 N_iter=50;
-withSurrogate=true;
+withSurrogate=false;
 N_surrogate_repeat=10;
 Nsample=10;
 np2=2;
