@@ -2,10 +2,10 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= '14_1';
+idName= '14_2';
 N0=10;
 N_iter=50;
-withSurrogate=true;
+withSurrogate=false;
 N_surrogate_repeat=10;
 Nsample=10;
 np2=2;
