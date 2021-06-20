@@ -219,8 +219,6 @@ Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
 Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
-% fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
-% fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
 if withSurrogate==true
     fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat);
 else
@@ -232,11 +230,9 @@ counter=N0+1;
 N_iter=N_iter+N0;
 for iter=N0+1:N_iter
     iteration=iter-N0
-    
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
         'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
-    iteration-N
     if isnan(nanCheck)
         error('nanCheck is NAN');
     end
