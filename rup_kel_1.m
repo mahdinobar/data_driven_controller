@@ -1,5 +1,15 @@
 function rup_kel_1
 clear all; clc; close all;
+
+% hyper-params
+idName= 'test';
+N0=2;
+N_iter=6;
+withSurrogate=true;
+N_surrogate_repeat=10;
+Nsample=10;
+np2=2;
+
 % % KUKA LBR IIWA
 % Jl=5.6;
 % bc=55;
@@ -167,14 +177,6 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= 'test';
-N0=2;
-N_iter=2;
-withSurrogate=true;
-N_surrogate_repeat=10;
-Nsample=4;
-np2=2;
-
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
 Ki = (Ki_max-Ki_min).*rand(N0,1) + Ki_min;
 Kd = (Kd_max-Kd_min).*rand(N0,1) + Kd_min;
@@ -211,7 +213,12 @@ objectiveEstData=objectiveData;
 % [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
 % G2 = tf(num_surrogate, den_surrogate);
 G2 = tfest(data,np2);
-
+G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+% step(G2, G2_2, G2_3, G2_4, G2_5, G2_6)
 InitData=table(Kp, Ki, Kd);
 
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
@@ -240,13 +247,17 @@ for iter=N0+1:N_iter
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
     
+    objectiveData_not_removed=objectiveData;
+    objectiveEstData_not_removed=objectiveEstData;
+    
     if withSurrogate==true
         %     uncomment for surrogate model
         %     remove previos data of older surrogate model
+%         num_perturbed_model=4;
         if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-            InitData([counter-N0-1],:)=[];
-            objectiveData([counter-N0-1],:)=[];
-            objectiveEstData([counter-N0-1],:)=[];
+            InitData([counter-N_surrogate_repeat-1],:)=[];
+            objectiveData([counter-N_surrogate_repeat-1],:)=[];
+            objectiveEstData([counter-N_surrogate_repeat-1],:)=[];
             counter=counter-1;
         end
     end
@@ -257,31 +268,33 @@ for iter=N0+1:N_iter
 end
 
 figure(1);
-plot(objectiveData(N0+1:end), 'b')
+plot(objectiveData_not_removed(N0+1:end), 'b')
 hold on
-plot(objectiveEstData(N0+1:end), '--r')
+plot(objectiveEstData_not_removed(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
 ylim([-0.01 0.01])
+xlim([1 N_iter-N0])
 dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
 
 figure(2);
-semilogy(objectiveData(N0+1:end), 'b')
+semilogy(objectiveData_not_removed(N0+1:end), 'b')
 hold on
-semilogy(objectiveEstData(N0+1:end), '--r')
+semilogy(objectiveEstData_not_removed(N0+1:end), '--r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
+xlim([1 N_iter-N0])
 figName=append(dir, idName, '_log.png');
 saveas(gcf,figName)
 
-objectiveData_dir=append(dir, idName, '_objectiveData.mat');
-save(objectiveData_dir,'objectiveData');
-objectiveEstData_dir=append(dir, idName, '_objectiveEstData.mat');
-save(objectiveEstData_dir,'objectiveEstData');
+objectiveData_dir=append(dir, idName, '_objectiveData_not_removed.mat');
+save(objectiveData_dir,'objectiveData_not_removed');
+objectiveEstData_dir=append(dir, idName, '_objectiveEstData_not_removed.mat');
+save(objectiveEstData_dir,'objectiveEstData_not_removed');
 InitData_dir=append(dir, idName, '_InitData.mat');
 save(InitData_dir,'InitData');
 
@@ -302,6 +315,210 @@ saveas(gcf,figName)
 
 pause;
 % FinalBestResult = bestPoint(results)
+end
+
+function [objective] = myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat)
+global N
+persistent idx
+global data
+if isempty(N)
+    N=1;
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+%     idx= 0;
+elseif N==1
+    N=N+1;
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+elseif N==2
+    N=N+1;
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+elseif N==3
+    N=N+1;
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+elseif N==4
+    N=N+1;
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+elseif N==5
+    N=N+1;
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= 0;
+elseif idx==N_surrogate_repeat
+    N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+    G2 = tfest(data,np2);
+    
+%     G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+%     G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+%     G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+%     G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+%     G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+%     idx= 0;
+elseif idx==N_surrogate_repeat+1
+        N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= idx +1;
+    
+elseif idx==N_surrogate_repeat+2
+        N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= idx +1;
+
+elseif idx==N_surrogate_repeat+3
+        N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= idx +1;
+
+elseif idx==N_surrogate_repeat+4
+        N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= idx +1;
+    
+elseif idx==N_surrogate_repeat+5
+        N = N+1;
+    %     G2tmp = n4sid(data,np2);
+    %     [A,B,C,D,~] = idssdata(G2tmp);
+    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
+    %     G2 = tf(num_surrogate, den_surrogate);
+
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G2, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    idx= 0;
+    
+else
+    N = N+1;
+    %     todo move some lines outside with handler@: faster?
+    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    CL=feedback(C*G, 1);
+    if abs(stepinfo(CL).Overshoot)<0.01
+        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    else
+        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    end
+    %     if isnan(objective)
+    %         objective=1e5;
+    %     end
+    %     objective=max(objective, 1e5);
+    
+    
+    CLU=feedback(C, G);
+    ytmp=step(CL,0:sampleTs:sampleTf);
+    utmp=step(CLU,0:sampleTs:sampleTf);
+    data = merge(data, iddata(ytmp,utmp,sampleTs));
+    idx= idx +1;
+end
+if isnan(objective)
+    objective=1e10;
+end
 end
 
 
