@@ -2,9 +2,9 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'test';
-N0=2;
-N_iter=6;
+idName= '14_1';
+N0=10;
+N_iter=50;
 withSurrogate=true;
 N_surrogate_repeat=10;
 Nsample=10;
@@ -33,7 +33,7 @@ np2=2;
 % Ks=3e7;
 % G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
 
-% Robot Arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
+% robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
 num = [-0.0118, 0.0257, 0, 0, 0];
 den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
 ts=1;
@@ -213,11 +213,11 @@ objectiveEstData=objectiveData;
 % [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
 % G2 = tf(num_surrogate, den_surrogate);
 G2 = tfest(data,np2);
-G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
-G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
-G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
-G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
-G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+% G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+% G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+% G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+% G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+% G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
 % step(G2, G2_2, G2_3, G2_4, G2_5, G2_6)
 InitData=table(Kp, Ki, Kd);
 
@@ -270,20 +270,20 @@ end
 figure(1);
 plot(objectiveData_not_removed(N0+1:end), 'b')
 hold on
-plot(objectiveEstData_not_removed(N0+1:end), '--r')
+plot(objectiveEstData_not_removed(N0+1:end), 'r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
 ylim([-0.01 0.01])
 xlim([1 N_iter-N0])
-dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_13/';
+dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_14/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
 
 figure(2);
 semilogy(objectiveData_not_removed(N0+1:end), 'b')
 hold on
-semilogy(objectiveEstData_not_removed(N0+1:end), '--r')
+semilogy(objectiveEstData_not_removed(N0+1:end), 'r')
 legend('MinObjective','MinEstimatedObjective')
 xlabel('iteration')
 ylabel('objective')
