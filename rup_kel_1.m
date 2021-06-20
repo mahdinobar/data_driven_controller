@@ -3,7 +3,7 @@ clear all; clc; close all;
 
 % hyper-params
 idName= '15_1';
-N0=10;
+N0=3;
 N_iter=50;
 withSurrogate=true;
 N_surrogate_repeat=10;
@@ -271,9 +271,11 @@ end
 
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
-surrogate_iteration=1:N_surrogate_repeat+1:N_iter-N0;
-for i = 1:size(surrogate_iteration,2)
-xline(surrogate_iteration(i));
+if withSurrogate==true
+    surrogate_iteration=1:N_surrogate_repeat+1:N_iter-N0;
+    for i = 1:size(surrogate_iteration,2)
+        xline(surrogate_iteration(i));
+    end
 end
 plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
 xlabel('iteration')
@@ -286,8 +288,10 @@ saveas(gcf,figName)
 
 figure(2);hold on
 semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
-for i = 1:size(surrogate_iteration,2)
-xline(surrogate_iteration(i));
+if withSurrogate==true
+    for i = 1:size(surrogate_iteration,2)
+        xline(surrogate_iteration(i));
+    end
 end
 semilogy(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
 legend('MinObjective','MinEstimatedObjective')
