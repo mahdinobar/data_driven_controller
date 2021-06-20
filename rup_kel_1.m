@@ -167,11 +167,12 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_15';
-N0=10;
-N_iter=50;
-Nsample=100;
+idName= '13_19';
+N0=5;
+N_iter=200;
+withSurrogate=True;
 N_surrogate_repeat=10;
+Nsample=10;
 np2=2;
 
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
@@ -220,12 +221,15 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 vars=[Kp, Ki, Kd];
 % fun = @(vars)myObjfun_withApproximateModel(vars, G, G2, Tf, sampleTf, sampleTs, np2, data);
 % fun = @(vars)myObjfun_withoutApproximateModel(vars, G, Tf);
-fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat);
-% fun = @(vars)myObjfun_Loop(vars, G, Tf);
+if withSurrogate==True
+    fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat);
+    counter=N0+1;
+else
+    fun = @(vars)myObjfun_Loop(vars, G, Tf);
+end
 
 global N
 N_iter=N_iter+N0;
-counter=N0+1;
 for iter=N0+1:N_iter
     iteration=iter-N0
     
@@ -239,15 +243,18 @@ for iter=N0+1:N_iter
     InitData=[InitData; results.XAtMinObjective];
     objectiveData = [objectiveData; results.MinObjective];
     objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
-    %     uncomment for surrogate model
-    %     remove previos data of older surrogate model
-    if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-        InitData([counter-N0-1],:)=[];
-        objectiveData([counter-N0-1],:)=[];
-        objectiveEstData([counter-N0-1],:)=[];
-        counter=counter-1;
+    
+    if withSurrogate==True
+        %     uncomment for surrogate model
+        %     remove previos data of older surrogate model
+        if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
+            InitData([counter-N0-1],:)=[];
+            objectiveData([counter-N0-1],:)=[];
+            objectiveEstData([counter-N0-1],:)=[];
+            counter=counter-1;
+        end
+        counter=counter+1;
     end
-    counter=counter+1;
 
     %     FileName='results.mat';
     %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
