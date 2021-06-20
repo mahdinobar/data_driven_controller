@@ -3,7 +3,7 @@ clear all; clc; close all;
 
 % hyper-params
 idName= '15_1';
-N0=3;
+N0=10;
 N_iter=50;
 withSurrogate=true;
 N_surrogate_repeat=10;
