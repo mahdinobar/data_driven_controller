@@ -30,12 +30,12 @@ ts=1;
 G = d2c(tf(num,den, ts));
 
 
-% % uncomment to estimate stable gain bounds
-% % auto tune
-% C_tuned = pidtune(G,'PID');
-% Kd_nominal=C_tuned.Kd;
-% Kp_nominal=C_tuned.Kp;
-% Ki_nominal=C_tuned.Ki;
+% uncomment to estimate stable gain bounds
+% auto tune
+C_tuned = pidtune(G,'PID');
+Kd_nominal=C_tuned.Kd;
+Kp_nominal=C_tuned.Kp;
+Ki_nominal=C_tuned.Ki;
 
 Tf=1e-8;
 
@@ -167,12 +167,12 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-idName= '13_19';
-N0=5;
-N_iter=200;
-withSurrogate=false;
+idName= 'test';
+N0=2;
+N_iter=2;
+withSurrogate=true;
 N_surrogate_repeat=10;
-Nsample=10;
+Nsample=4;
 np2=2;
 
 Kp = (Kp_max-Kp_min).*rand(N0,1) + Kp_min;
@@ -282,6 +282,24 @@ objectiveData_dir=append(dir, idName, '_objectiveData.mat');
 save(objectiveData_dir,'objectiveData');
 objectiveEstData_dir=append(dir, idName, '_objectiveEstData.mat');
 save(objectiveEstData_dir,'objectiveEstData');
+InitData_dir=append(dir, idName, '_InitData.mat');
+save(InitData_dir,'InitData');
+
+figure(3);
+C_nom=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
+CL_nom=feedback(C_nom*G, 1);
+step(CL_nom)
+hold on
+Kp_BO=results.XAtMinEstimatedObjective.Kp;
+Ki_BO=results.XAtMinEstimatedObjective.Ki;
+Kd_BO=results.XAtMinEstimatedObjective.Kd;
+C_BO=tf([Kd_BO+Tf*Kp_BO,Kp_BO+Tf*Ki_BO,Ki_BO], [Tf, 1, 0]);
+CL_BO=feedback(C_BO*G, 1);
+step(CL_BO, 'r')
+legend('nominal','BO')
+figName=append(dir, idName, '_step_response.png');
+saveas(gcf,figName)
+
 pause;
 % FinalBestResult = bestPoint(results)
 end
