@@ -298,9 +298,16 @@ saveas(gcf,figName)
 figure(2);hold on
 semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 if withSurrogate==true
-    for i = 1:size(surrogate_iteration,2)
-        xline(surrogate_iteration(i));
+    %     todo
+    for i=1:5
+        xline(i);
     end
+    for i=31:35
+        xline(i);
+    end
+%     for i = 1:size(surrogate_iteration,2)
+%         xline(surrogate_iteration(i));
+%     end
 end
 semilogy(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
 legend('MinObjective','MinEstimatedObjective')
