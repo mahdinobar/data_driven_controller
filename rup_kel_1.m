@@ -240,7 +240,7 @@ N_iter=N_iter+N0;
 objectiveData_not_removed=objectiveData;
 objectiveEstData_not_removed=objectiveEstData;
 for iter=N0+1:N_iter
-%     iteration=iter-N0
+    %     iteration=iter-N0
     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
         'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
     nanCheck = results.MinObjective;
@@ -274,13 +274,17 @@ end
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 if withSurrogate==true
-%     todo
-    xline(1:5);
-    xline(31:35);
-%     surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
-%     for i = 1:size(surrogate_iteration,2)
-%         xline(surrogate_iteration(i));
-%     end
+    %     todo
+    for i=1:5
+        xline(i);
+    end
+    for i=31:35
+        xline(i);
+    end
+    %     surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
+    %     for i = 1:size(surrogate_iteration,2)
+    %         xline(surrogate_iteration(i));
+    %     end
 end
 plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
 xlabel('iteration')
@@ -399,12 +403,12 @@ elseif idx==N_real_repeat
     %     G2 = tf(num_surrogate, den_surrogate);
     G2 = tfest(data,np2);
     
-%     G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
-%     G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
-%     G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
-%     G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
-%     G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
-
+    %     G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
+    %     G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+    %     G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
+    %     G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+    %     G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+    
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -414,14 +418,14 @@ elseif idx==N_real_repeat
     end
     idx= idx +1;
 elseif idx==N_real_repeat+1
-        N = N+1
+    N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
-
+    
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
-
+    
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -432,14 +436,14 @@ elseif idx==N_real_repeat+1
     idx= idx +1;
     
 elseif idx==N_real_repeat+2
-        N = N+1
+    N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
-
+    
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
-
+    
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -448,16 +452,16 @@ elseif idx==N_real_repeat+2
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= idx +1;
-
+    
 elseif idx==N_real_repeat+3
-        N = N+1
+    N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
-
+    
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
-
+    
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -466,16 +470,16 @@ elseif idx==N_real_repeat+3
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= idx +1;
-
+    
 elseif idx==N_real_repeat+4
-        N = N+1
+    N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
-
+    
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
-
+    
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
