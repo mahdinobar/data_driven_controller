@@ -6,7 +6,7 @@ idName= '16_1';
 N0=10;
 N_iter=50;
 withSurrogate=true;
-N_real_repeat=25;
+N_surrogate_repeat=25;
 Nsample=10;
 np2=2;
 num_perturbed_model=4;
@@ -229,7 +229,7 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
 if withSurrogate==true
-    fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+    fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat);
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
@@ -257,12 +257,12 @@ for iter=N0+1:N_iter
     if withSurrogate==true
         %     uncomment for surrogate model
         %     remove previos data of older surrogate model
-        if rem(iter-N0,N_real_repeat+(1+num_perturbed_model))==0 && iter>N0+N_real_repeat+(num_perturbed_model)
-            InitData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-            objectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-            objectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-            counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1
-            counter=counter-(num_perturbed_model+1);
+        if rem(iter-N0,N_surrogate_repeat+(1+num_perturbed_model))==0 && iter>N0+N_surrogate_repeat+(num_perturbed_model+1)
+            InitData([counter-N_surrogate_repeat-1-num_perturbed_model],:)=[];
+            objectiveData([counter-N_surrogate_repeat-1-num_perturbed_model],:)=[];
+            objectiveEstData([counter-N_surrogate_repeat-1-num_perturbed_model],:)=[];
+            counter=counter-1;
+            counter-N_surrogate_repeat-1-num_perturbed_model
         end
     end
     counter=counter+1;
@@ -274,7 +274,7 @@ end
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 if withSurrogate==true
-    surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
+    surrogate_iteration=1:N_surrogate_repeat+1:N_iter-N0;
     for i = 1:size(surrogate_iteration,2)
         xline(surrogate_iteration(i));
     end
@@ -284,7 +284,7 @@ xlabel('iteration')
 ylabel('objective')
 ylim([-0.01 0.01])
 xlim([1 N_iter-N0])
-dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_16/';
+dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_15/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
 
@@ -330,7 +330,7 @@ close all;
 % FinalBestResult = bestPoint(results)
 end
 
-function [objective] = myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
+function [objective] = myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat)
 global N
 persistent idx
 global data
@@ -388,7 +388,7 @@ elseif N==4
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= 0;
-elseif idx==N_real_repeat
+elseif idx==N_surrogate_repeat
     N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
@@ -410,7 +410,7 @@ elseif idx==N_real_repeat
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= idx +1;
-elseif idx==N_real_repeat+1
+elseif idx==N_surrogate_repeat+1
         N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
@@ -428,7 +428,7 @@ elseif idx==N_real_repeat+1
     end
     idx= idx +1;
     
-elseif idx==N_real_repeat+2
+elseif idx==N_surrogate_repeat+2
         N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
@@ -446,7 +446,7 @@ elseif idx==N_real_repeat+2
     end
     idx= idx +1;
 
-elseif idx==N_real_repeat+3
+elseif idx==N_surrogate_repeat+3
         N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
@@ -464,7 +464,7 @@ elseif idx==N_real_repeat+3
     end
     idx= idx +1;
 
-elseif idx==N_real_repeat+4
+elseif idx==N_surrogate_repeat+4
         N = N+1
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
@@ -510,7 +510,7 @@ end
 end
 
 
-function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
+function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_surrogate_repeat)
 global N
 persistent idx
 global data
@@ -524,7 +524,7 @@ if isempty(N)
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     idx= 0;
-elseif idx==N_real_repeat
+elseif idx==N_surrogate_repeat
     N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
