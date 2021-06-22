@@ -274,10 +274,13 @@ end
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 if withSurrogate==true
-    surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
-    for i = 1:size(surrogate_iteration,2)
-        xline(surrogate_iteration(i));
-    end
+%     todo
+    xline(1:5);
+    xline(31:35);
+%     surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
+%     for i = 1:size(surrogate_iteration,2)
+%         xline(surrogate_iteration(i));
+%     end
 end
 plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
 xlabel('iteration')
