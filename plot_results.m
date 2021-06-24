@@ -36,7 +36,8 @@ for i=1:N_iter-N0
     CI = [CI; mean(x) + ts*SEM];
 end 
 
-figure(1);hold on
+f=figure(1);hold on
+f.Position=[0 0 1000 600];
 for i=1:N_iter-N0
     semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
 end
