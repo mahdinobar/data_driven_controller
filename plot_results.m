@@ -1,14 +1,14 @@
 function plot_results
 % hyper-params
-idName= 'demo_17_1';
-N0=10;
-N_iter=60;
-repeat_experiment=100;
-withSurrogate=true;
+idName= 'test';
+N0=20;
+N_iter=20;
+repeat_experiment=2;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -24,7 +24,7 @@ mean_objectiveData_all=mean(objectiveData_all,2);
 
 CI=[];
 CI_Est=[];
-for i=1:N_iter-N0
+for i=1:size(objectiveEstData_all,2)
     x = objectiveEstData_all(i,:);                      % Create Data
     SEM = std(x)/sqrt(length(x));               % Standard Error
     ts = tinv([0.025  0.975],length(x)-1);      % T-Score
@@ -39,14 +39,14 @@ end
 f=figure(1);hold on
 f.Position=[0 0 1000 600];
 for i=1:N_iter-N0
-    semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
+    semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
 end
 hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
 hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-ylim([-0. 0.01])
+% ylim([-0. 0.01])
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
 title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')

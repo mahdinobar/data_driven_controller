@@ -2,12 +2,13 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_18_3';
-N0=10;
-N_iter=55;
-repeat_experiment=100;
-withSurrogate=true;
-N_real_repeat=10;
+idName= 'test';
+sys='robot_arm';
+N0=50;
+N_iter=50;
+repeat_experiment=20;
+withSurrogate=false;
+N_real_repeat=25;
 Nsample=10;
 np2=2;
 withPerturbed=false;
@@ -57,8 +58,8 @@ Tf=1e-8;
 
 % C=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
 % CL=feedback(C*G, 1);
-% if abs(stepinfo(CL).Overshoot)<0.01
-%     objective = abs(0.01*stepinfo(CL).SettlingTime);
+% if abs(stepinfo(CL).Overshoot)<1
+%     objective = abs(1*stepinfo(CL).SettlingTime);
 % else
 %     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
 % end
@@ -159,23 +160,37 @@ Tf=1e-8;
 % Kd_max=Kd_nominal+dd;
 
 % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+if sys=="ball_screw"
+    load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
+elseif sys=="robot_arm"
+    load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat')
+end
 
-
-load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat')
-
-% lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
-% ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
-% % lb=[-0.2358, 0.0457, -0.2358];
-% % ub=[0.2358, 0.5173, 0.2358];
+% % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
+% % ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
+% lb=[-0.2358, 0.0457, -0.2358];
+% ub=[0.2358, 0.5173, 0.2358];
 % funPS_handle = @(x)funPS2(x, G, Tf);
 % % options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
 % x = particleswarm(funPS_handle,3,lb,ub);
-
 % % Find True values
-% x(1)=-0.0954016552295164;
-% x(2)=0.186083733952419;
-% x(3)=-0.0954016552295164;
-% True_objective=myObjfun_Loop(x, G, Tf)
+% % x.Kp=0.231167276750434;
+% % x.Ki=0.467605534040020;
+% % x.Kd=0.234584924311749;
+% True_objective=funPS2(x, G, Tf)
+%     function [objective] = funPS2(x, G, Tf)
+%     %     todo move some lines outside with handler@: faster?
+%     C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     CL=feedback(C*G, 1);
+%     if abs(stepinfo(CL).Overshoot)<1
+%         objective = abs(1*stepinfo(CL).SettlingTime);
+%     else
+%         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+%     end
+%     if isnan(objective)
+%         objective=1e10;
+%     end
+%     end
 
 % Kpc=1.;
 % Kic=100.;
@@ -207,8 +222,9 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-% RAND=rand(N0,1);
-load(append(dir,'RAND.mat'))
+RAND=rand(N0,1);
+
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -220,7 +236,10 @@ global data
 for i=1:N0
     C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    InitobjectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    varstmp.Kp=Kp(i);
+    varstmp.Ki=Ki(i);
+    varstmp.Kd=Kd(i);
+    InitobjectiveData(i) = myObjfun_Loop(varstmp, G, Tf);
     while isnan(InitobjectiveData(i))
         RAND(i)=rand(1,1);
         Kd(i) = (Kd_max-Kd_min).*RAND(i) + Kd_min;
@@ -228,7 +247,10 @@ for i=1:N0
         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
         C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
         CL=feedback(C*G, 1);
-        InitobjectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+        varstmp.Kp=Kp(i);
+        varstmp.Ki=Ki(i);
+        varstmp.Kd=Kd(i);
+        InitobjectiveData(i) = myObjfun_Loop(varstmp, G, Tf);
     end
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
@@ -241,13 +263,13 @@ for i=1:N0
 end
 objectiveEstData=InitobjectiveData;
 
+save(append(dir,'RAND.mat'),'RAND')
+
 % surrogate model
 % G2tmp = n4sid(data,np2);
 % [A,B,C,D,~] = idssdata(G2tmp);
 % [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
 % G2 = tf(num_surrogate, den_surrogate);
-
-% save(append(dir,'RAND.mat'),'RAND')
 
 G2 = tfest(data,np2);
 % G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
@@ -283,12 +305,14 @@ InitData_all=InitData;
 objectiveData_all=InitobjectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
+    experiment
     N=[];
     idx=[];
     counter=N0+1;
     objectiveData_not_removed=InitobjectiveData;
     objectiveEstData_not_removed=objectiveEstData;
     for iter=N0+1:N_iter
+        iter
         %     iteration=iter-N0
         results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
             'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
@@ -297,7 +321,7 @@ for experiment=1:repeat_experiment
             error('nanCheck is NAN');
         end
         InitData=[InitData; results.NextPoint];
-        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf);];
+        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
         
         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
@@ -422,8 +446,8 @@ if isempty(N)
     N=1;
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -433,8 +457,8 @@ elseif N==1
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -444,8 +468,8 @@ elseif N==2
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -455,8 +479,8 @@ elseif N==3
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -466,8 +490,8 @@ elseif N==4
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -488,8 +512,8 @@ elseif idx==N_real_repeat
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -505,8 +529,8 @@ elseif idx==N_real_repeat+1
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -523,8 +547,8 @@ elseif idx==N_real_repeat+2
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -541,8 +565,8 @@ elseif idx==N_real_repeat+3
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -559,8 +583,8 @@ elseif idx==N_real_repeat+4
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -571,8 +595,8 @@ else
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -602,8 +626,8 @@ if isempty(N)
     N=1;
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -617,8 +641,8 @@ elseif idx==N_real_repeat
     G2 = tfest(data,np2);
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -628,8 +652,8 @@ else
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    if abs(stepinfo(CL).Overshoot)<0.01
-        objective = abs(0.01*stepinfo(CL).SettlingTime);
+    if abs(stepinfo(CL).Overshoot)<1
+        objective = abs(1*stepinfo(CL).SettlingTime);
     else
         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
@@ -655,8 +679,8 @@ function [objective] = myObjfun_Loop(vars, G, Tf)
 %     todo move some lines outside with handler@: faster?
 C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
-if abs(stepinfo(CL).Overshoot)<0.01
-    objective = abs(0.01*stepinfo(CL).SettlingTime);
+if abs(stepinfo(CL).Overshoot)<1
+    objective = abs(1*stepinfo(CL).SettlingTime);
 else
     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
 end
