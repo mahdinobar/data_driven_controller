@@ -12,14 +12,14 @@ withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
-% load(append(dir,'InitData_all'))
+load(append(dir,'InitData_all'))
 % InitData_all=table2array(InitData_all);
 load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-10,repeat_experiment]);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_experiment]);
 mean_objectiveEstData_all=mean(objectiveEstData_all,2);
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-10,repeat_experiment]);
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
 mean_objectiveData_all=mean(objectiveData_all,2);
 
 CI=[];
@@ -46,7 +46,7 @@ semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
 hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-ylim([-0.09 0.01])
+ylim([-0. 0.01])
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
 title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')

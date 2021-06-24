@@ -2,7 +2,7 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_18_3';
+idName= 'demo_17_3';
 N0=10;
 N_iter=55;
 repeat_experiment=100;
@@ -163,19 +163,30 @@ Tf=1e-8;
 
 load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat')
 
-% lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
-% ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
-% % lb=[-0.2358, 0.0457, -0.2358];
-% % ub=[0.2358, 0.5173, 0.2358];
-% funPS_handle = @(x)funPS2(x, G, Tf);
-% % options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
-% x = particleswarm(funPS_handle,3,lb,ub);
 
-% % Find True values
-% x(1)=-0.0954016552295164;
-% x(2)=0.186083733952419;
-% x(3)=-0.0954016552295164;
-% True_objective=myObjfun_Loop(x, G, Tf)
+lb=[-0.4716/2, -0.4716/2, -0.4716/2];
+ub=[0.4716/2, 0.4716/2, 0.4716/2];
+funPS_handle = @(x)funPS(x, G, Tf);
+x = particleswarm(funPS_handle,3,lb,ub);
+
+Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+CLtmp=feedback(Ctmp*G, 1);
+dp
+max_overshoot=stepinfo(CLtmp).Overshoot
+
+    function [objective] = funPS(x, G, Tf)
+        %     todo move some lines outside with handler@: faster?
+        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+        CL=feedback(C*G, 1);
+        objective=-abs(stepinfo(CL).Overshoot);
+        if isnan(objective)
+            objective=-1e10;
+        end
+    end
+
+
+
+
 
 % Kpc=1.;
 % Kic=100.;
@@ -213,22 +224,22 @@ load(append(dir,'RAND.mat'))
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
 Kd = (Kd_max-Kd_min).*RAND + Kd_min;
-InitobjectiveData = zeros(N0,1);
+objectiveData = zeros(N0,1);
 sampleTf=0.1;
 sampleTs=sampleTf/(Nsample-1);
 global data
 for i=1:N0
     C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    InitobjectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    while isnan(InitobjectiveData(i))
+    objectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    while isnan(objectiveData(i))
         RAND(i)=rand(1,1);
         Kd(i) = (Kd_max-Kd_min).*RAND(i) + Kd_min;
         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
         C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
         CL=feedback(C*G, 1);
-        InitobjectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+        objectiveData(i) = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
     end
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
@@ -239,7 +250,7 @@ for i=1:N0
         data = merge(data, iddata(ytmp,utmp,sampleTs));
     end
 end
-objectiveEstData=InitobjectiveData;
+objectiveEstData=objectiveData;
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -277,27 +288,27 @@ global idx
 N_iter=N_iter+N0;
 data_start=data;
 InitData_start=InitData;
-objectiveData_start=InitobjectiveData;
+objectiveData_start=objectiveData;
 objectiveEstData_start=objectiveEstData;
 InitData_all=InitData;
-objectiveData_all=InitobjectiveData;
+objectiveData_all=objectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
     N=[];
     idx=[];
     counter=N0+1;
-    objectiveData_not_removed=InitobjectiveData;
+    objectiveData_not_removed=objectiveData;
     objectiveEstData_not_removed=objectiveEstData;
     for iter=N0+1:N_iter
         %     iteration=iter-N0
         results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
-            'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
+            'PlotFcn', {}, 'InitialObjective', objectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
         nanCheck = results.MinObjective;
         if isnan(nanCheck)
             error('nanCheck is NAN');
         end
-        InitData=[InitData; results.NextPoint];
-        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf);];
+        InitData=[InitData; results.XAtMinObjective];
+        objectiveData = [objectiveData; results.MinObjective];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
         
         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
@@ -309,7 +320,7 @@ for experiment=1:repeat_experiment
                 %     remove previos data of older surrogate model
                 if rem(iter-N0,N_real_repeat+(1+num_perturbed_model))==0 && iter>N0+N_real_repeat+(num_perturbed_model)
                     InitData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    InitobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    objectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     objectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1
                     counter=counter-(num_perturbed_model+1);
@@ -317,7 +328,7 @@ for experiment=1:repeat_experiment
             else
                 if rem(iter-N0-1,N_real_repeat+1)==0 && iter>N0+1
                     InitData([counter-N_real_repeat-1],:)=[];
-                    InitobjectiveData([counter-N_real_repeat-1],:)=[];
+                    objectiveData([counter-N_real_repeat-1],:)=[];
                     objectiveEstData([counter-N_real_repeat-1],:)=[];
                     counter=counter-1;
                 end
@@ -330,12 +341,12 @@ for experiment=1:repeat_experiment
     end
     
     InitData_all=[InitData_all; InitData(N0+1:end,:)];
-    objectiveData_all = [objectiveData_all; InitobjectiveData(N0+1:end,:)];
+    objectiveData_all = [objectiveData_all; objectiveData(N0+1:end,:)];
     objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
     
     data=data_start;
     InitData=InitData_start;
-    InitobjectiveData=objectiveData_start;
+    objectiveData=objectiveData_start;
     objectiveEstData=objectiveEstData_start;
 end
 save(append(dir,'InitData_all'),'InitData_all')
@@ -364,7 +375,7 @@ save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
 % xlim([1 N_iter-N0])
 % figName=append(dir, idName, '.png');
 % saveas(gcf,figName)
-%
+% 
 % figure(2);hold on
 % semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 % if withSurrogate==true
@@ -386,14 +397,14 @@ save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
 % xlim([1 N_iter-N0])
 % figName=append(dir, idName, '_log.png');
 % saveas(gcf,figName)
-%
+% 
 % objectiveData_dir=append(dir, idName, '_objectiveData_not_removed.mat');
 % save(objectiveData_dir,'objectiveData_not_removed');
 % objectiveEstData_dir=append(dir, idName, '_objectiveEstData_not_removed.mat');
 % save(objectiveEstData_dir,'objectiveEstData_not_removed');
 % InitData_dir=append(dir, idName, '_InitData.mat');
 % save(InitData_dir,'InitData');
-%
+% 
 % figure(3);
 % C_nom=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
 % CL_nom=feedback(C_nom*G, 1);
@@ -408,7 +419,7 @@ save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
 % legend('nominal','BO')
 % figName=append(dir, idName, '_step_response.png');
 % saveas(gcf,figName)
-%
+% 
 % pause;
 % close all;
 % % FinalBestResult = bestPoint(results)
