@@ -6,7 +6,7 @@ idName= 'test';
 N0=4;
 N_iter=5;
 repeat_experiment=2;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=10;
 Nsample=10;
 np2=2;
@@ -249,7 +249,7 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
 if withSurrogate==true
-    if withPerturbed==True
+    if withPerturbed==true
         fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
     else
         fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
@@ -289,7 +289,7 @@ for experiment=1:repeat_experiment
         objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
         
         if withSurrogate==true
-            if withPerturbed==True
+            if withPerturbed==true
                 %     uncomment for surrogate model
                 %     remove previos data of older surrogate model
                 if rem(iter-N0,N_real_repeat+(1+num_perturbed_model))==0 && iter>N0+N_real_repeat+(num_perturbed_model)
@@ -300,10 +300,10 @@ for experiment=1:repeat_experiment
                     counter=counter-(num_perturbed_model+1);
                 end
             else
-                if rem(iter-N0-1,N_surrogate_repeat+1)==0 && iter>N0+1
-                    InitData([counter-N_surrogate_repeat-1],:)=[];
-                    objectiveData([counter-N_surrogate_repeat-1],:)=[];
-                    objectiveEstData([counter-N_surrogate_repeat-1],:)=[];
+                if rem(iter-N0-1,N_real_repeat+1)==0 && iter>N0+1
+                    InitData([counter-N_real_repeat-1],:)=[];
+                    objectiveData([counter-N_real_repeat-1],:)=[];
+                    objectiveEstData([counter-N_real_repeat-1],:)=[];
                     counter=counter-1;
                 end
             end
