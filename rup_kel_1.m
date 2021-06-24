@@ -2,15 +2,15 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_17_1';
+idName= 'demo_17_2';
 N0=10;
-N_iter=60;
+N_iter=50;
 repeat_experiment=100;
-withSurrogate=true;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -193,8 +193,8 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-RAND=rand(N0,1);
-% load(append(dir,'RAND.mat'))
+% RAND=rand(N0,1);
+load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -233,7 +233,7 @@ objectiveEstData=objectiveData;
 % [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
 % G2 = tf(num_surrogate, den_surrogate);
 
-save(append(dir,'RAND.mat'),'RAND')
+% save(append(dir,'RAND.mat'),'RAND')
 
 G2 = tfest(data,np2);
 % G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));

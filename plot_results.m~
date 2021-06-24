@@ -40,27 +40,20 @@ figure(1);hold on
 for i=1:N_iter-N0
     semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
 end
-hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 2, 'DisplayName','95% confidence interval');
+semilogy(CI_Est(:,1), '--r', 'LineWidth', 2, 'DisplayName','95% confidence interval')
 semilogy(CI_Est(:,2), '--r', 'LineWidth', 2)
-hmean=semilogy(mean_objectiveEstData_all, 'b', 'LineWidth', 3, 'DisplayName','mean');
-legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
+semilogy(mean_objectiveEstData_all, 'b', 'LineWidth', 3, 'DisplayName','mean')
 grid on
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
-figName=append(dir, 'objectiveEstData_all.png');
-saveas(gcf,figName)
-figName=append(dir, 'objectiveEstData_all.fig');
-saveas(gcf,figName)
 
 figure(2);hold on
 for i=1:N_iter-N0
     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
 end
-hCI = semilogy(CI(:,1), '--r', 'LineWidth', 2, 'DisplayName','95% confidence interval');
+semilogy(CI(:,1), '--r', 'LineWidth', 2, 'DisplayName','95% confidence interval')
 semilogy(CI(:,2), '--r', 'LineWidth', 2)
-hmean = semilogy(mean_objectiveData_all, 'b', 'LineWidth', 3, 'DisplayName','mean');
-legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
-grid on
+semilogy(mean_objectiveData_all, 'b', 'LineWidth', 3, 'DisplayName','mean')
 xlabel('Iteration')
 ylabel('Model Objective')
 
