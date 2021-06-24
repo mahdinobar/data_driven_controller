@@ -1,14 +1,14 @@
 function plot_results
 % hyper-params
-idName= 'demo_17_3';
+idName= 'demo_17_1';
 N0=10;
-N_iter=55;
+N_iter=60;
 repeat_experiment=100;
 withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -17,9 +17,9 @@ dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller
 load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-5,repeat_experiment]);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 mean_objectiveEstData_all=mean(objectiveEstData_all,2);
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-5,repeat_experiment]);
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 mean_objectiveData_all=mean(objectiveData_all,2);
 
 CI=[];
@@ -40,13 +40,15 @@ figure(1);hold on
 for i=1:N_iter-N0
     semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
 end
-hCI=semilogy(CI_Est(:,1), ':r', 'LineWidth', 2, 'DisplayName','95% confidence interval');
-semilogy(CI_Est(:,2), ':r', 'LineWidth', 2)
-hmean=semilogy(mean_objectiveEstData_all, 'b', 'LineWidth', 3, 'DisplayName','mean');
+hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
+semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
+hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
+ylim([-0.09 0.01])
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
+title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')
 figName=append(dir, 'objectiveEstData_all.png');
 saveas(gcf,figName)
 figName=append(dir, 'objectiveEstData_all.fig');
@@ -56,9 +58,9 @@ figure(2);hold on
 for i=1:N_iter-N0
     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.05], 'LineWidth', 0.1)
 end
-hCI = semilogy(CI(:,1), ':r', 'LineWidth', 2, 'DisplayName','95% confidence interval');
-semilogy(CI(:,2), ':r', 'LineWidth', 2)
-hmean = semilogy(mean_objectiveData_all, 'b', 'LineWidth', 3, 'DisplayName','mean');
+hCI = semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
+semilogy(CI(:,2), '--r', 'LineWidth', 1)
+hmean = semilogy(mean_objectiveData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
 xlabel('Iteration')
