@@ -1,10 +1,10 @@
 function plot_results
 % hyper-params
-idName= 'demo_17_2';
+idName= 'demo_17_3';
 N0=10;
-N_iter=50;
+N_iter=55;
 repeat_experiment=100;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
@@ -17,9 +17,9 @@ dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller
 load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-5,repeat_experiment]);
 mean_objectiveEstData_all=mean(objectiveEstData_all,2);
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-5,repeat_experiment]);
 mean_objectiveData_all=mean(objectiveData_all,2);
 
 CI=[];
