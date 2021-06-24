@@ -12,6 +12,7 @@ Nsample=10;
 np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
+dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
 
 
 % % KUKA LBR IIWA
@@ -192,7 +193,7 @@ load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/r
 
 % initial values for GP of BO
 RAND=rand(N0,1);
-% load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/RAND.mat')
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -231,8 +232,7 @@ objectiveEstData=objectiveData;
 % [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
 % G2 = tf(num_surrogate, den_surrogate);
 
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/RAND.mat','RAND')
-
+save(append(dir,'RAND.mat'),'RAND')
 
 G2 = tfest(data,np2);
 % G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
@@ -257,8 +257,9 @@ if withSurrogate==true
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
-
-
+global N
+global idx
+data_start=data;
 InitData_start=InitData;
 objectiveData_start=objectiveData;
 objectiveEstData_start=objectiveEstData;
@@ -266,7 +267,8 @@ InitData_all=InitData;
 objectiveData_all=objectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
-    global N
+    N=[];
+    idx=[];
     counter=N0+1;
     N_iter=N_iter+N0;
     objectiveData_not_removed=objectiveData;
@@ -316,13 +318,14 @@ for experiment=1:repeat_experiment
     objectiveData_all = [objectiveData_all; objectiveData(N0+1:end,:)];
     objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
     
+    data=data_start;
     InitData=InitData_start;
     objectiveData=objectiveData_start;
     objectiveEstData=objectiveEstData_start;
 end
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/InitData_all','InitData_all')
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/objectiveData_all.mat','objectiveData_all')
-save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/objectiveEstData_all.mat','objectiveEstData_all')
+save(append(dir,'InitData_all'),'InitData_all')
+save(append(dir,'objectiveData_all.mat'),'objectiveData_all')
+save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
 % =========================================================================
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
@@ -344,7 +347,6 @@ xlabel('iteration')
 ylabel('objective')
 ylim([-0.01 0.01])
 xlim([1 N_iter-N0])
-dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/test/';
 figName=append(dir, idName, '.png');
 saveas(gcf,figName)
 
@@ -399,7 +401,7 @@ end
 
 function [objective] = myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
 global N
-persistent idx
+global idx
 global data
 if isempty(N)
     N=1
@@ -579,7 +581,7 @@ end
 
 function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
 global N
-persistent idx
+global idx
 global data
 if isempty(N)
     N=1;

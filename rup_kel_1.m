@@ -257,8 +257,10 @@ if withSurrogate==true
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
-
-
+global N
+global idx
+N_iter=N_iter+N0;
+data_start=data;
 InitData_start=InitData;
 objectiveData_start=objectiveData;
 objectiveEstData_start=objectiveEstData;
@@ -266,9 +268,9 @@ InitData_all=InitData;
 objectiveData_all=objectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
-    global N
+    N=[];
+    idx=[];
     counter=N0+1;
-    N_iter=N_iter+N0;
     objectiveData_not_removed=objectiveData;
     objectiveEstData_not_removed=objectiveEstData;
     for iter=N0+1:N_iter
@@ -316,6 +318,7 @@ for experiment=1:repeat_experiment
     objectiveData_all = [objectiveData_all; objectiveData(N0+1:end,:)];
     objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
     
+    data=data_start;
     InitData=InitData_start;
     objectiveData=objectiveData_start;
     objectiveEstData=objectiveEstData_start;
@@ -323,82 +326,82 @@ end
 save(append(dir,'InitData_all'),'InitData_all')
 save(append(dir,'objectiveData_all.mat'),'objectiveData_all')
 save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
-% =========================================================================
-figure(1);hold on
-plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
-if withSurrogate==true
-    %     todo
-    for i=1:5
-        xline(i);
-    end
-    for i=31:35
-        xline(i);
-    end
-    %     surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
-    %     for i = 1:size(surrogate_iteration,2)
-    %         xline(surrogate_iteration(i));
-    %     end
-end
-plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
-xlabel('iteration')
-ylabel('objective')
-ylim([-0.01 0.01])
-xlim([1 N_iter-N0])
-figName=append(dir, idName, '.png');
-saveas(gcf,figName)
-
-figure(2);hold on
-semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
-if withSurrogate==true
-    %     todo
-    for i=1:5
-        xline(i);
-    end
-    for i=31:35
-        xline(i);
-    end
-    %     for i = 1:size(surrogate_iteration,2)
-    %         xline(surrogate_iteration(i));
-    %     end
-end
-semilogy(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
-legend('MinObjective','MinEstimatedObjective')
-xlabel('iteration')
-ylabel('objective')
-xlim([1 N_iter-N0])
-figName=append(dir, idName, '_log.png');
-saveas(gcf,figName)
-
-objectiveData_dir=append(dir, idName, '_objectiveData_not_removed.mat');
-save(objectiveData_dir,'objectiveData_not_removed');
-objectiveEstData_dir=append(dir, idName, '_objectiveEstData_not_removed.mat');
-save(objectiveEstData_dir,'objectiveEstData_not_removed');
-InitData_dir=append(dir, idName, '_InitData.mat');
-save(InitData_dir,'InitData');
-
-figure(3);
-C_nom=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
-CL_nom=feedback(C_nom*G, 1);
-step(CL_nom)
-hold on
-Kp_BO=results.XAtMinEstimatedObjective.Kp;
-Ki_BO=results.XAtMinEstimatedObjective.Ki;
-Kd_BO=results.XAtMinEstimatedObjective.Kd;
-C_BO=tf([Kd_BO+Tf*Kp_BO,Kp_BO+Tf*Ki_BO,Ki_BO], [Tf, 1, 0]);
-CL_BO=feedback(C_BO*G, 1);
-step(CL_BO, 'r')
-legend('nominal','BO')
-figName=append(dir, idName, '_step_response.png');
-saveas(gcf,figName)
-
-pause;
-close all;
-% FinalBestResult = bestPoint(results)
+% % =========================================================================
+% figure(1);hold on
+% plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
+% if withSurrogate==true
+%     %     todo
+%     for i=1:5
+%         xline(i);
+%     end
+%     for i=31:35
+%         xline(i);
+%     end
+%     %     surrogate_iteration=1:N_real_repeat+1:N_iter-N0;
+%     %     for i = 1:size(surrogate_iteration,2)
+%     %         xline(surrogate_iteration(i));
+%     %     end
+% end
+% plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
+% xlabel('iteration')
+% ylabel('objective')
+% ylim([-0.01 0.01])
+% xlim([1 N_iter-N0])
+% figName=append(dir, idName, '.png');
+% saveas(gcf,figName)
+% 
+% figure(2);hold on
+% semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
+% if withSurrogate==true
+%     %     todo
+%     for i=1:5
+%         xline(i);
+%     end
+%     for i=31:35
+%         xline(i);
+%     end
+%     %     for i = 1:size(surrogate_iteration,2)
+%     %         xline(surrogate_iteration(i));
+%     %     end
+% end
+% semilogy(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
+% legend('MinObjective','MinEstimatedObjective')
+% xlabel('iteration')
+% ylabel('objective')
+% xlim([1 N_iter-N0])
+% figName=append(dir, idName, '_log.png');
+% saveas(gcf,figName)
+% 
+% objectiveData_dir=append(dir, idName, '_objectiveData_not_removed.mat');
+% save(objectiveData_dir,'objectiveData_not_removed');
+% objectiveEstData_dir=append(dir, idName, '_objectiveEstData_not_removed.mat');
+% save(objectiveEstData_dir,'objectiveEstData_not_removed');
+% InitData_dir=append(dir, idName, '_InitData.mat');
+% save(InitData_dir,'InitData');
+% 
+% figure(3);
+% C_nom=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
+% CL_nom=feedback(C_nom*G, 1);
+% step(CL_nom)
+% hold on
+% Kp_BO=results.XAtMinEstimatedObjective.Kp;
+% Ki_BO=results.XAtMinEstimatedObjective.Ki;
+% Kd_BO=results.XAtMinEstimatedObjective.Kd;
+% C_BO=tf([Kd_BO+Tf*Kp_BO,Kp_BO+Tf*Ki_BO,Ki_BO], [Tf, 1, 0]);
+% CL_BO=feedback(C_BO*G, 1);
+% step(CL_BO, 'r')
+% legend('nominal','BO')
+% figName=append(dir, idName, '_step_response.png');
+% saveas(gcf,figName)
+% 
+% pause;
+% close all;
+% % FinalBestResult = bestPoint(results)
 end
 
 function [objective] = myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
 global N
-persistent idx
+global idx
 global data
 if isempty(N)
     N=1
@@ -578,7 +581,7 @@ end
 
 function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
 global N
-persistent idx
+global idx
 global data
 if isempty(N)
     N=1;
