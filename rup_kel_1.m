@@ -2,11 +2,11 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_17_2';
+idName= 'demo_17_3';
 N0=10;
-N_iter=50;
+N_iter=55;
 repeat_experiment=100;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
