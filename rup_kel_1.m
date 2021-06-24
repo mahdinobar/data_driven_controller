@@ -2,16 +2,17 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'test';
-N0=4;
-N_iter=5;
-repeat_experiment=2;
+idName= 'demo_17_1';
+N0=10;
+N_iter=60;
+repeat_experiment=100;
 withSurrogate=true;
-N_real_repeat=10;
+N_real_repeat=25;
 Nsample=10;
 np2=2;
 withPerturbed=true;
 num_perturbed_model=4;
+
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
 
 
@@ -404,7 +405,7 @@ global N
 global idx
 global data
 if isempty(N)
-    N=1
+    N=1;
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<0.01
@@ -414,7 +415,7 @@ if isempty(N)
     end
     idx= 0;
 elseif N==1
-    N=N+1
+    N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -425,7 +426,7 @@ elseif N==1
     end
     idx= 0;
 elseif N==2
-    N=N+1
+    N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -436,7 +437,7 @@ elseif N==2
     end
     idx= 0;
 elseif N==3
-    N=N+1
+    N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -447,7 +448,7 @@ elseif N==3
     end
     idx= 0;
 elseif N==4
-    N=N+1
+    N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -458,7 +459,7 @@ elseif N==4
     end
     idx= 0;
 elseif idx==N_real_repeat
-    N = N+1
+    N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
@@ -480,7 +481,7 @@ elseif idx==N_real_repeat
     end
     idx= idx +1;
 elseif idx==N_real_repeat+1
-    N = N+1
+    N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
@@ -498,7 +499,7 @@ elseif idx==N_real_repeat+1
     idx= idx +1;
     
 elseif idx==N_real_repeat+2
-    N = N+1
+    N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
@@ -516,7 +517,7 @@ elseif idx==N_real_repeat+2
     idx= idx +1;
     
 elseif idx==N_real_repeat+3
-    N = N+1
+    N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
@@ -534,7 +535,7 @@ elseif idx==N_real_repeat+3
     idx= idx +1;
     
 elseif idx==N_real_repeat+4
-    N = N+1
+    N = N+1;
     %     G2tmp = n4sid(data,np2);
     %     [A,B,C,D,~] = idssdata(G2tmp);
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
@@ -647,6 +648,6 @@ else
 end
 
 if isnan(objective)
-    objective=1e10
+    objective=1e10;
 end
 end
