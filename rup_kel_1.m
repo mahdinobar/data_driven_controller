@@ -10,7 +10,7 @@ withSurrogate=true;
 N_real_repeat=10;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
 
