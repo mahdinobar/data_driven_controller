@@ -9,6 +9,7 @@ withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
+withPerturbed=True;
 num_perturbed_model=4;
 
 
@@ -229,7 +230,11 @@ Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
 vars=[Kp, Ki, Kd];
 if withSurrogate==true
-    fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+    if withPerturbed==True
+        fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+    else
+        fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+    end
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
@@ -271,6 +276,8 @@ for iter=N0+1:N_iter
     %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
 end
 
+
+% =========================================================================
 figure(1);hold on
 plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
 if withSurrogate==true
