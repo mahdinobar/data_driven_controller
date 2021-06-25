@@ -2,16 +2,16 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_19_2';
+idName= 'demo_19_3';
 sys='robot_arm';
-N0=50;
+N0=100;
 N_iter=50;
 repeat_experiment=20;
-withSurrogate=true;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -222,9 +222,9 @@ end
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-% RAND=rand(N0,1);
+RAND=rand(N0,1);
 
-load(append(dir,'RAND.mat'))
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -263,7 +263,7 @@ for i=1:N0
 end
 objectiveEstData=InitobjectiveData;
 
-% save(append(dir,'RAND.mat'),'RAND')
+save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -273,10 +273,10 @@ objectiveEstData=InitobjectiveData;
 
 G2 = tfest(data,np2);
 % G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
-% G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+% G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.95e0, 0].*(rand(1,1)-0.5));
 % G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
-% G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
-% G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+% G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
+% G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
 % step(G2, G2_2, G2_3, G2_4, G2_5, G2_6)
 InitData=table(Kp, Ki, Kd);
 
@@ -456,7 +456,7 @@ if isempty(N)
     idx= 0;
 elseif N==1
     N=N+1;
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.95e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<1
@@ -478,7 +478,7 @@ elseif N==2
     idx= 0;
 elseif N==3
     N=N+1;
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<1
@@ -489,7 +489,7 @@ elseif N==3
     idx= 0;
 elseif N==4
     N=N+1;
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
     if abs(stepinfo(CL).Overshoot)<1
@@ -507,10 +507,10 @@ elseif idx==N_real_repeat
     G2 = tfest(data,np2);
     
     %     G2_2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.8e0, 0].*(rand(1,1)-0.5));
-    %     G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+    %     G2_3=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.95e0, 0].*(rand(1,1)-0.5));
     %     G2_4=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
-    %     G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
-    %     G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+    %     G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
+    %     G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -527,7 +527,7 @@ elseif idx==N_real_repeat+1
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
     
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.9e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.95e0, 0].*(rand(1,1)-0.5));
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -563,7 +563,7 @@ elseif idx==N_real_repeat+3
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
     
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
@@ -581,7 +581,7 @@ elseif idx==N_real_repeat+4
     %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
     %     G2 = tf(num_surrogate, den_surrogate);
     
-    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.2e0, 0].*(rand(1,1)-0.5));
+    G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);

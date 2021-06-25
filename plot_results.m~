@@ -22,9 +22,9 @@ objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_exper
 
 TF = abs(objectiveEstData_all)<1e3;
 % TF = isoutlier(objectiveEstData_all, 2);
-objectiveEstData_all=objectiveEstData_all.*TF;
-% TF2=isoutlier(objectiveEstData_all, 2);
-% objectiveEstData_all=objectiveEstData_all.*TF2;
+objectiveEstData_all2=objectiveEstData_all.*TF;
+TF2=isoutlier(objectiveEstData_all, 2);
+objectiveEstData_all=objectiveEstData_all.*TF2;
 objectiveEstData_all(objectiveEstData_all == 0) = NaN;
 
 objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
