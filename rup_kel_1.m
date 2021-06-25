@@ -3,16 +3,16 @@ clear all; clc; close all;
 tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp';
 
 % hyper-params
-idName= 'demo_20_3';
+idName= 'demo_20_6';
 sys='robot_arm';
-N0=10;
-N_iter=50+10;
+N0=3;
+N_iter=50;
 repeat_experiment=20;
-withSurrogate=true;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append(tmp_dir,'/', idName, '/');
@@ -187,7 +187,7 @@ load(dir_gains)
 %         ov=abs(stepinfo(CL).Overshoot);
 %         st=stepinfo(CL).SettlingTime;
 %         if isnan(ov) || isinf(ov) || ov>1e3
-%             ov=1e3*sign(ov);
+%             ov=1e3;
 %         end
 %         if isnan(st) || isinf(st) || st>1e5
 %             st=1e5;
@@ -225,10 +225,10 @@ load(dir_gains)
 % Kd_min=Kd_min+safeFacd*rgKd;
 % Kd_max=Kd_max-safeFacd*rgKd;
 
-% % initial values for GP of BO
-RAND=rand(N0,1);
+% % % initial values for GP of BO
+% RAND=rand(N0,1);
 
-% load(append(dir,'RAND.mat'))
+load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -266,7 +266,7 @@ for i=1:N0
     end
 end
 
-save(append(dir,'RAND.mat'),'RAND')
+% save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -325,16 +325,16 @@ for experiment=1:repeat_experiment
     counter=N0+1;
     %     objectiveData_not_removed=InitobjectiveData;
     %     objectiveEstData_not_removed=objectiveEstData;
-    for iter=N0+1:N_iter
-        iter
+    for iter=N0+1:N_iter 
+        iter 
         %     iteration=iter-N0
-        nanCheck=nan;
-        while isnan(nanCheck)
-            results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
-                'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-            nanCheck = results.MinObjective;
+        nanCheck=nan; 
+%         while isnan(nanCheck)
+        results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
+            'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound'); 
+%             nanCheck = results.MinObjective;
 %             error('nanCheck is NAN');
-        end
+%         end
         InitData=[InitData; results.NextPoint];
         InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
@@ -849,7 +849,7 @@ CL=feedback(C*G, 1);
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
 if isnan(ov) || isinf(ov) || ov>1e3 
-    ov=1e3*sign(ov);
+    ov=1e3;
 end
 if isnan(st) || isinf(st) || st>1e5 
     st=1e5;

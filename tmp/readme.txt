@@ -556,4 +556,15 @@ np2=2;
 withPerturbed=true;
 num_perturbed_model=4;
 
-
+% hyper-params
+idName= 'demo_20_4';
+sys='robot_arm';
+N0=10;
+N_iter=50;
+repeat_experiment=20;
+withSurrogate=false;
+N_real_repeat=25;
+Nsample=10;
+np2=2;
+withPerturbed=false;
+num_perturbed_model=4;
