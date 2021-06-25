@@ -5,7 +5,7 @@ tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tm
 % hyper-params
 idName= 'demo_20_2';
 sys='robot_arm';
-N0=10;
+N0=20;
 N_iter=50;
 repeat_experiment=20;
 withSurrogate=false;
@@ -328,11 +328,12 @@ for experiment=1:repeat_experiment
     for iter=N0+1:N_iter
         iter
         %     iteration=iter-N0
-        results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
-            'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-        nanCheck = results.MinObjective;
-        if isnan(nanCheck)
-            error('nanCheck is NAN');
+        nanCheck=nan;
+        while isnan(nanCheck)
+            results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
+                'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
+            nanCheck = results.MinObjective;
+%             error('nanCheck is NAN');
         end
         InitData=[InitData; results.NextPoint];
         InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
