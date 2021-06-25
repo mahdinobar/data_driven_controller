@@ -3,7 +3,7 @@ clear all; clc; close all;
 tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp';
 
 % hyper-params
-idName= 'demo_19_5';
+idName= 'demo_20_1';
 sys='robot_arm';
 N0=10;
 N_iter=50;
@@ -242,7 +242,7 @@ for i=1:N0
     varstmp.Ki=Ki(i);
     varstmp.Kd=Kd(i);
     InitobjectiveData(i) = myObjfun_Loop(varstmp, G, Tf);
-    while isnan(InitobjectiveData(i))
+    while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
         RAND(i)=rand(1,1);
         Kd(i) = (Kd_max-Kd_min).*RAND(i) + Kd_min;
         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
@@ -481,10 +481,10 @@ if isempty(N)
     CL=feedback(C*G2, 1);
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -501,10 +501,10 @@ elseif N==1
     CL=feedback(C*G2, 1);
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -521,10 +521,10 @@ elseif N==2
     CL=feedback(C*G2, 1);
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -541,10 +541,10 @@ elseif N==3
     CL=feedback(C*G2, 1);
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -562,10 +562,10 @@ elseif N==4
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -594,10 +594,10 @@ elseif idx==N_real_repeat
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -621,10 +621,10 @@ elseif idx==N_real_repeat+1
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -649,10 +649,10 @@ elseif idx==N_real_repeat+2
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -677,10 +677,10 @@ elseif idx==N_real_repeat+3
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -705,10 +705,10 @@ elseif idx==N_real_repeat+4
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -727,10 +727,10 @@ else
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -768,10 +768,10 @@ if isempty(N)
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -793,10 +793,10 @@ elseif idx==N_real_repeat
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -814,10 +814,10 @@ else
     
     ov=stepinfo(CL).Overshoot;
     st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov)
+    if isnan(ov) || isinf(ov) || abs(ov)>1e5
         ov=1e5;
     end
-    if isnan(st) || isinf(st)
+    if isnan(st) || isinf(st) || st>1e5
         st=1e5;
     end
     objective=ov/10+st/100;
@@ -851,10 +851,10 @@ CL=feedback(C*G, 1);
 
 ov=stepinfo(CL).Overshoot;
 st=stepinfo(CL).SettlingTime;
-if isnan(ov) || isinf(ov)
-    ov=1e5;
+if isnan(ov) || isinf(ov) || abs(ov)>1e5 
+    ov=1e5*sign(ov);
 end
-if isnan(st) || isinf(st)
+if isnan(st) || isinf(st) || st>1e5 
     st=1e5;
 end
 objective=ov/10+st/100;
