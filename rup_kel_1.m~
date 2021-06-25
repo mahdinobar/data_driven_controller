@@ -1,13 +1,12 @@
 function rup_kel_1
 clear all; clc; close all;
-tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp';
 
 % hyper-params
-idName= 'demo_19_5';
+idName= 'demo_19_4';
 sys='robot_arm';
 N0=100;
 N_iter=50+10;
-repeat_experiment=200;
+repeat_experiment=20;
 withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
@@ -15,7 +14,7 @@ np2=2;
 withPerturbed=true;
 num_perturbed_model=4;
 
-dir=append(tmp_dir,'/', idName, '/');
+dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
 % dir=append('/idiap/home/mnobar/Rupenyan/data_driven_controller/tmp/', idName, '/');
 
 
@@ -160,13 +159,13 @@ Tf=1e-8;
 % Ki_max=Ki_nominal+di;
 % Kd_min=Kd_nominal-dd;
 % Kd_max=Kd_nominal+dd;
+
 % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 if sys=="ball_screw"
-    dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
+    load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/ball_screw_gain_bounds/KpKiKd_bounds.mat')
 elseif sys=="robot_arm"
-    dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
+    load('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat')
 end
-load(dir_gains)
 
 % % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
 % % ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
