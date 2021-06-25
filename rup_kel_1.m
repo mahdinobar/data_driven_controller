@@ -2,16 +2,16 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'demo_19_3';
+idName= 'demo_19_4';
 sys='robot_arm';
 N0=100;
-N_iter=50;
+N_iter=50+10;
 repeat_experiment=20;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -221,10 +221,10 @@ end
 % Kd_min=Kd_min+safeFacd*rgKd;
 % Kd_max=Kd_max-safeFacd*rgKd;
 
-% initial values for GP of BO
-RAND=rand(N0,1);
+% % initial values for GP of BO
+% RAND=rand(N0,1);
 
-% load(append(dir,'RAND.mat'))
+load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -263,7 +263,7 @@ for i=1:N0
 end
 objectiveEstData=InitobjectiveData;
 
-save(append(dir,'RAND.mat'),'RAND')
+% save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);

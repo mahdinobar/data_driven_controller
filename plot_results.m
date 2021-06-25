@@ -50,7 +50,7 @@ end
 
 f=figure(1);hold on
 f.Position=[0 0 1000 600];
-% for i=1:N_iter-5
+% for i=1:N_iter
 %     x=linspace(1,repeat_experiment,repeat_experiment);
 %     nan_flag=isnan(objectiveData_all(i,:));
 %     semilogy(x(~nan_flag),objectiveEstData_all(i,~nan_flag), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
@@ -60,7 +60,7 @@ semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
 hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-ylim([70 90])
+% ylim([70 90])
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
 title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')
