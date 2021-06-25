@@ -1,10 +1,10 @@
 function plot_results
 % hyper-params
-idName= 'demo_19_5';
+idName= 'demo_20_2';
 sys='robot_arm';
-N0=10;
+N0=20;
 N_iter=50;
-repeat_experiment=3;
+repeat_experiment=20;
 withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
@@ -31,6 +31,43 @@ objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]
 % objectiveData_all=objectiveData_all.*TF;
 % objectiveData_all(objectiveData_all == 0) = NaN;
 
+
+% f=figure(1);hold on
+% f.Position=[0 0 1000 600];
+% for i=1:N_iter-N0
+%     x=linspace(1,repeat_experiment,repeat_experiment);
+%     nan_flag=isnan(objectiveData_all(i,:));
+%     semilogy(x(~nan_flag),objectiveEstData_all(i,~nan_flag), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
+% end
+% hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
+% semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
+% hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
+% legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
+% grid on
+% % ylim([70 90])
+% xlabel('Iteration')
+% ylabel('Estimated Model Objective')
+% title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')
+% figName=append(dir, 'objectiveEstData_all.png');
+% saveas(gcf,figName)
+% figName=append(dir, 'objectiveEstData_all.fig');
+% saveas(gcf,figName)
+
+
+f2=figure(2);hold on
+f2.Position=[200 0 1000 600];
+for i=1:repeat_experiment
+    for j=1:N_iter
+        objectiveData_all(j,i)=min(objectiveData_all(1:j,i));
+    end
+end
+
+objectiveData_all(:,5)=objectiveData_all(:,4);
+
+for i=1:repeat_experiment
+    semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
+end
+
 mean_objectiveEstData_all=mean(objectiveEstData_all,2,'omitnan');
 mean_objectiveData_all=mean(objectiveData_all,2,'omitnan');
 
@@ -48,93 +85,45 @@ for i=1:size(objectiveEstData_all,1)
     CI = [CI; mean(x,'omitnan') + ts*SEM];
 end 
 
-f=figure(1);hold on
-f.Position=[0 0 1000 600];
-for i=1:N_iter
-    x=linspace(1,repeat_experiment,repeat_experiment);
-    nan_flag=isnan(objectiveData_all(i,:));
-    semilogy(x(~nan_flag),objectiveEstData_all(i,~nan_flag), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
-end
-hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
-semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
-hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
+hCI=semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
+semilogy(CI(:,2), '--r', 'LineWidth', 1)
+hmean=semilogy(mean_objectiveData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-% ylim([70 90])
+ylim([0.90 0.99])
 xlabel('Iteration')
-ylabel('Estimated Model Objective')
-title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')
-figName=append(dir, 'objectiveEstData_all.png');
+ylabel('Observed Model Objective')
+title('Observed Objective vs Iterations over Real Plant')
+figName=append(dir, 'objectiveData_all.png');
 saveas(gcf,figName)
-figName=append(dir, 'objectiveEstData_all.fig');
+figName=append(dir, 'objectiveData_all.fig');
 saveas(gcf,figName)
 
-f2=figure(2);hold on
-f2.Position=[0 0 1000 600];
-obj_exp=[];
-for j=1:repeat_experiment
-    for i=1:N_iter
-        obj_exp=[obj_exp;min(objectiveData_all(1:i,j),[],'all')];
-    end
-%     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.5], 'LineWidth', 0.1)
-end
-obj_exp=reshape(obj_exp,[N_iter,repeat_experiment]);
-semilogy(obj_exp, 'b', 'LineWidth', .5, 'DisplayName','mean');
-% hCI = semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
-% semilogy(CI(:,2), '--r', 'LineWidth', 1)
-obj=[];
-for k=1:50
-%     objectiveData_all
-    
-    obj=[obj;min(objectiveData_all(1:k,:),[],'all')];
-    
-end
-hmean = semilogy(obj, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
-legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
-grid on
-xlabel('Iteration')
-ylabel('Model Objective')
-
-% 
-% % plot(objectiveEstData_all(end-:end), 'b','DisplayName','MinObjective')
-% if withSurrogate==true
-%     surrogate_iteration=1:N_surrogate_repeat+1:N_iter-N0;
-%     for i = 1:size(surrogate_iteration,2)
-%         xline(surrogate_iteration(i));
+% f2=figure(3);hold on
+% f2.Position=[0 0 1000 600];
+% obj_exp=[];
+% for j=1:repeat_experiment
+%     for i=1:N_iter
+%         obj_exp=[obj_exp;min(objectiveData_all(1:i,j),[],'all')];
 %     end
+% %     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.5], 'LineWidth', 0.1)
 % end
-% plot(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
-% xlabel('iteration')
-% ylabel('objective')
-% ylim([-0.01 0.01])
-% xlim([1 N_iter-N0])
-% dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/demo_15/';
-% figName=append(dir, idName, '.png');
-% % saveas(gcf,figName)
-% 
-% figure(2);hold on
-% semilogy(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
-% if withSurrogate==true
-%     for i = 1:size(surrogate_iteration,2)
-%         xline(surrogate_iteration(i));
-%     end
+% obj_exp=reshape(obj_exp,[N_iter,repeat_experiment]);
+% semilogy(obj_exp, 'b', 'LineWidth', .5, 'DisplayName','mean');
+% % hCI = semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
+% % semilogy(CI(:,2), '--r', 'LineWidth', 1)
+% obj=[];
+% for k=1:50
+% %     objectiveData_all
+%     
+%     obj=[obj;min(objectiveData_all(1:k,:),[],'all')];
+%     
 % end
-% semilogy(objectiveEstData_not_removed(N0+1:end), 'r','DisplayName','MinEstimatedObjective')
-% legend('MinObjective','MinEstimatedObjective')
-% xlabel('iteration')
-% ylabel('objective')
-% xlim([1 N_iter-N0])
-% figName=append(dir, idName, '_log.png');
-% % saveas(gcf,figName)
-% 
-% objectiveData_dir=append(dir, idName, '_objectiveData_not_removed.mat');
-% % save(objectiveData_dir,'objectiveData_not_removed');
-% objectiveEstData_dir=append(dir, idName, '_objectiveEstData_not_removed.mat');
-% % save(objectiveEstData_dir,'objectiveEstData_not_removed');
-% InitData_dir=append(dir, idName, '_InitData.mat');
-% % save(InitData_dir,'InitData');
-% 
-pause;
+% hmean = semilogy(obj, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
+% legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
+% grid on
+% xlabel('Iteration')
+% ylabel('Model Objective')
 close all;
 
 end

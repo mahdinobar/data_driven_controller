@@ -517,6 +517,20 @@ num_perturbed_model=4;
 
 Correnctions for results applied
 =================================================================================================================================
+% hyper-params
+idName= 'demo_20_1';
+sys='robot_arm';
+N0=20;
+N_iter=50+10;
+repeat_experiment=20;
+withSurrogate=true;
+N_real_repeat=25;
+Nsample=10;
+np2=2;
+withPerturbed=true;
+num_perturbed_model=4;
+
+% hyper-params
 idName= 'demo_20_2';
 sys='robot_arm';
 N0=20;
@@ -528,3 +542,18 @@ Nsample=10;
 np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
+
+% hyper-params
+idName= 'demo_20_3';
+sys='robot_arm';
+N0=10;
+N_iter=50+10;
+repeat_experiment=20;
+withSurrogate=true;
+N_real_repeat=25;
+Nsample=10;
+np2=2;
+withPerturbed=true;
+num_perturbed_model=4;
+
+

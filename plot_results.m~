@@ -1,15 +1,15 @@
 function plot_results
 % hyper-params
-idName= 'demo_19_5';
+idName= 'demo_20_1';
 sys='robot_arm';
-N0=10;
-N_iter=50;
-repeat_experiment=3;
-withSurrogate=false;
+N0=20;
+N_iter=50+10;
+repeat_experiment=20;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -18,7 +18,7 @@ load(append(dir,'InitData_all'))
 load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 
 % TF = abs(objectiveEstData_all)<1e3;
 % % TF = isoutlier(objectiveEstData_all, 2);
@@ -27,7 +27,7 @@ objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_exper
 % % objectiveEstData_all=objectiveEstData_all.*TF2;
 % objectiveEstData_all(objectiveEstData_all == 0) = NaN;
 
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 % objectiveData_all=objectiveData_all.*TF;
 % objectiveData_all(objectiveData_all == 0) = NaN;
 
@@ -50,7 +50,7 @@ end
 
 f=figure(1);hold on
 f.Position=[0 0 1000 600];
-for i=1:N_iter
+for i=1:N_iter-N0
     x=linspace(1,repeat_experiment,repeat_experiment);
     nan_flag=isnan(objectiveData_all(i,:));
     semilogy(x(~nan_flag),objectiveEstData_all(i,~nan_flag), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
@@ -72,15 +72,14 @@ saveas(gcf,figName)
 f2=figure(2);hold on
 f2.Position=[0 0 1000 600];
 obj_exp=[];
-for i=1:N_iter
-    for j=1:repeat_experiment
+for j=1:repeat_experiment
+    for i=1:N_iter
         obj_exp=[obj_exp;min(objectiveData_all(1:i,j),[],'all')];
     end
 %     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.5], 'LineWidth', 0.1)
 end
-obj_exp=reshape(obj_exp,[N_iter,repeat_experiment])
-hmean = semilogy(obj, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
-
+obj_exp=reshape(obj_exp,[N_iter,repeat_experiment]);
+semilogy(obj_exp, 'b', 'LineWidth', .5, 'DisplayName','mean');
 % hCI = semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
 obj=[];
