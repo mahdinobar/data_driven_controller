@@ -2,16 +2,16 @@ function rup_kel_1
 clear all; clc; close all;
 
 % hyper-params
-idName= 'test';
+idName= 'demo_19_2';
 sys='robot_arm';
 N0=50;
 N_iter=50;
 repeat_experiment=20;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -222,9 +222,9 @@ end
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % initial values for GP of BO
-RAND=rand(N0,1);
+% RAND=rand(N0,1);
 
-% load(append(dir,'RAND.mat'))
+load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -263,7 +263,7 @@ for i=1:N0
 end
 objectiveEstData=InitobjectiveData;
 
-save(append(dir,'RAND.mat'),'RAND')
+% save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -306,6 +306,7 @@ objectiveData_all=InitobjectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
     experiment
+    
     N=[];
     idx=[];
     counter=N0+1;
@@ -361,6 +362,7 @@ for experiment=1:repeat_experiment
     InitData=InitData_start;
     InitobjectiveData=objectiveData_start;
     objectiveEstData=objectiveEstData_start;
+    
 end
 save(append(dir,'InitData_all'),'InitData_all')
 save(append(dir,'objectiveData_all.mat'),'objectiveData_all')

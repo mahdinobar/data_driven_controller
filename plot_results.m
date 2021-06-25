@@ -1,14 +1,15 @@
 function plot_results
 % hyper-params
-idName= 'test';
-N0=20;
-N_iter=20;
-repeat_experiment=2;
-withSurrogate=false;
+idName= 'demo_19_2';
+sys='robot_arm';
+N0=50;
+N_iter=50;
+repeat_experiment=20;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -17,36 +18,47 @@ load(append(dir,'InitData_all'))
 load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_experiment]);
-mean_objectiveEstData_all=mean(objectiveEstData_all,2);
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
-mean_objectiveData_all=mean(objectiveData_all,2);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-5,repeat_experiment]);
+
+TF = abs(objectiveEstData_all<1e2).*(objectiveEstData_all>0);
+% TF = isoutlier(objectiveEstData_all);
+objectiveEstData_all=objectiveEstData_all.*TF;
+objectiveEstData_all(objectiveEstData_all == 0) = NaN;
+
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-5,repeat_experiment]);
+objectiveData_all=objectiveData_all.*TF;
+objectiveData_all(objectiveData_all == 0) = NaN;
+
+mean_objectiveEstData_all=mean(objectiveEstData_all,2,'omitnan');
+mean_objectiveData_all=mean(objectiveData_all,2,'omitnan');
 
 CI=[];
 CI_Est=[];
 for i=1:size(objectiveEstData_all,2)
-    x = objectiveEstData_all(i,:);                      % Create Data
+    x = objectiveEstData_all(i,~isnan(objectiveEstData_all(i,:)));                      % Create Data
     SEM = std(x)/sqrt(length(x));               % Standard Error
     ts = tinv([0.025  0.975],length(x)-1);      % T-Score
-    CI_Est = [CI_Est; mean(x) + ts*SEM];
+    CI_Est = [CI_Est; mean(x,'omitnan') + ts*SEM];
     
-    x = objectiveData_all(i,:);                      % Create Data
+    x = objectiveData_all(i,~isnan(objectiveData_all(i,:)));                      % Create Data
     SEM = std(x)/sqrt(length(x));               % Standard Error
     ts = tinv([0.025  0.975],length(x)-1);      % T-Score
-    CI = [CI; mean(x) + ts*SEM];
+    CI = [CI; mean(x,'omitnan') + ts*SEM];
 end 
 
 f=figure(1);hold on
 f.Position=[0 0 1000 600];
-for i=1:N_iter-N0
-    semilogy(objectiveEstData_all(:,i), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
-end
+% for i=1:N_iter-5
+%     x=linspace(1,repeat_experiment,repeat_experiment);
+%     nan_flag=isnan(objectiveData_all(i,:));
+%     semilogy(x(~nan_flag),objectiveEstData_all(i,~nan_flag), '-', 'Color', [0, 0, 1, 1], 'LineWidth', 0.1)
+% end
 hCI=semilogy(CI_Est(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 semilogy(CI_Est(:,2), '--r', 'LineWidth', 1)
 hmean=semilogy(mean_objectiveEstData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-% ylim([-0. 0.01])
+ylim([70 90])
 xlabel('Iteration')
 ylabel('Estimated Model Objective')
 title('Bayesian Optimization Estimated Model Objective vs Iterations over Real Plant')
