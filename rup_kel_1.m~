@@ -5,14 +5,14 @@ tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tm
 % hyper-params
 idName= 'demo_19_5';
 sys='robot_arm';
-N0=100;
-N_iter=50+10;
-repeat_experiment=200;
-withSurrogate=true;
+N0=10;
+N_iter=50;
+repeat_experiment=3;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append(tmp_dir,'/', idName, '/');
@@ -224,9 +224,9 @@ load(dir_gains)
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % % initial values for GP of BO
-% RAND=rand(N0,1);
+RAND=rand(N0,1);
 
-load(append(dir,'RAND.mat'))
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -263,9 +263,9 @@ for i=1:N0
         data = merge(data, iddata(ytmp,utmp,sampleTs));
     end
 end
-objectiveEstData=InitobjectiveData;
 
-% save(append(dir,'RAND.mat'),'RAND')
+
+save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -296,15 +296,22 @@ if withSurrogate==true
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
+objectiveEstData=InitobjectiveData;
+XobjectiveEstData=InitData;
+objectiveData=InitobjectiveData;
+XobjectiveData=InitData;
 global N
 global idx
 N_iter=N_iter+N0;
 data_start=data;
 InitData_start=InitData;
-objectiveData_start=InitobjectiveData;
+InitobjectiveData_start=InitobjectiveData;
 objectiveEstData_start=objectiveEstData;
+XobjectiveEstData_start=XobjectiveEstData;
+objectiveData_start=objectiveData;
+XobjectiveData_start=XobjectiveData;
 InitData_all=InitData;
-objectiveData_all=InitobjectiveData;
+InitobjectiveData_all=InitobjectiveData;
 objectiveEstData_all=objectiveEstData;
 for experiment=1:repeat_experiment
     experiment
@@ -312,8 +319,8 @@ for experiment=1:repeat_experiment
     N=[];
     idx=[];
     counter=N0+1;
-    objectiveData_not_removed=InitobjectiveData;
-    objectiveEstData_not_removed=objectiveEstData;
+%     objectiveData_not_removed=InitobjectiveData;
+%     objectiveEstData_not_removed=objectiveEstData;
     for iter=N0+1:N_iter
         iter
         %     iteration=iter-N0
@@ -326,9 +333,12 @@ for experiment=1:repeat_experiment
         InitData=[InitData; results.NextPoint];
         InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
-        
-        objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
-        objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
+        XobjectiveEstData = [XobjectiveEstData; results.XAtMinEstimatedObjective];
+        objectiveData = [objectiveData; results.MinObjective];
+        XobjectiveData = [XobjectiveData; results.XAtMinObjective];
+            
+%         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
+%         objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
         
         if withSurrogate==true
             if withPerturbed==true
@@ -338,6 +348,9 @@ for experiment=1:repeat_experiment
                     InitData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     InitobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     objectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    objectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    XobjectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    XobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1
                     counter=counter-(num_perturbed_model+1);
                 end
@@ -346,6 +359,9 @@ for experiment=1:repeat_experiment
                     InitData([counter-N_real_repeat-1],:)=[];
                     InitobjectiveData([counter-N_real_repeat-1],:)=[];
                     objectiveEstData([counter-N_real_repeat-1],:)=[];
+                    objectiveData([counter-N_real_repeat-1],:)=[];
+                    XobjectiveEstData([counter-N_real_repeat-1],:)=[];
+                    XobjectiveData([counter-N_real_repeat-1],:)=[];
                     counter=counter-1;
                 end
             end
@@ -357,12 +373,16 @@ for experiment=1:repeat_experiment
     end
     
     InitData_all=[InitData_all; InitData(N0+1:end,:)];
-    objectiveData_all = [objectiveData_all; InitobjectiveData(N0+1:end,:)];
+    InitobjectiveData_all = [InitobjectiveData_all; InitobjectiveData(N0+1:end,:)];
     objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
+    objectiveData_all = [objectiveData_all; objectiveEstData(N0+1:end,:)];
+    XobjectiveEstData_all = [XobjectiveEstData_all; objectiveEstData(N0+1:end,:)];
+    XobjectiveData_all = [XobjectiveData_all; objectiveEstData(N0+1:end,:)];
+
     
     data=data_start;
     InitData=InitData_start;
-    InitobjectiveData=objectiveData_start;
+    InitobjectiveData=InitobjectiveData_start;
     objectiveEstData=objectiveEstData_start;
     
 end
@@ -692,7 +712,7 @@ if isnan(st) || isinf(st)
     st=1e5;
 end
 
-objective=ov*st+0.1*st;
+objective=ov/10+st/100;
 
 % if abs(stepinfo(CL).Overshoot)<1
 %     objective = abs(1*stepinfo(CL).SettlingTime);

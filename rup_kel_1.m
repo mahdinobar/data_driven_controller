@@ -49,12 +49,12 @@ ts=1;
 G = d2c(tf(num,den, ts));
 
 
-% uncomment to estimate stable gain bounds
-% auto tune
-C_tuned = pidtune(G,'PID');
-Kd_nominal=C_tuned.Kd;
-Kp_nominal=C_tuned.Kp;
-Ki_nominal=C_tuned.Ki;
+% % uncomment to estimate stable gain bounds
+% % auto tune
+% C_tuned = pidtune(G,'PID');
+% Kd_nominal=C_tuned.Kd;
+% Kp_nominal=C_tuned.Kp;
+% Ki_nominal=C_tuned.Ki;
 
 Tf=1e-8;
 
@@ -263,7 +263,7 @@ for i=1:N0
         data = merge(data, iddata(ytmp,utmp,sampleTs));
     end
 end
-objectiveEstData=InitobjectiveData;
+
 
 save(append(dir,'RAND.mat'),'RAND')
 
@@ -296,24 +296,34 @@ if withSurrogate==true
 else
     fun = @(vars)myObjfun_Loop(vars, G, Tf);
 end
+objectiveEstData=InitobjectiveData;
+XobjectiveEstData=InitData;
+objectiveData=InitobjectiveData;
+XobjectiveData=InitData;
 global N
 global idx
 N_iter=N_iter+N0;
 data_start=data;
 InitData_start=InitData;
-objectiveData_start=InitobjectiveData;
+InitobjectiveData_start=InitobjectiveData;
 objectiveEstData_start=objectiveEstData;
+XobjectiveEstData_start=XobjectiveEstData;
+objectiveData_start=objectiveData;
+XobjectiveData_start=XobjectiveData;
 InitData_all=InitData;
-objectiveData_all=InitobjectiveData;
+InitobjectiveData_all=InitobjectiveData;
 objectiveEstData_all=objectiveEstData;
+XobjectiveEstData_all=XobjectiveEstData;
+objectiveData_all=objectiveData;
+XobjectiveData_all=XobjectiveData;
 for experiment=1:repeat_experiment
     experiment
     
     N=[];
     idx=[];
     counter=N0+1;
-    objectiveData_not_removed=InitobjectiveData;
-    objectiveEstData_not_removed=objectiveEstData;
+    %     objectiveData_not_removed=InitobjectiveData;
+    %     objectiveEstData_not_removed=objectiveEstData;
     for iter=N0+1:N_iter
         iter
         %     iteration=iter-N0
@@ -326,9 +336,12 @@ for experiment=1:repeat_experiment
         InitData=[InitData; results.NextPoint];
         InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
+        XobjectiveEstData = [XobjectiveEstData; results.XAtMinEstimatedObjective];
+        objectiveData = [objectiveData; results.MinObjective];
+        XobjectiveData = [XobjectiveData; results.XAtMinObjective];
         
-        objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
-        objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
+        %         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
+        %         objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
         
         if withSurrogate==true
             if withPerturbed==true
@@ -338,6 +351,9 @@ for experiment=1:repeat_experiment
                     InitData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     InitobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     objectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    objectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    XobjectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
+                    XobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
                     counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1
                     counter=counter-(num_perturbed_model+1);
                 end
@@ -346,6 +362,9 @@ for experiment=1:repeat_experiment
                     InitData([counter-N_real_repeat-1],:)=[];
                     InitobjectiveData([counter-N_real_repeat-1],:)=[];
                     objectiveEstData([counter-N_real_repeat-1],:)=[];
+                    objectiveData([counter-N_real_repeat-1],:)=[];
+                    XobjectiveEstData([counter-N_real_repeat-1],:)=[];
+                    XobjectiveData([counter-N_real_repeat-1],:)=[];
                     counter=counter-1;
                 end
             end
@@ -357,18 +376,28 @@ for experiment=1:repeat_experiment
     end
     
     InitData_all=[InitData_all; InitData(N0+1:end,:)];
-    objectiveData_all = [objectiveData_all; InitobjectiveData(N0+1:end,:)];
+    InitobjectiveData_all = [InitobjectiveData_all; InitobjectiveData(N0+1:end,:)];
     objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
+    objectiveData_all = [objectiveData_all; objectiveEstData(N0+1:end,:)];
+    XobjectiveEstData_all = [XobjectiveEstData_all; objectiveEstData(N0+1:end,:)];
+    XobjectiveData_all = [XobjectiveData_all; objectiveEstData(N0+1:end,:)];
     
     data=data_start;
     InitData=InitData_start;
-    InitobjectiveData=objectiveData_start;
+    InitobjectiveData=InitobjectiveData_start;
     objectiveEstData=objectiveEstData_start;
+    objectiveData=objectiveData_start;
+    XobjectiveEstData=XobjectiveEstData_start;
+    XobjectiveData=XobjectiveData_start;
     
 end
 save(append(dir,'InitData_all'),'InitData_all')
-save(append(dir,'objectiveData_all.mat'),'objectiveData_all')
+save(append(dir,'InitobjectiveData_all.mat'),'InitobjectiveData_all')
 save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
+save(append(dir,'objectiveData_all.mat'),'objectiveData_all')
+save(append(dir,'XobjectiveEstData_all.mat'),'XobjectiveEstData_all')
+save(append(dir,'XobjectiveData_all.mat'),'XobjectiveData_all')
+
 % % =========================================================================
 % figure(1);hold on
 % plot(objectiveData_not_removed(N0+1:end), 'b','DisplayName','MinObjective')
@@ -450,55 +479,101 @@ if isempty(N)
     N=1;
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif N==1
     N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 0.95e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif N==2
     N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.0e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif N==3
     N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif N==4
     N=N+1;
     G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif idx==N_real_repeat
     N = N+1;
@@ -516,11 +591,21 @@ elseif idx==N_real_repeat
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= idx +1;
 elseif idx==N_real_repeat+1
     N = N+1;
@@ -533,11 +618,21 @@ elseif idx==N_real_repeat+1
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= idx +1;
     
 elseif idx==N_real_repeat+2
@@ -551,11 +646,21 @@ elseif idx==N_real_repeat+2
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= idx +1;
     
 elseif idx==N_real_repeat+3
@@ -569,11 +674,21 @@ elseif idx==N_real_repeat+3
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= idx +1;
     
 elseif idx==N_real_repeat+4
@@ -587,11 +702,21 @@ elseif idx==N_real_repeat+4
     
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
     
 else
@@ -599,11 +724,21 @@ else
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     %     if isnan(objective)
     %         objective=1e5;
     %     end
@@ -630,11 +765,21 @@ if isempty(N)
     N=1;
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 elseif idx==N_real_repeat
     N = N+1;
@@ -645,22 +790,42 @@ elseif idx==N_real_repeat
     G2 = tfest(data,np2);
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G2, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     idx= 0;
 else
     N = N+1;
     %     todo move some lines outside with handler@: faster?
     C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
     CL=feedback(C*G, 1);
-    if abs(stepinfo(CL).Overshoot)<1
-        objective = abs(1*stepinfo(CL).SettlingTime);
-    else
-        objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    
+    ov=stepinfo(CL).Overshoot;
+    st=stepinfo(CL).SettlingTime;
+    if isnan(ov) || isinf(ov)
+        ov=1e5;
     end
+    if isnan(st) || isinf(st)
+        st=1e5;
+    end
+    objective=ov/10+st/100;
+    %     if abs(stepinfo(CL).Overshoot)<1
+    %         objective = abs(1*stepinfo(CL).SettlingTime);
+    %     else
+    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+    %     end
     %     if isnan(objective)
     %         objective=1e5;
     %     end
@@ -683,6 +848,7 @@ function [objective] = myObjfun_Loop(vars, G, Tf)
 %     todo move some lines outside with handler@: faster?
 C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
+
 ov=stepinfo(CL).Overshoot;
 st=stepinfo(CL).SettlingTime;
 if isnan(ov) || isinf(ov)
@@ -691,7 +857,6 @@ end
 if isnan(st) || isinf(st)
     st=1e5;
 end
-
 objective=ov/10+st/100;
 
 % if abs(stepinfo(CL).Overshoot)<1
