@@ -72,14 +72,15 @@ saveas(gcf,figName)
 f2=figure(2);hold on
 f2.Position=[0 0 1000 600];
 obj_exp=[];
-for j=1:repeat_experiment
-    for i=1:N_iter
+for i=1:N_iter
+    for j=1:repeat_experiment
         obj_exp=[obj_exp;min(objectiveData_all(1:i,j),[],'all')];
     end
 %     semilogy(objectiveData_all(:,i), '-', 'Color', [0, 0, 1, 0.5], 'LineWidth', 0.1)
 end
-obj_exp=reshape(obj_exp,[N_iter,repeat_experiment]);
-semilogy(obj_exp, 'b', 'LineWidth', .5, 'DisplayName','mean');
+obj_exp=reshape(obj_exp,[N_iter,repeat_experiment])
+hmean = semilogy(obj, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
+
 % hCI = semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
 obj=[];

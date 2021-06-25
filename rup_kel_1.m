@@ -5,14 +5,14 @@ tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tm
 % hyper-params
 idName= 'demo_19_5';
 sys='robot_arm';
-N0=100;
-N_iter=50+10;
-repeat_experiment=200;
-withSurrogate=true;
+N0=10;
+N_iter=50;
+repeat_experiment=3;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append(tmp_dir,'/', idName, '/');
@@ -224,9 +224,9 @@ load(dir_gains)
 % Kd_max=Kd_max-safeFacd*rgKd;
 
 % % initial values for GP of BO
-% RAND=rand(N0,1);
+RAND=rand(N0,1);
 
-load(append(dir,'RAND.mat'))
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -265,7 +265,7 @@ for i=1:N0
 end
 objectiveEstData=InitobjectiveData;
 
-% save(append(dir,'RAND.mat'),'RAND')
+save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
@@ -683,13 +683,24 @@ function [objective] = myObjfun_Loop(vars, G, Tf)
 %     todo move some lines outside with handler@: faster?
 C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
-if abs(stepinfo(CL).Overshoot)<1
-    objective = abs(1*stepinfo(CL).SettlingTime);
-else
-    objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+ov=stepinfo(CL).Overshoot;
+st=stepinfo(CL).SettlingTime;
+if isnan(ov) || isinf(ov)
+    ov=1e5;
+end
+if isnan(st) || isinf(st)
+    st=1e5;
 end
 
-if isnan(objective)
-    objective=1e10;
-end
+objective=ov/10+st/100;
+
+% if abs(stepinfo(CL).Overshoot)<1
+%     objective = abs(1*stepinfo(CL).SettlingTime);
+% else
+%     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+% end
+% if isnan(objective)
+%     objective=1e10;
+% end
+
 end
