@@ -3,16 +3,16 @@ clear all; clc; close all;
 tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp';
 
 % hyper-params
-idName= 'demo_20_1';
+idName= 'demo_20_2';
 sys='robot_arm';
 N0=10;
-N_iter=50+10;
+N_iter=50;
 repeat_experiment=20;
-withSurrogate=true;
+withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=true;
+withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append(tmp_dir,'/', idName, '/');
@@ -225,10 +225,10 @@ load(dir_gains)
 % Kd_min=Kd_min+safeFacd*rgKd;
 % Kd_max=Kd_max-safeFacd*rgKd;
 
-% % % initial values for GP of BO
-% RAND=rand(N0,1);
+% % initial values for GP of BO
+RAND=rand(N0,1);
 
-load(append(dir,'RAND.mat'))
+% load(append(dir,'RAND.mat'))
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
@@ -266,8 +266,7 @@ for i=1:N0
     end
 end
 
-
-% save(append(dir,'RAND.mat'),'RAND')
+save(append(dir,'RAND.mat'),'RAND')
 
 % surrogate model
 % G2tmp = n4sid(data,np2);
