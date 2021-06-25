@@ -166,33 +166,35 @@ if sys=="ball_screw"
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 end
-load(dir_gains)
+% load(dir_gains)
 
 % % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
 % % ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
-% lb=[-0.2358, 0.0457, -0.2358];
-% ub=[0.2358, 0.5173, 0.2358];
-% funPS_handle = @(x)funPS2(x, G, Tf);
-% % options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
-% x = particleswarm(funPS_handle,3,lb,ub);
-% % Find True values
+lb=[-0.2358, 0.0457, -0.2358];
+ub=[0.2358, 0.5173, 0.2358];
+funPS_handle = @(x)funPS2(x, G, Tf);
+% options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
+x = particleswarm(funPS_handle,3,lb,ub);
+% % % Find True values
 % % x.Kp=0.231167276750434;
 % % x.Ki=0.467605534040020;
 % % x.Kd=0.234584924311749;
-% True_objective=funPS2(x, G, Tf)
-%     function [objective] = funPS2(x, G, Tf)
-%     %     todo move some lines outside with handler@: faster?
-%     C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CL=feedback(C*G, 1);
-%     if abs(stepinfo(CL).Overshoot)<1
-%         objective = abs(1*stepinfo(CL).SettlingTime);
-%     else
-%         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-%     end
-%     if isnan(objective)
-%         objective=1e10;
-%     end
-%     end
+True_objective=funPS2(x, G, Tf)
+    function [objective] = funPS2(x, G, Tf)
+        %         todo move some lines outside with handler@: faster?
+        C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+        CL=feedback(C*G, 1);
+        ov=stepinfo(CL).Overshoot;
+        st=stepinfo(CL).SettlingTime;
+        if isnan(ov) || isinf(ov) || abs(ov)>1e3
+            ov=1e3*sign(ov);
+        end
+        if isnan(st) || isinf(st) || st>1e5
+            st=1e5;
+        end
+        
+        objective=ov/1+st/100;
+    end
 
 % Kpc=1.;
 % Kic=100.;
