@@ -1,15 +1,15 @@
 function plot_results
 % hyper-params
-idName= 'demo_20_6';
+idName= 'demo_20_1';
 sys='robot_arm';
-N0=3;
-N_iter=50;
+N0=20;
+N_iter=50+10;
 repeat_experiment=20;
-withSurrogate=false;
+withSurrogate=true;
 N_real_repeat=25;
 Nsample=10;
 np2=2;
-withPerturbed=false;
+withPerturbed=true;
 num_perturbed_model=4;
 
 dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
@@ -19,7 +19,7 @@ load(append(dir,'InitobjectiveData_all.mat'))
 % load(append(dir,'objectiveData_all.mat'))
 load(append(dir,'objectiveEstData_all.mat'))
 objectiveData_all=InitobjectiveData_all;
-objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 
 % TF = abs(objectiveEstData_all)<1e3;
 % % TF = isoutlier(objectiveEstData_all, 2);
@@ -28,7 +28,7 @@ objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter,repeat_exper
 % % objectiveEstData_all=objectiveEstData_all.*TF2;
 % objectiveEstData_all(objectiveEstData_all == 0) = NaN;
 
-objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]);
+objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 % objectiveData_all=objectiveData_all.*TF;
 % objectiveData_all(objectiveData_all == 0) = NaN;
 
@@ -58,7 +58,7 @@ objectiveData_all=reshape(objectiveData_all(N0+1:end),[N_iter,repeat_experiment]
 f2=figure(2);hold on
 f2.Position=[200 0 1000 600];
 for i=1:repeat_experiment
-    for j=1:N_iter
+    for j=1:N_iter-10
         objectiveData_all(j,i)=min(objectiveData_all(1:j,i));
     end
 end
@@ -85,7 +85,7 @@ semilogy(CI(:,2), '--r', 'LineWidth', 1)
 hmean=semilogy(mean_objectiveData_all, 'k', 'LineWidth', 1.5, 'DisplayName','mean');
 legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
-ylim([0.1 0.3])
+ylim([0.8 1.2])
 xlabel('Iteration')
 ylabel('Observed Model Objective')
 title('Observed Objective vs Iterations over Real Plant')
