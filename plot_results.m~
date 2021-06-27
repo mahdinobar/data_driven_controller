@@ -91,12 +91,12 @@ mean_objectiveData_all_20_6=mean(objectiveData_all_20_6,2,'omitnan');
 
 % hCI=semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
-hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 2, 'DisplayName','Guided BO');
-hmean_20_6=semilogy(mean_objectiveData_all_20_6./true_objective, 'b', 'LineWidth', 2, 'DisplayName','BO');
-legend([hmean hmean_20_6],{'Guided BO','BO'}, 'Location', 'best')
+hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 2, 'DisplayName','with');
+hmean_20_6=semilogy(mean_objectiveData_all_20_6./true_objective, 'b', 'LineWidth', 2, 'DisplayName','mean');
+% legend([hCI hmean],{'95% confidence interval','mean'}, 'Location', 'best')
 grid on
 % ylim([0.1 0.3])
-ylim([1 5])
+ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 title('Minimum Observed Objective vs Iterations over Real Plant')
