@@ -1,7 +1,5 @@
-function plot_results
+function plot_results_2
 % hyper-params
-idName= 'N03_InitobjectiveData_all';
-N0=3;
 N_iter=50;
 repeat_experiment=250;
 withSurrogate=false;
@@ -24,29 +22,56 @@ dir='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3';
 % objectiveData_all_server_1=InitobjectiveData_all;
 % objectiveData_all_server_1=reshape(objectiveData_all_server_1(N0+1:end),[N_iter-25,repeat_experiment]);
 
-tmp=[];
-for m=1:4
-    load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
-%     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
-    objectiveData_all_server_1_tmp=InitobjectiveData_all;
-%     objectiveData_all_server_1_tmp=objectiveData_all;
-    objectiveData_all_server_1_tmp=reshape(objectiveData_all_server_1_tmp(1:end),[50,250]);
-    tmp=[tmp, objectiveData_all_server_1_tmp];
-end
-% tmp(tmp<0) = NaN;
-objectiveData_all_server_1=tmp;
-
-tmp=[];
+tmp_N03=[];
+tmp_N05=[];
+tmp_N010=[];
+tmp_N020=[];
 for m=17:20
     load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
 %     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
-    objectiveData_all_server_surrogate_tmp=InitobjectiveData_all;
-%     objectiveData_all_server_surrogate_tmp=objectiveData_all;
-    objectiveData_all_server_surrogate_tmp=reshape(objectiveData_all_server_surrogate_tmp(1:end),[50,250]);
-    tmp=[tmp, objectiveData_all_server_surrogate_tmp];
+    objectiveData_all_server_N03_tmp=InitobjectiveData_all;
+%     objectiveData_all_server_1_tmp=objectiveData_all;
+    objectiveData_all_server_N03_tmp=reshape(objectiveData_all_server_N03_tmp(1:end),[50,250]);
+    tmp_N03=[tmp_N03, objectiveData_all_server_N03_tmp];
+    
+    load(append(dir,'/InitobjectiveData_all_',num2str(m+4),'.mat'))
+%     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
+    objectiveData_all_server_N05_tmp=InitobjectiveData_all;
+%     objectiveData_all_server_1_tmp=objectiveData_all;
+    objectiveData_all_server_N05_tmp=reshape(objectiveData_all_server_N05_tmp(1:end),[50,250]);
+    tmp_N05=[tmp_N05, objectiveData_all_server_N05_tmp];
+    
+    load(append(dir,'/InitobjectiveData_all_',num2str(m+8),'.mat'))
+%     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
+    objectiveData_all_server_N010_tmp=InitobjectiveData_all;
+%     objectiveData_all_server_1_tmp=objectiveData_all;
+    objectiveData_all_server_N010_tmp=reshape(objectiveData_all_server_N010_tmp(1:end),[50,250]);
+    tmp_N010=[tmp_N010, objectiveData_all_server_N010_tmp];
+    
+    load(append(dir,'/InitobjectiveData_all_',num2str(m+12),'.mat'))
+%     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
+    objectiveData_all_server_N020_tmp=InitobjectiveData_all;
+%     objectiveData_all_server_1_tmp=objectiveData_all;
+    objectiveData_all_server_N020_tmp=reshape(objectiveData_all_server_N020_tmp(1:end),[50,250]);
+    tmp_N020=[tmp_N020, objectiveData_all_server_N020_tmp];
 end
+% tmp(tmp<0) = NaN;
+objectiveData_all_server_N03=tmp_N03;
+objectiveData_all_server_N05=tmp_N05;
+objectiveData_all_server_N010=tmp_N010;
+objectiveData_all_server_N020=tmp_N020;
 
-objectiveData_all_server_surrogate=tmp;
+% tmp_N03=[];
+% for m=17:20
+%     load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
+% %     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
+%     objectiveData_all_server_surrogate_tmp=InitobjectiveData_all;
+% %     objectiveData_all_server_surrogate_tmp=objectiveData_all;
+%     objectiveData_all_server_surrogate_tmp=reshape(objectiveData_all_server_surrogate_tmp(1:end),[50,250]);
+%     tmp_N03=[tmp_N03, objectiveData_all_server_surrogate_tmp];
+% end
+% 
+% objectiveData_all_server_surrogate=tmp_N03;
 
 % objectiveEstData_all=reshape(objectiveEstData_all(N0+1:end),[N_iter-10,repeat_experiment]);
 
@@ -94,8 +119,11 @@ f2.Position=[200 0 1000 600];
 
 for i=1:1000
     for j=1:50
-        objectiveData_all_server_1(j,i)=nanmin(objectiveData_all_server_1(1:j,i));
-        objectiveData_all_server_surrogate(j,i)=nanmin(objectiveData_all_server_surrogate(1:j,i));
+        objectiveData_all_server_N03(j,i)=nanmin(objectiveData_all_server_N03(1:j,i));
+        objectiveData_all_server_N05(j,i)=nanmin(objectiveData_all_server_N05(1:j,i));
+        objectiveData_all_server_N010(j,i)=nanmin(objectiveData_all_server_N010(1:j,i));
+        objectiveData_all_server_N020(j,i)=nanmin(objectiveData_all_server_N020(1:j,i));
+%         objectiveData_all_server_surrogate(j,i)=nanmin(objectiveData_all_server_surrogate(1:j,i));
     end
 end
 
@@ -106,14 +134,17 @@ true_objective=0.1882;
 %     semilogy(objectiveData_all(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .2], 'LineWidth', 0.1)
 % end
 
-for i=1:1000
-    semilogy(objectiveData_all_server_1(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0, 1, .3], 'LineWidth', 0.1)
-    semilogy(objectiveData_all_server_surrogate(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .3], 'LineWidth', 0.1)
-end
+% for i=1:1000
+%     semilogy(objectiveData_all_server_N03(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0, 1, .3], 'LineWidth', 0.1)
+%     semilogy(objectiveData_all_server_surrogate(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .3], 'LineWidth', 0.1)
+% end
 
 % mean_objectiveData_all=mean(objectiveData_all(:,:),2,'omitnan');
-mean_objectiveData_all_server_1=mean(objectiveData_all_server_1,2,'omitnan');
-mean_objectiveData_all_server_surrogate=mean(objectiveData_all_server_surrogate,2,'omitnan');
+mean_objectiveData_all_server_N03=mean(objectiveData_all_server_N03,2,'omitnan');
+mean_objectiveData_all_server_N05=mean(objectiveData_all_server_N05,2,'omitnan');
+mean_objectiveData_all_server_N010=mean(objectiveData_all_server_N010,2,'omitnan');
+mean_objectiveData_all_server_N020=mean(objectiveData_all_server_N020,2,'omitnan');
+% mean_objectiveData_all_server_surrogate=mean(objectiveData_all_server_surrogate,2,'omitnan');
 
 % CI=[];
 % CI_Est=[];
@@ -127,22 +158,25 @@ mean_objectiveData_all_server_surrogate=mean(objectiveData_all_server_surrogate,
 % hCI=semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
 % hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 4, 'DisplayName','Guided BO');
-hmean=semilogy(mean_objectiveData_all_server_1./true_objective, 'b', 'LineWidth', 4, 'DisplayName','BO');
-hmean_surrogate=semilogy(mean_objectiveData_all_server_surrogate./true_objective, 'r', 'LineWidth', 4, 'DisplayName','BO');
-legend([hmean_surrogate hmean],{'Guided BO','BO'}, 'Location', 'best')
+hmean_N03=semilogy(mean_objectiveData_all_server_N03./true_objective, 'LineWidth', 1, 'DisplayName','BO');
+hmean_N05=semilogy(mean_objectiveData_all_server_N05./true_objective, 'LineWidth', 1, 'DisplayName','BO');
+hmean_N010=semilogy(mean_objectiveData_all_server_N010./true_objective, 'LineWidth', 1, 'DisplayName','BO');
+hmean_N020=semilogy(mean_objectiveData_all_server_N020./true_objective, 'LineWidth', 1, 'DisplayName','BO');
+% hmean_surrogate=semilogy(mean_objectiveData_all_server_surrogate./true_objective, 'r', 'LineWidth', 4, 'DisplayName','BO');
+legend([hmean_N03, hmean_N05, hmean_N010, hmean_N020],{'N0=3','N0=5', 'N0=10', 'N0=20'}, 'Location', 'best')
 grid on
 % ylim([0.1 0.3])
-ylim([1 3])
+ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
-title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
+title(append('Minimum Observed Objective vs Iterations over Real Plant for Guided BO'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
 % figName=append(dir, 'objectiveData_all.png');
-figName=append(dir, 'server_', idName,'.png');
+figName=append(dir, 'server_', 'only_Guided_BO','.png');
 saveas(gcf,figName)
 % figName=append(dir, 'objectiveData_all.fig');
-figName=append(dir, 'server_', idName,'.fig');
+figName=append(dir, 'server_', 'only_Guided_BO','.fig');
 saveas(gcf,figName)
 
 

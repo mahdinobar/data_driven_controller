@@ -571,7 +571,7 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-
+***for server
 % hyper-params
 idName= 'demo_20_5';
 sys='robot_arm';
@@ -585,6 +585,7 @@ np2=2;
 withPerturbed=true;
 num_perturbed_model=4;
 
+***for server
 % hyper-params
 idName= 'demo_20_6';
 sys='robot_arm';
@@ -597,3 +598,43 @@ Nsample=10;
 np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
+
+% hyper-params
+idName= 'demo_20_7';
+sys='robot_arm';
+N0=3;
+N_iter=50+50;
+repeat_experiment=20;
+withSurrogate=true;
+N_real_repeat=1;
+Nsample=10;
+np2=2;
+withPerturbed=false;
+num_perturbed_model=4;
+
+% hyper-params
+idName= 'demo_20_8';
+sys='robot_arm';
+N0=3;
+N_iter=54+9;
+repeat_experiment=20;
+withSurrogate=true;
+N_real_repeat=5;
+Nsample=10;
+np2=2;
+withPerturbed=false;
+num_perturbed_model=4;
+
+% hyper-params
+idName= 'demo_20_9';
+sys='robot_arm';
+N0=3;
+N_iter=50+25;
+repeat_experiment=20;
+withSurrogate=true;
+N_real_repeat=10;
+Nsample=10;
+np2=2;
+withPerturbed=true;
+num_perturbed_model=4;
+
