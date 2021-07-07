@@ -1,6 +1,6 @@
-function plot_results
+function plot_results_3
 % hyper-params
-idName= 'N01';
+idName= 'Histogram_N01';
 N0=1;
 N_iter=50;
 repeat_experiment=250;
@@ -86,6 +86,7 @@ objectiveData_all_server_surrogate=tmp;
 
 f2=figure(2);hold on
 f2.Position=[200 0 1600 800];
+
 % for i=1:repeat_experiment
 %     for j=1:N_iter-10
 %         objectiveData_all(j,i)=min(objectiveData_all(1:j,i));
@@ -103,46 +104,21 @@ end
 % true_objective=0.1882;
 true_objective=0.1243; %with ts=0.1
 
-% for i=1:repeat_experiment
-%     semilogy(objectiveData_all(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .2], 'LineWidth', 0.1)
-% end
-
-for i=1:1000
-    semilogy(objectiveData_all_server_1(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0, 1, .5], 'LineWidth', 0.1)
-    semilogy(objectiveData_all_server_surrogate(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .5], 'LineWidth', 0.1)
-end
-
-% mean_objectiveData_all=mean(objectiveData_all(:,:),2,'omitnan');
-mean_objectiveData_all_server_1=mean(objectiveData_all_server_1,2,'omitnan');
-mean_objectiveData_all_server_surrogate=mean(objectiveData_all_server_surrogate,2,'omitnan');
-
-% CI=[];
-% CI_Est=[];
-% for i=1:size(objectiveEstData_all,1)    
-%     x = objectiveData_all(i,~isnan(objectiveData_all(i,:)));                      % Create Data
-%     SEM = std(x)/sqrt(length(x));               % Standard Error
-%     ts = tinv([0.025  0.975],length(x)-1);      % T-Score
-%     CI = [CI; mean(x,'omitnan') + ts*SEM];
-% end 
-
-% hCI=semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
-% semilogy(CI(:,2), '--r', 'LineWidth', 1)
-% hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 4, 'DisplayName','Guided BO');
-hmean=semilogy(mean_objectiveData_all_server_1./true_objective, 'b', 'LineWidth', 4, 'DisplayName','BO');
-hmean_surrogate=semilogy(mean_objectiveData_all_server_surrogate./true_objective, 'r', 'LineWidth', 4, 'DisplayName','BO');
-legend([hmean_surrogate hmean],{'Guided BO','BO'}, 'Location', 'best')
+edges = [1:.01:1.1];
+h=histogram(objectiveData_all_server_1(end,:)/true_objective, edges, 'FaceColor', [0 0 1], 'Normalization','probability');
+h_surrogate=histogram(objectiveData_all_server_surrogate(end,:)/true_objective, edges, 'FaceColor', [1 0 0], 'Normalization','probability');
+ytix = get(gca, 'YTick');
+set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
+legend([h_surrogate h],{'Guided BO','BO'}, 'Location', 'best')
 grid on
 % ylim([0.1 0.3])
-ylim([1 2])
-xlabel('Iteration')
-ylabel('Optimality Ratio')
-title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
+% ylim([1 2])
+xlabel('Optimality Ratio')
+ylabel('Percentage')
+title(append('Minimum Observed Objective Histogram after 50 Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
-set(gca,'yscale','log')
-% figName=append(dir, 'objectiveData_all.png');
 figName=append(dir, '_server_', idName,'.png');
 saveas(gcf,figName)
-% figName=append(dir, 'objectiveData_all.fig');
 figName=append(dir, '_server_', idName,'.fig');
 saveas(gcf,figName)
 
