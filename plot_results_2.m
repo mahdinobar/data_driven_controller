@@ -10,7 +10,7 @@ withPerturbed=false;
 num_perturbed_model=4;
 
 % =========================================================================
-dir='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3';
+dir='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3_3';
 tmp_N03=[];
 tmp_N05=[];
 tmp_N010=[];
