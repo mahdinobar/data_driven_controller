@@ -130,9 +130,9 @@ mean_objectiveData_all_server_2=mean(objectiveData_all_server_2,2,'omitnan');
 % hCI=semilogy(CI(:,1), '--r', 'LineWidth', 1, 'DisplayName','95% confidence interval');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
 % hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 4, 'DisplayName','Guided BO');
-hmean=semilogy(mean_objectiveData_all_server_1./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
-hmean_surrogate=semilogy(mean_objectiveData_all_server_2./true_objective, 'Color', [0, 0.5, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
-legend([hmean_surrogate hmean],{'5 Identified per 25 Real plant', '5 Identified per 10 Real plant'}, 'Location', 'best')
+hmean_1=semilogy(mean_objectiveData_all_server_1./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
+hmean_2=semilogy(mean_objectiveData_all_server_2./true_objective, 'Color', [0, 0.5, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
+legend([hmean_1 hmean_2],{'5 Identified per 25 Real plant', '5 Identified per 10 Real plant'}, 'Location', 'best')
 grid on
 % ylim([0.1 0.3])
 ylim([1 2])
