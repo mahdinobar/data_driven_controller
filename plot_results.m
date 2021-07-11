@@ -1,8 +1,8 @@
 function plot_results
 % hyper-params
-idName= 'N03_GBO_10realvs25real';
+idName= 'N01_GBO';
 sys='robot_arm';
-N0=3;
+N0=1;
 N_iter=50+25;
 repeat_experiment=20;
 withSurrogate=true;
@@ -13,8 +13,8 @@ withPerturbed=true;
 num_perturbed_model=4;
 
 % dir=append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', idName, '/');
-dir='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3_2';
-dir_2='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_4';
+dir='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3';
+dir_2='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_3';
 % load(append(dir,'InitData_all'))
 % % InitData_all=table2array(InitData_all);
 % load(append(dir,'InitobjectiveData_all.mat'))
@@ -27,7 +27,7 @@ dir_2='/home/mahdi/PhD application/ETH/Rupenyan/code/results/server_runs_ver_4';
 % objectiveData_all_server_1=reshape(objectiveData_all_server_1(N0+1:end),[N_iter-25,repeat_experiment]);
 
 tmp=[];
-for m=17:20
+for m=37:40
     load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
 %     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
     objectiveData_all_server_1_tmp=InitobjectiveData_all;
@@ -39,7 +39,7 @@ end
 objectiveData_all_server_1=tmp;
 
 tmp=[];
-for m=1:4
+for m=33:36
     load(append(dir_2,'/InitobjectiveData_all_',num2str(m),'.mat'))
 %     load(append(dir,'/objectiveData_all_',num2str(m),'.mat'))
     objectiveData_all_server_2_tmp=InitobjectiveData_all;
@@ -111,7 +111,7 @@ true_objective=0.1243; %with ts=0.1
 
 for i=1:1000
     semilogy(objectiveData_all_server_1(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [1, 0, 0, .4], 'LineWidth', 0.1)
-    semilogy(objectiveData_all_server_2(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0.5, 0, .4], 'LineWidth', 0.1)
+    semilogy(objectiveData_all_server_2(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0, 1, .4], 'LineWidth', 0.1)
 end
 
 % mean_objectiveData_all=mean(objectiveData_all(:,:),2,'omitnan');
@@ -131,14 +131,14 @@ mean_objectiveData_all_server_2=mean(objectiveData_all_server_2,2,'omitnan');
 % semilogy(CI(:,2), '--r', 'LineWidth', 1)
 % hmean=semilogy(mean_objectiveData_all./true_objective, 'r', 'LineWidth', 4, 'DisplayName','Guided BO');
 hmean_1=semilogy(mean_objectiveData_all_server_1./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
-hmean_2=semilogy(mean_objectiveData_all_server_2./true_objective, 'Color', [0, 0.5, 0, 1], 'LineWidth', 5, 'DisplayName','BO');
-legend([hmean_1 hmean_2],{'5 Identified per 25 Real plant', '5 Identified per 10 Real plant'}, 'Location', 'best')
+hmean_2=semilogy(mean_objectiveData_all_server_2./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5, 'DisplayName','BO');
+legend([hmean_1 hmean_2],{'Guided BO', 'BO'}, 'Location', 'best')
 grid on
 % ylim([0.1 0.3])
 ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
-title(append('Guided BO Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
+title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
 % figName=append(dir, 'objectiveData_all.png');
