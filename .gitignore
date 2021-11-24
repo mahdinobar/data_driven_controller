@@ -19,4 +19,5 @@ bin-release/
 
 data_driven_controller-main.zip
 Copy_of_tmp/
-tmp/
+tmp/*
+.gitignore

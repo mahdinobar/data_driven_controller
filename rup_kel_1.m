@@ -1,8 +1,8 @@
 function rup_kel_1
 clear all; clc; close all;
-tmp_dir='/home/mahdi/ETH/GBO/code/data_driven_controller/tmp';
+tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_20_6';
+idName= 'demo_0';
 sys='robot_arm';
 N0=1;
 N_iter=50;
