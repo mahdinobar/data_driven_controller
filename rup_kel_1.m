@@ -1,6 +1,6 @@
 function rup_kel_1
 clear all; clc; close all;
-tmp_dir='/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp';
+tmp_dir='/home/mahdi/ETH/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_20_6';
 sys='robot_arm';

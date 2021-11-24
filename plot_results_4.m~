@@ -1,0 +1,77 @@
+function plot_results_4
+close all; clear; clc;
+
+% hyper-params
+idName= 'Histogram_data';
+N0=1;
+N_iter=50;
+
+dir='/home/mahdi/ETH/GBO/code/results/server_runs_ver_3_2';
+
+tmp=[];
+for m=33:36
+    load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
+    objectiveData_all_server_1_tmp=InitobjectiveData_all;
+    objectiveData_all_server_1_tmp=reshape(objectiveData_all_server_1_tmp(1:end),[50,250]);
+    tmp=[tmp, objectiveData_all_server_1_tmp];
+end
+objectiveData_all_server_1=tmp;
+
+tmp=[];
+for m=37:40
+    load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
+    objectiveData_all_server_surrogate_tmp=InitobjectiveData_all;
+    objectiveData_all_server_surrogate_tmp=reshape(objectiveData_all_server_surrogate_tmp(1:end),[50,250]);
+    tmp=[tmp, objectiveData_all_server_surrogate_tmp];
+end
+
+objectiveData_all_server_surrogate=tmp;
+
+for i=1:1000
+    for j=1:50
+        objectiveData_all_server_1(j,i)=nanmin(objectiveData_all_server_1(1:j,i));
+        objectiveData_all_server_surrogate(j,i)=nanmin(objectiveData_all_server_surrogate(1:j,i));
+    end
+end
+
+true_objective=0.1243; %with ts=0.1
+
+aa=objectiveData_all_server_1/true_objective;
+aa=aa>1.1;
+bb=objectiveData_all_server_surrogate/true_objective;
+bb=bb>1.1;
+[~, columns] = size(aa);
+AA = zeros(1, columns);
+BB = zeros(1, columns);
+for col = 1 : size(aa, 2)
+    if sum(aa(:, col))>0
+        AA(1, col) = find(aa(:, col), 1, 'last')+1;
+    end
+    if sum(bb(:, col))>0
+        BB(1, col) = find(bb(:, col), 1, 'last')+1;
+    end
+end
+
+f2=figure(2);hold on
+f2.Position=[200 0 1600 800];
+edges = [1:1:N0+N_iter];
+h=histogram(objectiveData_all_server_1(end,:)/true_objective, edges, 'FaceColor', [0 0 1], 'Normalization','probability');
+h_surrogate=histogram(objectiveData_all_server_surrogate(end,:)/true_objective, edges, 'FaceColor', [1 0 0], 'Normalization','probability');
+ytix = get(gca, 'YTick');
+set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
+legend([h_surrogate h],{'Guided BO','BO'}, 'Location', 'best')
+grid on
+xlabel('Optimality Ratio')
+ylabel('Percentage')
+title(append('Minimum Observed Objective Histogram after 50 Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times')
+figName=append(dir, '_server_', idName,'.png');
+saveas(gcf,figName)
+figName=append(dir, '_server_', idName,'.fig');
+saveas(gcf,figName)
+
+
+pause;
+close all;
+
+end
