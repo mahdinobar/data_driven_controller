@@ -13,7 +13,7 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0';
+dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0/';
 
 tmp=[];
 load(append(dir,'/InitobjectiveData_all.mat'))

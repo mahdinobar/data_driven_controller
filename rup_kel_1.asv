@@ -345,8 +345,7 @@ for experiment=1:repeat_experiment
         
         %         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
         %         objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
-
-        %         remove previos data of older surrogate model
+        
         if withSurrogate==true
             if withPerturbed==true
                 %     uncomment for surrogate model
