@@ -113,7 +113,46 @@ xlabel('iteration')
 ylabel('e_m_a_x')
 title('Maximum absolute tracking error')
 
+subplot(3,2,2)
+hold on;
+plot(metrics(:,2),'o', 'MarkerFaceColor', 'b');
+legend('BO')
+grid on
+xlabel('iteration')
+ylabel('T_s')
+title('Settling Time')
 
+subplot(3,2,3)
+hold on;
+plot(metrics(:,3),'o', 'MarkerFaceColor', 'b');
+grid on
+xlabel('iteration')
+ylabel('T_r')
+title('Rise Time from 10% to 100% of Reference')
+
+subplot(3,2,4)
+hold on;
+plot(metrics(:,4),'o', 'MarkerFaceColor', 'b');
+grid on
+xlabel('iteration')
+ylabel('ITAE')
+title('Integral Time Absolute Error')
+
+subplot(3,2,5)
+hold on;
+plot(metrics(:,5),'o', 'MarkerFaceColor', 'b');
+grid on
+xlabel('iteration')
+ylabel('ess')
+title('Steady-state Error')
+
+subplot(3,2,6)
+hold on;
+plot(metrics(:,6),'o', 'MarkerFaceColor', 'b');
+grid on
+xlabel('iteration')
+ylabel('Maximum Overshoot')
+title('Maximum Overshoot')
 
 figName=append(dir, idName,'_metrics.png');
 saveas(gcf,figName)
