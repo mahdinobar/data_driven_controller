@@ -1,9 +1,9 @@
-function rup_kel_1
+function rup_kel_2
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_0_2';
-sys='robot_arm';
+sys='DC_motor';
 N0=3;
 N_iter=30;
 repeat_experiment=2;
@@ -56,12 +56,12 @@ G = tf(num, den, 'InputDelay',Td);
 
 % % uncomment to estimate stable gain bounds
 % % auto tune
-% C_tuned = pidtune(G,'PID');
-% Kd_nominal=C_tuned.Kd;
+% C_tuned = pidtune(G,'PI');
+% % Kd_nominal=C_tuned.Kd;
 % Kp_nominal=C_tuned.Kp;
 % Ki_nominal=C_tuned.Ki;
 % 
-% Tf=1e-8;
+% % Tf=1e-8;
 % 
 % % C=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
 % % CL=feedback(C*G, 1);
@@ -72,24 +72,23 @@ G = tf(num, den, 'InputDelay',Td);
 % % end
 % % objective
 % 
-% 
 % max_overshoot=0;
 % d=1e-1;
 % while max_overshoot<50 && ~isnan(max_overshoot)
-%     lb=[Kp_nominal-d, Ki_nominal-d, Kd_nominal-d];
-%     ub=[Kp_nominal+d, Ki_nominal+d, Kd_nominal+d];
-%     funPS_handle = @(x)funPS(x, G, Tf);
+%     lb=[Kp_nominal-d, Ki_nominal-d];
+%     ub=[Kp_nominal+d, Ki_nominal+d];
+%     funPS_handle = @(x)funPS(x, G);
 %     x = particleswarm(funPS_handle,3,lb,ub);
 % 
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%     Ctmp=tf([x(1), x(1)*x(2)], [1, 0]);
 %     CLtmp=feedback(Ctmp*G, 1);
 %     d
 %     max_overshoot=stepinfo(CLtmp).Overshoot
 %     d = d*1.1;
 % end
-%     function [objective] = funPS(x, G, Tf)
+%     function [objective] = funPS(x, G)
 %         %     todo move some lines outside with handler@: faster?
-%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+%         C=tf([x(1), x(1)*x(2)], [1, 0]);
 %         CL=feedback(C*G, 1);
 %         objective=-abs(stepinfo(CL).Overshoot);
 %         if isnan(objective)
@@ -101,8 +100,6 @@ G = tf(num, den, 'InputDelay',Td);
 % Kp_max=Kp_nominal+d;
 % Ki_min=Ki_nominal-d;
 % Ki_max=Ki_nominal+d;
-% Kd_min=Kd_nominal-d;
-% Kd_max=Kd_nominal+d;
 % 
 % % max_overshoot=0;
 % % dp=1e-1;
@@ -166,13 +163,13 @@ G = tf(num, den, 'InputDelay',Td);
 % % Kd_min=Kd_nominal-dd;
 % % Kd_max=Kd_nominal+dd;
 % % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
-% save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+% save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
 if sys=="ball_screw"
     dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKiKd_bounds.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
 end
 load(dir_gains)
 
@@ -241,30 +238,26 @@ RAND=rand(N0,1);
 
 Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
-Kd = (Kd_max-Kd_min).*RAND + Kd_min;
 InitobjectiveData = zeros(N0,1);
 % todo pay attention how you choose sampleTf?
 sampleTf=0.1;
 sampleTs=sampleTf/(Nsample-1);
 global data
 for i=1:N0
-    C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
+    C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
     CL=feedback(C*G, 1);
     varstmp.Kp=Kp(i);
     varstmp.Ki=Ki(i);
-    varstmp.Kd=Kd(i);
-    InitobjectiveData(i) = myObjfun_Loop(varstmp, G, Tf);
+    InitobjectiveData(i) = myObjfun_Loop(varstmp, G);
     while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
         RAND(i)=rand(1,1);
-        Kd(i) = (Kd_max-Kd_min).*RAND(i) + Kd_min;
         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
-        C=tf([Kd(i)+Tf*Kp(i),Kp(i)+Tf*Ki(i),Ki(i)], [Tf, 1, 0]);
+        C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
         CL=feedback(C*G, 1);
         varstmp.Kp=Kp(i);
         varstmp.Ki=Ki(i);
-        varstmp.Kd=Kd(i);
-        InitobjectiveData(i) = myObjfun_Loop(varstmp, G, Tf);
+        InitobjectiveData(i) = myObjfun_Loop(varstmp, G);
     end
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
@@ -292,13 +285,12 @@ G2 = tfest(data,np2);
 % G2_5=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
 % G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
 % step(G2, G2_2, G2_3, G2_4, G2_5, G2_6)
-InitData=table(Kp, Ki, Kd);
+InitData=table(Kp, Ki);
 
 Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
 Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
-Kd = optimizableVariable('Kd', [Kd_min Kd_max], 'Type','real');
 
-vars=[Kp, Ki, Kd];
+vars=[Kp, Ki];
 if withSurrogate==true
     if withPerturbed==true
         fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
@@ -306,7 +298,7 @@ if withSurrogate==true
         fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
     end
 else
-    fun = @(vars)myObjfun_Loop(vars, G, Tf);
+    fun = @(vars)myObjfun_Loop(vars, G);
 end
 objectiveEstData=InitobjectiveData;
 XobjectiveEstData=InitData;
@@ -347,7 +339,7 @@ for experiment=1:repeat_experiment
         %             error('nanCheck is NAN');
         %         end
         InitData=[InitData; results.NextPoint];
-        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G, Tf)];
+        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G)];
         objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
         XobjectiveEstData = [XobjectiveEstData; results.XAtMinEstimatedObjective];
         objectiveData = [objectiveData; results.MinObjective];
@@ -860,10 +852,10 @@ end
 
 end
 
-function [objective] = myObjfun_Loop(vars, G, Tf)
+function [objective] = myObjfun_Loop(vars, G)
 
 %     todo move some lines outside with handler@: faster?
-C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+C=tf([vars.Kp,vars.Kp*vars.Ki], [1, 0]);
 CL=feedback(C*G, 1);
 
 ov=abs(stepinfo(CL).Overshoot);
