@@ -61,14 +61,27 @@ ts=1;
 G = d2c(tf(num,den, ts));
 Tf=1e-8;
 load(append(dir,'/InitData_all.mat'))
-gains=InitData_all(end,:);
-C=tf([gains.Kd+Tf*gains.Kp,gains.Kp+Tf*gains.Ki,gains.Ki], [Tf, 1, 0]);
+last_gains=InitData_all(end,:);
+C=tf([last_gains.Kd+Tf*last_gains.Kp,last_gains.Kp+Tf*last_gains.Ki,last_gains.Ki], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
 reference=1;
-% plot output error over time: e=|y-r| vs t
-plot_et(CL, reference, idName, dir)
-% plot y,r vs t
-plot_yrt(CL, reference, idName, dir)
+
+% % plot output error over time: e=|y-r| vs t
+% plot_et(CL, reference, idName, dir)
+% % plot y,r vs t
+% plot_yrt(CL, reference, idName, dir)
+
+metrics=[];
+for i=1:N_iter
+    gainsi=InitData_all(i,:);
+    Ci=tf([gainsi.Kd+Tf*gainsi.Kp,gainsi.Kp+Tf*gainsi.Ki,gainsi.Ki], [Tf, 1, 0]);
+    CLi=feedback(Ci*G, 1);
+    metrics=[metrics; calc_metrics(CLi, reference)];
+end
+
+% plot metrics vs iteration
+plot_metrics(metrics, idName, dir)
+
 
 pause;
 close all;
@@ -76,13 +89,45 @@ close all;
 
 end
 
+function [metrics] = calc_metrics(CL, r)
+
+[y,t]=step(CL);
+e=abs(y-r);
+emax=max(e);
+ov=stepinfo(CL).Overshoot;
+Ts=stepinfo(CL).SettlingTime;
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,1.0]).RiseTime;
+ess= e(end);
+% epsilon = sin(t*3 - pi/6).*exp(-0.2*t); %Example for epsilon
+ITAE = trapz(t, t.*abs(e));
+metrics=[emax, Ts, Tr, ITAE, ess, ov];
+end
+
+function plot_metrics(metrics, idName, dir)
+% plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
+subplot(3,2,1)
+hold on;
+plot(metrics(:,1),'o', 'MarkerFaceColor', 'b');
+grid on
+xlabel('iteration')
+ylabel('e_m_a_x')
+title('Maximum absolute tracking error')
+
+
+
+figName=append(dir, idName,'_metrics.png');
+saveas(gcf,figName)
+pause;
+end
+
+
 function plot_et(TF, r, idName, dir)
 % plot e over t
 fig=figure();
 hold on;
 fig.Position=[200 0 1600 800];
 [y,t]=step(TF);
-graph=plot(t, abs(y-r),'Color', [0, 0, 1, 1], 'LineWidth', 2, 'DisplayName','BO');
+graph=plot(t, abs(y-r),'Color', [0, 0, 1, 1], 'LineWidth', 2);
 legend([graph],{'Tracking Error'}, 'Location', 'best')
 grid on
 xlabel('Time (sec)')
@@ -99,8 +144,8 @@ fig=figure();
 hold on;
 fig.Position=[200 0 1600 800];
 [y,t]=step(TF);
-graph1=plot(t, y,'Color', [0, 0, 1, 1], 'LineWidth', 2, 'DisplayName','BO');
-graph2=plot(t, r.*ones(size(t)), ':', 'Color', [0.2, 0.2, 0.2, 1], 'LineWidth', 2, 'DisplayName','BO');
+graph1=plot(t, y,'Color', [0, 0, 1, 1], 'LineWidth', 2);
+graph2=plot(t, r.*ones(size(t)), ':', 'Color', [0.2, 0.2, 0.2, 1], 'LineWidth', 2);
 
 legend([graph1, graph2],{'y: output', 'r: reference'}, 'Location', 'best')
 
