@@ -1,11 +1,11 @@
 function plot_results_base
 close all; clear; clc;
 % hyper-params
-idName= '0';
+idName= '0_2';
 sys='robot_arm';
-N0=1;
-N_iter=50;
-repeat_experiment=20;
+N0=3;
+N_iter=30;
+repeat_experiment=2;
 withSurrogate=false;
 N_real_repeat=25;
 Nsample=10;
@@ -13,7 +13,7 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0/';
+dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0_2/';
 
 tmp=[];
 load(append(dir,'/InitobjectiveData_all.mat'))
@@ -29,20 +29,22 @@ for i=1:repeat_experiment
     end
 end
 
-true_objective=0.1882; %with ts=1
+% true_objective=0.1882; %with ts=1
 % true_objective=0.1243; %with ts=0.1
+true_objective=1;
 
 for i=1:repeat_experiment
     semilogy(objectiveData_all_0(:,i)./true_objective, ':', 'LineWidth', 1, 'Color', [0, 0, 1, .5])
+%     plot(objectiveData_all_0(:,i), ':')
 end
 
 mean_objectiveData_all_0=mean(objectiveData_all_0,2,'omitnan');
 
 hmean_0=semilogy(mean_objectiveData_all_0./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
-
+% hmean_0=plot(mean_objectiveData_all_0);
 legend([hmean_0],{'BO'}, 'Location', 'best')
 grid on
-ylim([1 2])
+% ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
@@ -61,31 +63,33 @@ G = d2c(tf(num,den, ts));
 Tf=1e-8;
 load(append(dir,'/InitData_all.mat'))
 InitData_all=InitData_all{N0+1:end,:};
-InitData_all=reshape(InitData_all(1:end,:),[N_iter,repeat_experiment,3]);
+InitData_all=reshape(InitData_all(1:end,:),[N_iter,repeat_experiment,size(InitData_all,2)]);
 experiment=2;
 last_gains=InitData_all(end, experiment, :);
-C=tf([last_gains(3)+Tf*last_gains(1),last_gains(1)+Tf*last_gains(2),last_gains(2)], [Tf, 1, 0]);
+C=tf([last_gains(1),last_gains(1)*last_gains(2)], [1, 0]);
 CL=feedback(C*G, 1);
 reference=1;
 
-% % plot output error over time: e=|y-r| vs t
-% plot_et(CL, reference, idName, dir)
-% % plot y,r vs t
-% plot_yrt(CL, reference, idName, dir)
+% plot output error over time: e=|y-r| vs t
+plot_et(CL, reference, idName, dir)
+% plot y,r vs t
+plot_yrt(CL, reference, idName, dir)
 
+f3=figure(3);hold on
+f3.Position=[200 0 1600 800];
 for exper=1:repeat_experiment
     metrics=[];
     for i=1:N_iter
         gainsi=InitData_all(i, exper, :);
-        Ci=tf([gainsi(3)+Tf*gainsi(1),gainsi(1)+Tf*gainsi(2),gainsi(2)], [Tf, 1, 0]);
+        Ci=tf([gainsi(1),gainsi(1)*gainsi(2)], [1, 0]);
         CLi=feedback(Ci*G, 1);
         metrics=[metrics; calc_metrics(CLi, reference)];
     end
     plot_metrics(metrics)
-%     figName=append(dir, idName,'_metrics.png');
-%     saveas(gcf,figName)
-%     pause;
 end
+figName=append(dir, idName,'_metrics.png');
+saveas(gcf,figName)
+
 % metrics=reshape(metrics(1:end,:),[N_iter,repeat_experiment,6]);
 % 
 % 
