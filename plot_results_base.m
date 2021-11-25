@@ -23,7 +23,6 @@ objectiveData_all_0=reshape(objectiveData_all_0(1:end),[N_iter,repeat_experiment
 f2=figure(2);hold on
 f2.Position=[200 0 1600 800];
 
-
 for i=1:repeat_experiment
     for j=1:N_iter
         objectiveData_all_0(j,i)=nanmin(objectiveData_all_0(1:j,i));
@@ -61,8 +60,11 @@ ts=1;
 G = d2c(tf(num,den, ts));
 Tf=1e-8;
 load(append(dir,'/InitData_all.mat'))
-last_gains=InitData_all(end,:);
-C=tf([last_gains.Kd+Tf*last_gains.Kp,last_gains.Kp+Tf*last_gains.Ki,last_gains.Ki], [Tf, 1, 0]);
+InitData_all=InitData_all{N0+1:end,:};
+InitData_all=reshape(InitData_all(1:end,:),[N_iter,repeat_experiment,3]);
+experiment=2;
+last_gains=InitData_all(end, experiment, :);
+C=tf([last_gains(3)+Tf*last_gains(1),last_gains(1)+Tf*last_gains(2),last_gains(2)], [Tf, 1, 0]);
 CL=feedback(C*G, 1);
 reference=1;
 
@@ -71,10 +73,11 @@ reference=1;
 % % plot y,r vs t
 % plot_yrt(CL, reference, idName, dir)
 
+
 metrics=[];
 for i=1:N_iter
-    gainsi=InitData_all(i,:);
-    Ci=tf([gainsi.Kd+Tf*gainsi.Kp,gainsi.Kp+Tf*gainsi.Ki,gainsi.Ki], [Tf, 1, 0]);
+    gainsi=InitData_all(i, experiment, :);
+    Ci=tf([gainsi(3)+Tf*gainsi(1),gainsi(1)+Tf*gainsi(2),gainsi(2)], [Tf, 1, 0]);
     CLi=feedback(Ci*G, 1);
     metrics=[metrics; calc_metrics(CLi, reference)];
 end
@@ -158,7 +161,6 @@ figName=append(dir, idName,'_metrics.png');
 saveas(gcf,figName)
 pause;
 end
-
 
 function plot_et(TF, r, idName, dir)
 % plot e over t
