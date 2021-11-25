@@ -54,7 +54,63 @@ saveas(gcf,figName)
 figName=append(dir, idName,'.fig');
 saveas(gcf,figName)
 
+% robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
+num = [-0.0118, 0.0257, 0, 0, 0];
+den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
+ts=1;
+G = d2c(tf(num,den, ts));
+Tf=1e-8;
+load(append(dir,'/InitData_all.mat'))
+gains=InitData_all(end,:);
+C=tf([gains.Kd+Tf*gains.Kp,gains.Kp+Tf*gains.Ki,gains.Ki], [Tf, 1, 0]);
+CL=feedback(C*G, 1);
+reference=1;
+% plot output error over time: e=|y-r| vs t
+plot_et(CL, reference, idName, dir)
+% plot y,r vs t
+plot_yrt(CL, reference, idName, dir)
+
 pause;
 close all;
 
+
+end
+
+function plot_et(TF, r, idName, dir)
+% plot e over t
+fig=figure();
+hold on;
+fig.Position=[200 0 1600 800];
+[y,t]=step(TF);
+graph=plot(t, abs(y-r),'Color', [0, 0, 1, 1], 'LineWidth', 2, 'DisplayName','BO');
+legend([graph],{'Tracking Error'}, 'Location', 'best')
+grid on
+xlabel('Time (sec)')
+ylabel('e=|y-r|')
+title(append('Reference Tracking Error vs Time'))
+figName=append(dir, idName,'_et.png');
+saveas(gcf,figName)
+pause;
+end
+
+function plot_yrt(TF, r, idName, dir)
+% plot e over t
+fig=figure();
+hold on;
+fig.Position=[200 0 1600 800];
+[y,t]=step(TF);
+graph1=plot(t, y,'Color', [0, 0, 1, 1], 'LineWidth', 2, 'DisplayName','BO');
+graph2=plot(t, r.*ones(size(t)), ':', 'Color', [0.2, 0.2, 0.2, 1], 'LineWidth', 2, 'DisplayName','BO');
+
+legend([graph1, graph2],{'y: output', 'r: reference'}, 'Location', 'best')
+
+grid on
+xlabel('Time (sec)')
+ylabel('y, r')
+ymargin=0.05;
+ylim([min([r;y])-ymargin,max([r;y])+ymargin]);
+title(append('System Response and Setpoint vs Time'))
+figName=append(dir, idName,'_yrt.png');
+saveas(gcf,figName)
+pause;
 end
