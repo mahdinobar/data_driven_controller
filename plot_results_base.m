@@ -163,7 +163,7 @@ hold on;
 plot(metrics(:,6),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
-ylabel('Maximum Overshoot')
+ylabel('max(0, 100*(y_{max}-r)')
 title('Maximum Overshoot')
 
 end
