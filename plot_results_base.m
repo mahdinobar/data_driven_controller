@@ -1,7 +1,7 @@
 function plot_results_base
 close all; clear; clc;
 % hyper-params
-N0=10;
+N0=3;
 N_iter=30;
 repeat_experiment=2;
 
@@ -49,12 +49,12 @@ saveas(gcf,figName)
 figName=append(dir, idName,'.fig');
 saveas(gcf,figName)
 
-% robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
-num = [-0.0118, 0.0257, 0, 0, 0];
-den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
-ts=1;
-G = d2c(tf(num,den, ts));
-Tf=1e-8;
+% DC motor at FHNW lab
+num = [5.19908];
+den = [1, 1.61335];
+Td=2e-3;
+G = tf(num, den, 'InputDelay',Td);
+
 load(append(dir,'/InitData_all.mat'))
 InitData_all=InitData_all{N0+1:end,:};
 InitData_all=reshape(InitData_all(1:end,:),[N_iter,repeat_experiment,size(InitData_all,2)]);

@@ -4,7 +4,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_0_3';
 sys='DC_motor';
-N0=10;
+N0=3;
 N_iter=30;
 repeat_experiment=2;
 withSurrogate=false;
@@ -15,6 +15,9 @@ withPerturbed=false;
 num_perturbed_model=4;
 
 dir=append(tmp_dir,'/', idName, '/');
+if not(isfolder(dir))
+    mkdir(dir)
+end
 % dir=append('/idiap/home/mnobar/Rupenyan/data_driven_controller/tmp/', idName, '/');
 
 
@@ -41,11 +44,11 @@ dir=append(tmp_dir,'/', idName, '/');
 % Ks=3e7;
 % G=tf([Kt],[La*(Jm+Jl),La*Bm+Ra*(Jm+Jl),Ra*Bm+Kt*Kb])*tf([Bml,Ks],[Jl,Bml,Ks]);
 
-% robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
-num = [-0.0118, 0.0257, 0, 0, 0];
-den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
-ts=1;
-G = d2c(tf(num,den, ts));
+% % robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
+% num = [-0.0118, 0.0257, 0, 0, 0];
+% den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
+% ts=1;
+% G = d2c(tf(num,den, ts));
 
 % DC motor at FHNW lab
 num = [5.19908];
@@ -860,16 +863,15 @@ CL=feedback(C*G, 1);
 
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
-
-w1=1;
-w2=1/50;
 if isnan(ov) || isinf(ov) || ov>1e3
-    ov=w1.*1e3;
+    ov=1e3;
 end
 if isnan(st) || isinf(st) || st>1e5
-    st=w2.*1e3;
+    st=1e5;
 end
-objective=w1.*ov+w2.*st;
+w1=1;
+w2=50;
+objective=ov/w1+st/w2;
 
 % if abs(stepinfo(CL).Overshoot)<1
 %     objective = abs(1*stepinfo(CL).SettlingTime);
