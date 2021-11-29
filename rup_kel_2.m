@@ -870,7 +870,7 @@ if isnan(st) || isinf(st) || st>1e5
     st=1e5;
 end
 w1=1;
-w2=50;
+w2=500;
 objective=ov/w1+st/w2;
 
 % if abs(stepinfo(CL).Overshoot)<1
