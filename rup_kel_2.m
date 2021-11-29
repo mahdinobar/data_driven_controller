@@ -2,9 +2,9 @@ function rup_kel_2
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_0_2';
+idName= 'demo_0_3';
 sys='DC_motor';
-N0=3;
+N0=10;
 N_iter=30;
 repeat_experiment=2;
 withSurrogate=false;
@@ -860,15 +860,16 @@ CL=feedback(C*G, 1);
 
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
+
+w1=1;
+w2=50;
 if isnan(ov) || isinf(ov) || ov>1e3
-    ov=1e3;
+    ov=w1.*1e3;
 end
 if isnan(st) || isinf(st) || st>1e5
-    st=1e5;
+    st=w2.*1e3;
 end
-w1=1;
-w2=500;
-objective=ov/w1+st/w2;
+objective=w1.*ov+w2.*st;
 
 % if abs(stepinfo(CL).Overshoot)<1
 %     objective = abs(1*stepinfo(CL).SettlingTime);

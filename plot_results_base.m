@@ -1,8 +1,6 @@
 function plot_results_base
 close all; clear; clc;
 % hyper-params
-idName= '0_2';
-sys='robot_arm';
 N0=3;
 N_iter=30;
 repeat_experiment=2;
@@ -13,7 +11,8 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0_2/';
+idName= '0_3';
+dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0_3/';
 
 tmp=[];
 load(append(dir,'/InitobjectiveData_all.mat'))
@@ -46,7 +45,8 @@ legend([hmean_0],{'BO'}, 'Location', 'best')
 grid on
 % ylim([1 2])
 xlabel('Iteration')
-ylabel('Optimality Ratio')
+% ylabel('Optimality Ratio')
+ylabel('Cost function')
 title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
