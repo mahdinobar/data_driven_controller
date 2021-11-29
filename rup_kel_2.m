@@ -2,14 +2,14 @@ function rup_kel_2
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_0_5';
+idName= 'demo_GBO_0_1';
 sys='DC_motor';
 N0=3;
 N_iter=30;
 repeat_experiment=2;
-withSurrogate=false;
-N_real_repeat=25;
-Nsample=10;
+withSurrogate=true;
+N_real_repeat=5;
+Nsample=50;
 np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
@@ -243,7 +243,7 @@ Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
 InitobjectiveData = zeros(N0,1);
 % todo pay attention how you choose sampleTf?
-sampleTf=0.1;
+sampleTf=1.5;
 sampleTs=sampleTf/(Nsample-1);
 global data
 for i=1:N0
@@ -298,7 +298,7 @@ if withSurrogate==true
     if withPerturbed==true
         fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
     else
-        fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+        fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, sampleTf, sampleTs, np2, N_real_repeat);
     end
 else
     fun = @(vars)myObjfun_Loop(vars, G);
@@ -765,87 +765,25 @@ end
 end
 
 
-function [objective] = myObjfun_ApproxLoop(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat)
+function [objective] = myObjfun_ApproxLoop(vars, G, G2, sampleTf, sampleTs, np2, N_real_repeat)
 global N
 global idx
 global data
 if isempty(N)
     N=1;
-    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-    CL=feedback(C*G2, 1);
-    
-    ov=abs(stepinfo(CL).Overshoot);
-    st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov) || ov>1e3
-        ov=1e5;
-    end
-    if isnan(st) || isinf(st) || st>1e5
-        st=1e5;
-    end
-    w1=1;
-    w2=500;
-    objective=ov/w1+st/w2;
-    %     if abs(stepinfo(CL).Overshoot)<1
-    %         objective = abs(1*stepinfo(CL).SettlingTime);
-    %     else
-    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    %     end
+    objective=myObjfun_Loop(vars, G2);
     idx= 0;
 elseif idx==N_real_repeat
     N = N+1;
-    %     G2tmp = n4sid(data,np2);
-    %     [A,B,C,D,~] = idssdata(G2tmp);
-    %     [num_surrogate, den_surrogate] = ss2tf(A,B,C,D);
-    %     G2 = tf(num_surrogate, den_surrogate);
-    G2 = tfest(data,np2);
-    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
-    CL=feedback(C*G2, 1);
-    
-    ov=abs(stepinfo(CL).Overshoot);
-    st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov) || ov>1e3
-        ov=1e5;
-    end
-    if isnan(st) || isinf(st) || st>1e5
-        st=1e5;
-    end
-    w1=1;
-    w2=500;
-    objective=ov/w1+st/w2;
-    %     if abs(stepinfo(CL).Overshoot)<1
-    %         objective = abs(1*stepinfo(CL).SettlingTime);
-    %     else
-    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    %     end
+    G2 = tfest(data,np2); 
+    objective=myObjfun_Loop(vars, G2);
     idx= 0;
 else
     N = N+1;
     %     todo move some lines outside with handler@: faster?
-    C=tf([vars.Kd+Tf*vars.Kp,vars.Kp+Tf*vars.Ki,vars.Ki], [Tf, 1, 0]);
+    objective=myObjfun_Loop(vars, G);
+    C=tf([vars.Kp,vars.Kp*vars.Ki], [1, 0]);
     CL=feedback(C*G, 1);
-    
-    ov=abs(stepinfo(CL).Overshoot);
-    st=stepinfo(CL).SettlingTime;
-    if isnan(ov) || isinf(ov) || ov>1e3
-        ov=1e5;
-    end
-    if isnan(st) || isinf(st) || st>1e5
-        st=1e5;
-    end
-    w1=1;
-    w2=500;
-    objective=ov/w1+st/w2;
-    %     if abs(stepinfo(CL).Overshoot)<1
-    %         objective = abs(1*stepinfo(CL).SettlingTime);
-    %     else
-    %         objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
-    %     end
-    %     if isnan(objective)
-    %         objective=1e5;
-    %     end
-    %     objective=max(objective, 1e5);
-    
-    
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
     utmp=step(CLU,0:sampleTs:sampleTf);
