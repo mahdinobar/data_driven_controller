@@ -862,7 +862,7 @@ ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
 
 w1=1;
-w2=50;
+w2=1/50;
 if isnan(ov) || isinf(ov) || ov>1e3
     ov=w1.*1e3;
 end
