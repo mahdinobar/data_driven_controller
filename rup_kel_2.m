@@ -2,7 +2,7 @@ function rup_kel_2
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_0_3';
+idName= 'demo_0_5';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -863,15 +863,34 @@ CL=feedback(C*G, 1);
 
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
+
+[y,t]=step(CL);
+reference=1;
+e=abs(y-reference);
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,1.0]).RiseTime;
+ITAE = trapz(t, t.*abs(e));
+
 if isnan(ov) || isinf(ov) || ov>1e3
     ov=1e3;
 end
+
 if isnan(st) || isinf(st) || st>1e5
     st=1e5;
 end
-w1=1;
-w2=500;
-objective=ov/w1+st/w2;
+
+if isnan(Tr) || isinf(Tr) || Tr>1e5
+    Tr=1e5;
+end
+
+if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+    ITAE=1e5;
+end
+
+w1=0.1;
+w2=1;
+w3=1;
+w4=0.5;
+objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
 
 % if abs(stepinfo(CL).Overshoot)<1
 %     objective = abs(1*stepinfo(CL).SettlingTime);

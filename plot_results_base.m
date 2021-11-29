@@ -5,8 +5,8 @@ N0=3;
 N_iter=30;
 repeat_experiment=2;
 
-idName= '0_3';
-dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0_3/';
+idName= 'demo_0_5';
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
 tmp=[];
 load(append(dir,'/InitobjectiveData_all.mat'))
@@ -58,10 +58,12 @@ G = tf(num, den, 'InputDelay',Td);
 load(append(dir,'/InitData_all.mat'))
 InitData_all=InitData_all{N0+1:end,:};
 InitData_all=reshape(InitData_all(1:end,:),[N_iter,repeat_experiment,size(InitData_all,2)]);
-experiment=2;
+
+experiment=1; %pick an experiment to plot
 last_gains=InitData_all(end, experiment, :);
 C=tf([last_gains(1),last_gains(1)*last_gains(2)], [1, 0]);
 CL=feedback(C*G, 1);
+
 reference=1;
 
 % plot output error over time: e=|y-r| vs t
