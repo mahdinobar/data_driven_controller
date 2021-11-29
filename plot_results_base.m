@@ -1,15 +1,9 @@
 function plot_results_base
 close all; clear; clc;
 % hyper-params
-N0=3;
+N0=10;
 N_iter=30;
 repeat_experiment=2;
-withSurrogate=false;
-N_real_repeat=25;
-Nsample=10;
-np2=2;
-withPerturbed=false;
-num_perturbed_model=4;
 
 idName= '0_3';
 dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_0_3/';
