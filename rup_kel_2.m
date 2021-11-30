@@ -2,11 +2,11 @@ function rup_kel_2
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_1';
+idName= 'demo_GBO_0_2';
 sys='DC_motor';
 N0=3;
 N_iter=30+10;
-repeat_experiment=1;
+repeat_experiment=10;
 withSurrogate=true;
 N_real_repeat=5;
 Nsample=50;

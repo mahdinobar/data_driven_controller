@@ -3,7 +3,7 @@ close all; clear; clc;
 % hyper-params
 N0=3;
 N_iter=30;
-repeat_experiment=1;
+repeat_experiment=10;
 withSurrogate=true;
 N_real_repeat=5;
 Nsample=50;
@@ -11,13 +11,14 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-idName= 'demo_GBO_0_1';
+idName= 'demo_GBO_0_2';
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
 tmp=[];
 load(append(dir,'/InitobjectiveData_all.mat'))
-objectiveData_all_0=InitobjectiveData_all(N0+1:end-4,1);
-objectiveData_all_0=reshape(objectiveData_all_0(1:end),[N_iter,repeat_experiment]);
+objectiveData_all_0=InitobjectiveData_all(N0+1:end,1);
+objectiveData_all_0=reshape(objectiveData_all_0(1:end),[N_iter+4,repeat_experiment]);
+objectiveData_all_0=objectiveData_all_0(1+4:end,1:end);
 
 f2=figure(2);hold on
 f2.Position=[200 0 1600 800];
@@ -63,7 +64,8 @@ G = tf(num, den, 'InputDelay',Td);
 
 load(append(dir,'/InitData_all.mat'))
 InitData_all=InitData_all{N0+1:end,:};
-InitData_all=reshape(InitData_all(1:end-4,:),[N_iter,repeat_experiment,size(InitData_all,2)]);
+InitData_all=reshape(InitData_all(1:end,:),[N_iter+4,repeat_experiment,size(InitData_all,2)]);
+InitData_all=InitData_all(1+4:end,1:end,1:end);
 
 experiment=1; %pick an experiment to plot
 last_gains=InitData_all(end, experiment, :);
