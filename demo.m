@@ -29,7 +29,7 @@ opt.grid_size = 20000;
 opt.lt_const = -0.05;
 %opt.optimize_ei = 1; % Uncomment this to optimize EI/EIC at each candidate rather than optimize over a discrete grid. This will be slow.
 %opt.grid_size = 300; % If you use the optimize_ei option
-opt.do_cbo = 1; % Do CBO -- use the constraint output from F as well.
+opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
 %opt.save_trace = 1;
 %opt.trace_file = 'demo_trace.mat';
 %matlabpool 3; % Uncomment to do certain things in parallel. Suggested if optimize_ei is turned on. If parallel_jobs is > 1, bayesopt does this for you.
