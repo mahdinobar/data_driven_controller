@@ -4,7 +4,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_GBO_0_3';
 sys='DC_motor';
-N0=3;
+N0=50;
 N_iter=5;
 repeat_experiment=1;
 withSurrogate=false;
@@ -287,21 +287,26 @@ G2 = tfest(data,np2);
 % G2_6=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.1e0, 0].*(rand(1,1)-0.5));
 % step(G2, G2_2, G2_3, G2_4, G2_5, G2_6)
 InitData=table(Kp, Ki);
-
-%%
-Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
-Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
-
-vars=[Kp, Ki];
-if withSurrogate==true
-    if withPerturbed==true
-        fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
-    else
-        fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, sampleTf, sampleTs, np2, N_real_repeat);
-    end
-else
-    fun = @(vars)myObjfun_Loop(vars, G);
-end
+% 
+% %%
+% Kp = optimizableVariable('Kp', [Kp_min Kp_max], 'Type','real');
+% Ki = optimizableVariable('Ki', [Ki_min Ki_max], 'Type','real');
+% 
+% vars=[Kp, Ki];
+% if withSurrogate==true
+%     if withPerturbed==true
+%         fun = @(vars)myObjfun_ApproxLoop_perturbed(vars, G, G2, Tf, sampleTf, sampleTs, np2, N_real_repeat);
+%     else
+%         fun = @(vars)myObjfun_ApproxLoop(vars, G, G2, sampleTf, sampleTs, np2, N_real_repeat);
+%     end
+% else
+%     fun = @(vars)myObjfun_Loop(vars, G);
+% end
+botrace.samples=[Kp, Ki];
+botrace.values=InitobjectiveData;
+% todo need to correct time?
+botrace.times=RAND';
+save(append(dir,'trace_file.mat'),'botrace')
 
 %% Initializing the Gaussian Process (GP) Library
 addpath ./gpml/
@@ -310,19 +315,20 @@ startup;
 % Setting parameters for Bayesian Global Optimization
 opt = defaultopt(); % Get some default values for non problem-specific options.
 opt.dims = 2; % Number of parameters.
-opt.mins = [Kp_min,Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
+opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter. 
-opt.max_iters = 50; % Override the default max_iters value -- probably don't need 100 for this simple demo function.
+opt.max_iters = 200; % Override the default max_iters value -- probably don't need 100 for this simple demo function.
 opt.grid_size = 20000;
 %opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
 opt.lt_const = 0.0;
 %opt.optimize_ei = 1; % Uncomment this to optimize EI/EIC at each candidate rather than optimize over a discrete grid. This will be slow.
 %opt.grid_size = 300; % If you use the optimize_ei option
 opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
-%opt.save_trace = 1;
+opt.save_trace = 1;
 %opt.trace_file = 'demo_trace.mat';
 %matlabpool 3; % Uncomment to do certain things in parallel. Suggested if optimize_ei is turned on. If parallel_jobs is > 1, bayesopt does this for you.
-
+opt.trace_file=append(dir,'trace_file.mat');
+opt.resume_trace=true;
 %% We define the function we would like to optimize
 fun = @(X) myObjfun_Loop(X(1), X(2), G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 

@@ -5,4 +5,3 @@ function opt = bo_default_opt()
     opt.covfunc = {@covSEard}; % Squared Exponential kernel with ARD.
     opt.hyp = -1; % Set hyperparameters using MLE.
 	opt.save_trace = false;
-	opt.trace_file = 'trace.mat';
