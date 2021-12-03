@@ -1,13 +1,13 @@
-function rup_kel_2
+function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_2';
+idName= 'demo_GBO_0_3';
 sys='DC_motor';
 N0=3;
-N_iter=30+10;
-repeat_experiment=10;
-withSurrogate=true;
+N_iter=5;
+repeat_experiment=1;
+withSurrogate=false;
 N_real_repeat=5;
 Nsample=50;
 np2=2;
@@ -250,18 +250,14 @@ global data
 for i=1:N0
     C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
     CL=feedback(C*G, 1);
-    varstmp.Kp=Kp(i);
-    varstmp.Ki=Ki(i);
-    InitobjectiveData(i) = myObjfun_Loop(varstmp, G);
+    InitobjectiveData(i) = myObjfun_Loop(Kp(i), Ki(i), G);
     while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
         RAND(i)=rand(1,1);
         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
         C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
         CL=feedback(C*G, 1);
-        varstmp.Kp=Kp(i);
-        varstmp.Ki=Ki(i);
-        InitobjectiveData(i) = myObjfun_Loop(varstmp, G);
+        InitobjectiveData(i) = myObjfun_Loop(Kp(i), Ki(i), G);
     end
     CLU=feedback(C, G);
     ytmp=step(CL,0:sampleTs:sampleTf);
@@ -306,6 +302,56 @@ if withSurrogate==true
 else
     fun = @(vars)myObjfun_Loop(vars, G);
 end
+
+%% Initializing the Gaussian Process (GP) Library
+addpath ./gpml/
+startup;
+
+% Setting parameters for Bayesian Global Optimization
+opt = defaultopt(); % Get some default values for non problem-specific options.
+opt.dims = 2; % Number of parameters.
+opt.mins = [-5,-5]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
+opt.maxes = [0, 5]; % Vector of maximum values for each parameter. 
+opt.max_iters = 50; % Override the default max_iters value -- probably don't need 100 for this simple demo function.
+opt.grid_size = 20000;
+%opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
+opt.lt_const = 0.0;
+%opt.optimize_ei = 1; % Uncomment this to optimize EI/EIC at each candidate rather than optimize over a discrete grid. This will be slow.
+%opt.grid_size = 300; % If you use the optimize_ei option
+opt.do_cbo = 1; % Do CBO -- use the constraint output from F as well.
+%opt.save_trace = 1;
+%opt.trace_file = 'demo_trace.mat';
+%matlabpool 3; % Uncomment to do certain things in parallel. Suggested if optimize_ei is turned on. If parallel_jobs is > 1, bayesopt does this for you.
+
+%% We define the function we would like to optimize
+fun = @(X) myObjfun_Loop(X(1), X(2), G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
+
+% Let's plot it just to see what we are trying to optimize
+clf;
+Kp_range=Kp_max-Kp_min;
+resol=10;
+Kp_surf_resol=Kp_range/resol;
+Ki_range=Ki_max-Ki_min;
+Ki_surf_resol=Ki_range/resol;
+[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+j_pt=zeros(size(kp_pt));
+c_pt=zeros(size(kp_pt));
+for i=1:size(kp_pt,1)
+    for j=1:size(kp_pt,2)
+        [l,c]=myObjfun_Loop(kp_pt(i,j),ki_pt(i,j),G);
+        j_pt(i,j)=l;
+        c_pt(i,j)=c;
+    end
+end
+% [j_pt,c_pt]=myObjfun_Loop(kp_pt(:),ki_pt(:),G);
+j_pt(c_pt>opt.lt_const)=NaN;
+surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
+xlabel('Kp')
+ylabel('Ki')
+zlabel('J')
+drawnow;
+
+%%
 objectiveEstData=InitobjectiveData;
 XobjectiveEstData=InitData;
 objectiveData=InitobjectiveData;
@@ -672,10 +718,10 @@ end
 
 end
 
-function [objective] = myObjfun_Loop(vars, G)
+function [objective, constraints] = myObjfun_Loop(Kp, Ki, G)
 
 %     todo move some lines outside with handler@: faster?
-C=tf([vars.Kp,vars.Kp*vars.Ki], [1, 0]);
+C=tf([Kp,Kp*Ki], [1, 0]);
 CL=feedback(C*G, 1);
 
 ov=abs(stepinfo(CL).Overshoot);
@@ -708,5 +754,5 @@ w2=1;
 w3=1;
 w4=0.5;
 objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
-
+constraints=-1;
 end

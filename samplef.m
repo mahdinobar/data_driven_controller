@@ -9,7 +9,7 @@
 %          F = @(X)samplef(X,b);
 % 
 % This lets you, for example, pass in datasets when tuning ML algorithm parameters.
-function [Lval,Cval] = samplef2(x,y,b)
+function [Lval,Cval] = samplef(x,y,b)
 	L = @(x,y) cos(2.*x).*cos(y) + sin(b.*x);
 	C = @(x,y) -(-cos(x).*cos(y)+sin(x).*sin(y));
 	Lval = L(x,y) + 1e-4*randn(1,size(x,2));

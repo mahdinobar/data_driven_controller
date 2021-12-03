@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesopt(F,opt)
+function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
     warning('off')
     % Check options for minimum level of validity
     check_opts(opt);

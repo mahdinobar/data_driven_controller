@@ -36,7 +36,7 @@ opt.do_cbo = 1; % Do CBO -- use the constraint output from F as well.
 
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
-[ms,mv,T] = bayesopt(F,opt);   % ms - Best parameter setting found
+[ms,mv,T] = bayesoptGPML(F,opt);   % ms - Best parameter setting found
                                % mv - best function value for that setting L(ms)
                                % T  - Trace of all settings tried, their function values, and constraint values.
                               
