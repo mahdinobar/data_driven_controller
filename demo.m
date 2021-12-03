@@ -1,7 +1,7 @@
 %% Initializing the Gaussian Process (GP) Library
 clc;
-addpath ../
-addpath ../gpml/
+close all;
+addpath ./gpml/
 startup;
  
 
