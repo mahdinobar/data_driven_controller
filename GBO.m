@@ -135,14 +135,14 @@ drawnow;
 
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
-[ms,mv,T] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
+[ms,mv,Trace] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
                                % mv - best function value for that setting L(ms)
-                               % T  - Trace of all settings tried, their function values, and constraint values.
+                               % Trace  - Trace of all settings tried, their function values, and constraint values.
                               
 %% Print results
 fprintf('******************************************************\n');
-fprintf('Best hyperparameters:      P1=%2.4f, P2=%2.4f\n',ms(1),ms(2));
-fprintf('Associated function value: F([P1,P2])=%2.4f\n',mv);
+fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
+fprintf('Associated cost: J([Kp,Ki])=%2.4f\n',mv);
 fprintf('******************************************************\n');
 
 %% Draw optimium
