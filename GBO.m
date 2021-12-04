@@ -5,7 +5,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 idName= 'demo_GBO_0_3';
 sys='DC_motor';
 N0=50;
-N_iter=5;
+N_iter=200;
 repeat_experiment=1;
 withSurrogate=false;
 N_real_repeat=5;
@@ -317,7 +317,7 @@ opt = defaultopt(); % Get some default values for non problem-specific options.
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter. 
-opt.max_iters = 200; % Override the default max_iters value -- probably don't need 100 for this simple demo function.
+opt.max_iters = N_iter; % Override the default max_iters value -- probably don't need 100 for this simple demo function.
 opt.grid_size = 20000;
 %opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
 opt.lt_const = 0.0;
@@ -372,112 +372,6 @@ fprintf('******************************************************\n');
 %% Draw optimium
 hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
-
-
-%%
-objectiveEstData=InitobjectiveData;
-XobjectiveEstData=InitData;
-objectiveData=InitobjectiveData;
-XobjectiveData=InitData;
-global N
-global idx
-N_iter=N_iter+N0;
-data_start=data;
-InitData_start=InitData;
-InitobjectiveData_start=InitobjectiveData;
-objectiveEstData_start=objectiveEstData;
-XobjectiveEstData_start=XobjectiveEstData;
-objectiveData_start=objectiveData;
-XobjectiveData_start=XobjectiveData;
-InitData_all=InitData;
-InitobjectiveData_all=InitobjectiveData;
-objectiveEstData_all=objectiveEstData;
-XobjectiveEstData_all=XobjectiveEstData;
-objectiveData_all=objectiveData;
-XobjectiveData_all=XobjectiveData;
-for experiment=1:repeat_experiment
-    experiment
-
-    N=[];
-    idx=[];
-    counter=N0+1;
-    %     objectiveData_not_removed=InitobjectiveData;
-    %     objectiveEstData_not_removed=objectiveEstData;
-    for iter=N0+1:N_iter
-        iter
-        %     iteration=iter-N0
-        nanCheck=nan;
-        %         while isnan(nanCheck)
-        results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', counter, 'NumSeedPoints', counter-1, ...
-            'PlotFcn', {}, 'InitialObjective', InitobjectiveData, 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound');
-        %             nanCheck = results.MinObjective;
-        %             error('nanCheck is NAN');
-        %         end
-        InitData=[InitData; results.NextPoint];
-        InitobjectiveData = [InitobjectiveData; myObjfun_Loop(results.NextPoint, G)];
-        objectiveEstData = [objectiveEstData; results.MinEstimatedObjective];
-        XobjectiveEstData = [XobjectiveEstData; results.XAtMinEstimatedObjective];
-        objectiveData = [objectiveData; results.MinObjective];
-        XobjectiveData = [XobjectiveData; results.XAtMinObjective];
-
-        %         objectiveData_not_removed=[objectiveData_not_removed; results.MinObjective];
-        %         objectiveEstData_not_removed=[objectiveEstData_not_removed; results.MinEstimatedObjective];
-
-        %         remove previos data of older surrogate model
-        if withSurrogate==true
-            if withPerturbed==true
-                %     uncomment for surrogate model
-                %     remove previos data of older surrogate model
-                if rem(iter-N0,N_real_repeat+(1+num_perturbed_model))==0 && iter>N0+N_real_repeat+(num_perturbed_model)
-                    InitData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    InitobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    objectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    objectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    XobjectiveEstData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    XobjectiveData([counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1],:)=[];
-                    counter-N_real_repeat-(num_perturbed_model+1)+1:counter-N_real_repeat-(0+1)+1
-                    counter=counter-(num_perturbed_model+1);
-                end
-            else
-                if rem(iter-N0-1,N_real_repeat+1)==0 && iter>N0+1
-                    InitData([counter-N_real_repeat-1],:)=[];
-                    InitobjectiveData([counter-N_real_repeat-1],:)=[];
-                    objectiveEstData([counter-N_real_repeat-1],:)=[];
-                    objectiveData([counter-N_real_repeat-1],:)=[];
-                    XobjectiveEstData([counter-N_real_repeat-1],:)=[];
-                    XobjectiveData([counter-N_real_repeat-1],:)=[];
-                    counter=counter-1;
-                end
-            end
-        end
-        counter=counter+1;
-        %     FileName='results.mat';
-        %     results = bayesopt(fun,vars, 'MaxObjectiveEvaluations', 1, 'NumSeedPoints', N0, ...
-        %         'PlotFcn', 'all', 'InitialX', InitData, 'AcquisitionFunctionName', 'lower-confidence-bound', 'OutputFcn', @saveToFile, 'SaveFileName', append('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/', FileName));
-    end
-
-    InitData_all=[InitData_all; InitData(N0+1:end,:)];
-    InitobjectiveData_all = [InitobjectiveData_all; InitobjectiveData(N0+1:end,:)];
-    objectiveEstData_all = [objectiveEstData_all; objectiveEstData(N0+1:end,:)];
-    objectiveData_all = [objectiveData_all; objectiveEstData(N0+1:end,:)];
-    XobjectiveEstData_all = [XobjectiveEstData_all; XobjectiveEstData(N0+1:end,:)];
-    XobjectiveData_all = [XobjectiveData_all; XobjectiveEstData(N0+1:end,:)];
-
-    data=data_start;
-    InitData=InitData_start;
-    InitobjectiveData=InitobjectiveData_start;
-    objectiveEstData=objectiveEstData_start;
-    objectiveData=objectiveData_start;
-    XobjectiveEstData=XobjectiveEstData_start;
-    XobjectiveData=XobjectiveData_start;
-
-end
-save(append(dir,'InitData_all'),'InitData_all')
-save(append(dir,'InitobjectiveData_all.mat'),'InitobjectiveData_all')
-save(append(dir,'objectiveEstData_all.mat'),'objectiveEstData_all')
-save(append(dir,'objectiveData_all.mat'),'objectiveData_all')
-save(append(dir,'XobjectiveEstData_all.mat'),'XobjectiveEstData_all')
-save(append(dir,'XobjectiveData_all.mat'),'XobjectiveData_all')
 
 end
 
