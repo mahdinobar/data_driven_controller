@@ -51,7 +51,8 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 	% Check for existing trace
 	if isfield(opt,'resume_trace') && opt.resume_trace && exist(opt.trace_file,'file')
 		load(opt.trace_file);
-		samples = botrace.samples;
+%         so initial data needs to be scaled between [0,1] to be in consistent with the code. At the end the unscaled samples are collected as the trace nad final resuts.
+		samples = scale_point(botrace.samples,opt.mins,opt.maxes);
 		values = botrace.values;
 		times = botrace.times;
 		if DO_CBO,
