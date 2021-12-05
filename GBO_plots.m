@@ -1,8 +1,4 @@
-function GBO_plots(ms, mv, Trace, gain_mins, gain_maxes, idName, G)
-% hyper-params
-N0=3;
-N_iter=30;
-repeat_experiment=1;
+function GBO_plots(ms, mv, Trace, gain_mins, gain_maxes, N0, N_iter, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
@@ -13,7 +9,7 @@ f1.Position=[200 0 1600 800];
 true_objective=3.1672;
 
 
-h1=semilogy(Trace.values./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
+h1=semilogy(Trace.values(N0+1:end)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
 legend([h1],{'BO'}, 'Location', 'best')
 grid on
 % ylim([1 2])
@@ -49,7 +45,7 @@ for i=1:N_iter
     CLi=feedback(Ci*G, 1);
     metrics=[metrics; calc_metrics(CLi, reference)];
 end
-plot_metrics(metrics, Trace, gain_mins, gain_maxes, dir, idName)
+plot_metrics(metrics, Trace, gain_mins, gain_maxes, N0, dir, idName)
 % end
 pause;
 close all;
@@ -68,14 +64,15 @@ ITAE = trapz(t, t.*abs(e));
 metrics=[emax, Ts, Tr, ITAE, ess, ov];
 end
 
-function plot_metrics(metrics, Trace, gain_mins, gain_maxes, dir, idName)
+function plot_metrics(metrics, Trace, gain_mins, gain_maxes, N0, dir, idName)
 color=rand(1,3);
 fig=figure();
 fig.Position=[200 0 1600 800];
 % plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
 subplot(3,2,1)
 hold on;
-plot(metrics(:,1),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,1),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,1),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('e_m_a_x')
@@ -83,7 +80,8 @@ title('Maximum absolute tracking error')
 
 subplot(3,2,2)
 hold on;
-plot(metrics(:,2),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,2),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,2),'o', 'MarkerFaceColor', color);
 legend('BO')
 grid on
 xlabel('iteration')
@@ -92,7 +90,8 @@ title('Settling Time')
 
 subplot(3,2,3)
 hold on;
-plot(metrics(:,3),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,3),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,3),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('T_r')
@@ -100,7 +99,8 @@ title('Rise Time from 10% to 100% of Reference')
 
 subplot(3,2,4)
 hold on;
-plot(metrics(:,4),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,4),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,4),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('ITAE')
@@ -108,7 +108,8 @@ title('Integral Time Absolute Error')
 
 subplot(3,2,5)
 hold on;
-plot(metrics(:,5),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,5),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,5),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('ess')
@@ -116,7 +117,8 @@ title('Steady-state Error')
 
 subplot(3,2,6)
 hold on;
-plot(metrics(:,6),'o', 'MarkerFaceColor', color);
+plot(metrics(1:N0,6),'x', 'MarkerFaceColor', color);
+plot(metrics(N0+1:end,6),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('max(0, 100*(y_{max}-r)')
@@ -131,7 +133,12 @@ fig.Position=[200 0 1600 800];
 % plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
 subplot(3,2,1)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,1),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 1), metrics(1:N0,1),'x', 'MarkerFaceColor', color);
+c = linspace(1,length(metrics(N0+1:end,1)),length(metrics(N0+1:end,1))); 
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,1),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -140,8 +147,11 @@ title('Maximum absolute tracking error')
 
 subplot(3,2,2)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,2),'o', 'MarkerFaceColor', color);
-legend('BO')
+plot(Trace.samples(1:N0, 1), metrics(1:N0,2),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,2),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -150,7 +160,11 @@ title('Settling Time')
 
 subplot(3,2,3)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,3),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 1), metrics(1:N0,3),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,3),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -159,7 +173,11 @@ title('Rise Time from 10% to 100% of Reference')
 
 subplot(3,2,4)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,4),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 1), metrics(1:N0,4),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,4),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -168,7 +186,11 @@ title('Integral Time Absolute Error')
 
 subplot(3,2,5)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,5),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 1), metrics(1:N0,5),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,5),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -177,7 +199,11 @@ title('Steady-state Error')
 
 subplot(3,2,6)
 hold on;
-plot(Trace.samples(:, 1), metrics(:,6),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 1), metrics(1:N0,6),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,6),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
@@ -193,7 +219,11 @@ fig.Position=[200 0 1600 800];
 % plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
 subplot(3,2,1)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,1),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 2), metrics(1:N0,1),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,1),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
@@ -202,8 +232,11 @@ title('Maximum absolute tracking error')
 
 subplot(3,2,2)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,2),'o', 'MarkerFaceColor', color);
-legend('BO')
+plot(Trace.samples(1:N0, 2), metrics(1:N0,2),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,2),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
@@ -212,7 +245,11 @@ title('Settling Time')
 
 subplot(3,2,3)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,3),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 2), metrics(1:N0,3),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,3),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
@@ -221,8 +258,12 @@ title('Rise Time from 10% to 100% of Reference')
 
 subplot(3,2,4)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,4),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 2), metrics(1:N0,4),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,4),[],c,'filled');
+cbar = colorbar;
+colormap jet
 grid on
+ylabel(cbar, 'iteration')
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
 ylabel('ITAE')
@@ -230,7 +271,11 @@ title('Integral Time Absolute Error')
 
 subplot(3,2,5)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,5),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 2), metrics(1:N0,5),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,5),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
@@ -239,7 +284,11 @@ title('Steady-state Error')
 
 subplot(3,2,6)
 hold on;
-plot(Trace.samples(:, 2), metrics(:,6),'o', 'MarkerFaceColor', color);
+plot(Trace.samples(1:N0, 2), metrics(1:N0,6),'x', 'MarkerFaceColor', color);
+scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,6),[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])

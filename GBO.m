@@ -7,6 +7,7 @@ idName= 'demo_GBO_0_3';
 sys='DC_motor';
 N0=3;
 N_iter=30;
+N_iter=N_iter+N0;
 Nsample=50;
 
 dir=append(tmp_dir,'/', idName, '/');
@@ -155,7 +156,7 @@ hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
 
 %% plots
-GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, idName, G)
+GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter, idName, G)
 end
 
 function [objective, constraints] = myObjfun_Loop(Kp, Ki, G)
