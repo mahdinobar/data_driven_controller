@@ -1,4 +1,5 @@
 function GBO
+% GPML toolbox based implementation
 clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
@@ -107,6 +108,7 @@ opt.resume_trace=true;
 %% We define the function we would like to optimize
 fun = @(X) myObjfun_Loop(X(1), X(2), G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 
+%% plot true J (grid)
 % Let's plot grid of points just to see what we are trying to optimize
 clf;
 Kp_range=Kp_max-Kp_min;
@@ -124,7 +126,6 @@ for i=1:size(kp_pt,1)
         c_pt(i,j)=c;
     end
 end
-% [j_pt,c_pt]=myObjfun_Loop(kp_pt(:),ki_pt(:),G);
 j_pt(c_pt>opt.lt_const)=NaN;
 surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
 xlabel('Kp')
@@ -148,6 +149,8 @@ fprintf('******************************************************\n');
 hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
 
+%% plots
+GBO_plots(ms, mv, Trace, idName, G)
 end
 
 function [objective, constraints] = myObjfun_Loop(Kp, Ki, G)

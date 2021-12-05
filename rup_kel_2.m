@@ -190,7 +190,7 @@ true_optimum_vars = particleswarm(funPS_handle,2,lb,ub)
 % % x.Kp=0.231167276750434;
 % % x.Ki=0.467605534040020;
 % % x.Kd=0.234584924311749;
-True_objective=funPS2(true_optimum_vars, G)
+True_objective = funPS2(true_optimum_vars, G)
 %     function [objective] = funPS2(x, G, Tf)
 %         %         todo move some lines outside with handler@: faster?
 %         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
