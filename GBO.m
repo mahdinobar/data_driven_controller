@@ -7,7 +7,6 @@ sys='DC_motor';
 N0=3;
 N_iter=30;
 Nsample=50;
-np2=2;
 
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))

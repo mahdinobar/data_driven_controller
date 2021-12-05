@@ -1,5 +1,5 @@
 function rup_kel_2
-clear all; clc; close all;
+clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_GBO_0_2';
@@ -167,27 +167,30 @@ G = tf(num, den, 'InputDelay',Td);
 % % Kd_max=Kd_nominal+dd;
 % % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
 % save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
-if sys=="ball_screw"
-    dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="robot_arm"
-    dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
-end
-load(dir_gains)
+% if sys=="ball_screw"
+%     dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
+% elseif sys=="robot_arm"
+%     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
+% elseif sys=="DC_motor"
+%     dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
+% end
+% load(dir_gains)
 %%
-% % % % Find True values
-% % % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
-% % % ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
+% % % Find True values
+% % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
+% % ub=[-0.0954016552295164*0.99,0.186083733952419*1.01,-0.0954016552295164*0.99];
+
 % lb=[-0.2358, 0.0457, -0.2358];
 % ub=[0.2358, 0.5173, 0.2358];
-% funPS_handle = @(x)funPS2(x, G, Tf);
-% % options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
-% x = particleswarm(funPS_handle,3,lb,ub);
-% % % x.Kp=0.231167276750434;
-% % % x.Ki=0.467605534040020;
-% % % x.Kd=0.234584924311749;
-% True_objective=funPS2(x, G, Tf)
+lb=[-0.0186267176164606, 1.21563271779725];
+ub=[0.671827525262160, 1.90608696067587];
+funPS_handle = @(x)funPS2(x, G);
+% options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
+true_optimum_vars = particleswarm(funPS_handle,2,lb,ub)
+% % x.Kp=0.231167276750434;
+% % x.Ki=0.467605534040020;
+% % x.Kd=0.234584924311749;
+True_objective=funPS2(true_optimum_vars, G)
 %     function [objective] = funPS2(x, G, Tf)
 %         %         todo move some lines outside with handler@: faster?
 %         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
@@ -200,9 +203,45 @@ load(dir_gains)
 %         if isnan(st) || isinf(st) || st>1e5
 %             st=1e5;
 %         end
-%
-%             w1=1;     w2=500;     objective=ov/w1+st/w2;
+% 
+%         w1=1;     w2=500;     objective=ov/w1+st/w2;
 %     end
+
+function [objective] = funPS2(x, G)
+%     todo move some lines outside with handler@: faster?
+C=tf([x(1),x(1)*x(2)], [1, 0]);
+CL=feedback(C*G, 1);
+
+ov=abs(stepinfo(CL).Overshoot);
+st=stepinfo(CL).SettlingTime;
+
+[y,t]=step(CL);
+reference=1;
+e=abs(y-reference);
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,1.0]).RiseTime;
+ITAE = trapz(t, t.*abs(e));
+
+if isnan(ov) || isinf(ov) || ov>1e3
+    ov=1e3;
+end
+if isnan(st) || isinf(st) || st>1e5
+    st=1e5;
+end
+if isnan(Tr) || isinf(Tr) || Tr>1e5
+    Tr=1e5;
+end
+if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+    ITAE=1e5;
+end
+
+w1=0.1;
+w2=1;
+w3=1;
+w4=0.5;
+objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
+end
+
+
 
 % Kpc=1.;
 % Kic=100.;
@@ -673,7 +712,6 @@ end
 end
 
 function [objective] = myObjfun_Loop(vars, G)
-
 %     todo move some lines outside with handler@: faster?
 C=tf([vars.Kp,vars.Kp*vars.Ki], [1, 0]);
 CL=feedback(C*G, 1);
@@ -690,15 +728,12 @@ ITAE = trapz(t, t.*abs(e));
 if isnan(ov) || isinf(ov) || ov>1e3
     ov=1e3;
 end
-
 if isnan(st) || isinf(st) || st>1e5
     st=1e5;
 end
-
 if isnan(Tr) || isinf(Tr) || Tr>1e5
     Tr=1e5;
 end
-
 if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
@@ -708,5 +743,4 @@ w2=1;
 w3=1;
 w4=0.5;
 objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
-
 end
