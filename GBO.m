@@ -3,7 +3,7 @@ function GBO
 clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_3';
+idName= 'demo_GBO_0_4';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -171,7 +171,7 @@ st=stepinfo(CL).SettlingTime;
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,1.0]).RiseTime;
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.98]).RiseTime;
 ITAE = trapz(t, t.*abs(e));
 
 if isnan(ov) || isinf(ov) || ov>1e3

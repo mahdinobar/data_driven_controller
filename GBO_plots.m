@@ -2,27 +2,65 @@ function GBO_plots(ms, mv, Trace, gain_mins, gain_maxes, N0, N_iter, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-f1=figure();hold on
-f1.Position=[200 0 1600 800];
-
 % true_objective DC motor numeric
 true_objective=3.1672;
 
-
-h1=semilogy(Trace.values(N0+1:end)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
-legend([h1],{'BO'}, 'Location', 'best')
+fig=figure();hold on
+fig.Position=[200 0 1600 800];
+h=semilogy(Trace.values(N0+1:end)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
+legend([h],{'BO'}, 'Location', 'best')
 grid on
 % ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 % ylabel('Cost function')
-title(append('Minimum Observed Objective vs Iterations over Real Plant (N0=',num2str(N0),')'))
+title(append('Minimum Observed Objective vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
-figName=append(dir, idName,'.png');
+figName=append(dir, idName,'_Ji.png');
 saveas(gcf,figName)
-figName=append(dir, idName,'.fig');
+figName=append(dir, idName,'_Ji.fig');
 saveas(gcf,figName)
+
+fig=figure();hold on
+fig.Position=[200 0 1600 800];
+c = linspace(1,N_iter-N0,N_iter-N0); 
+h=scatter(Trace.samples(N0+1:end, 1), Trace.values(N0+1:end)./true_objective,[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
+grid on
+xlabel('Kp')
+ylabel('Optimality Ratio')
+xlim([gain_mins(1), gain_maxes(1)])
+% ylabel('Cost function')
+title(append('Minimum Observed Objective vs Kp gain (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times')
+set(gca,'yscale','log')
+figName=append(dir, idName,'_JKp.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_JKp.fig');
+saveas(gcf,figName)
+
+fig=figure();hold on
+fig.Position=[200 0 1600 800];
+h=scatter(Trace.samples(N0+1:end, 2), Trace.values(N0+1:end)./true_objective,[],c,'filled');
+cbar = colorbar;
+colormap jet
+ylabel(cbar, 'iteration')
+grid on
+xlabel('Ki')
+ylabel('Optimality Ratio')
+xlim([gain_mins(2), gain_maxes(2)])
+% ylabel('Cost function')
+title(append('Minimum Observed Objective vs Ki gain (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times')
+set(gca,'yscale','log')
+figName=append(dir, idName,'_JKi.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_JKi.fig');
+saveas(gcf,figName)
+
 
 % experiment=1; %pick an experiment to plot
 C=tf([ms(1),ms(1)*ms(2)], [1, 0]);
