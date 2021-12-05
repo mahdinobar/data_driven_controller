@@ -40,6 +40,11 @@ load(dir_gains)
 
 %%
 tmp=[];
+
+% set random seed
+rng('default')
+rng(123)
+
 % % initial values for GP of BO
 RAND=rand(N0,1);
 
@@ -150,7 +155,7 @@ hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
 
 %% plots
-GBO_plots(ms, mv, Trace, idName, G)
+GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, idName, G)
 end
 
 function [objective, constraints] = myObjfun_Loop(Kp, Ki, G)
