@@ -4,17 +4,21 @@ dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/')
 
 % true_objective DC motor numeric
 true_objective=3.1672;
-
+JminObserv=Trace.values(N0+1:end);
+for j=N0+1:N_iter
+    JminObserv(j-N0)=nanmin(Trace.values(N0+1:j));
+end
 fig=figure();hold on
 fig.Position=[200 0 1600 800];
-h=semilogy(Trace.values(N0+1:end)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3, 'DisplayName','BO');
-legend([h],{'BO'}, 'Location', 'best')
+h1=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
+h2=semilogy(JminObserv./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
+legend([h1, h2],{'BO: Minimum Estimated','BO: Minimum Observed'}, 'Location', 'best')
 grid on
 % ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 % ylabel('Cost function')
-title(append('Minimum Observed Objective vs Iteration (N0=',num2str(N0),')'))
+title(append('Objective vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
 figName=append(dir, idName,'_Ji.png');
@@ -34,7 +38,7 @@ xlabel('Kp')
 ylabel('Optimality Ratio')
 xlim([gain_mins(1), gain_maxes(1)])
 % ylabel('Cost function')
-title(append('Minimum Observed Objective vs Kp gain (N0=',num2str(N0),')'))
+title(append('Objective vs Kp gain (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
 figName=append(dir, idName,'_JKp.png');
@@ -53,7 +57,7 @@ xlabel('Ki')
 ylabel('Optimality Ratio')
 xlim([gain_mins(2), gain_maxes(2)])
 % ylabel('Cost function')
-title(append('Minimum Observed Objective vs Ki gain (N0=',num2str(N0),')'))
+title(append('Objective vs Ki gain (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
 set(gca,'yscale','log')
 figName=append(dir, idName,'_JKi.png');
