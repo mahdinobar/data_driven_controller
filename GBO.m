@@ -3,9 +3,9 @@ function GBO
 clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_4';
+idName= 'demo_GBO_0_5';
 sys='DC_motor';
-N0=3;
+N0=10;
 N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
