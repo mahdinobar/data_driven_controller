@@ -3,7 +3,7 @@ function GBO
 clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_6';
+idName= 'demo_GBO_0_7';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -13,7 +13,7 @@ withSurrogate=true;
 if withSurrogate
     npG2=2;
     N_G = 5; %number of consecutive optimization on real plant before surrogate
-    N_extra= 5; % to compensate deleted iteration of surrogate
+    N_extra= 6; % to compensate deleted iteration of surrogate
     N_iter=N_iter+N_extra;
 end
 
@@ -171,16 +171,29 @@ for itr=N0+1:N_iter
     [ms,mv,Trace] = bayesoptGPML(fun,opt);
 
     %         remove previos data of older surrogate(G2) model
-    if withSurrogate==true && rem(itr-N0-1,N_G+1)==0 && itr>N0+1
+%     if withSurrogate==true && rem(itr-N0-1,N_G+1)==0 && itr>N0+1
+%         fprintf('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n');
+%         itr
+%         Trace.samples(counter-N_G-1,:)=[];
+%         Trace.values(counter-N_G-1)=[];
+%         Trace.times(counter-N_G-1)=[];
+%         counter=counter-1;
+%     end
+    if withSurrogate==true && N~=1 && idx==0
         fprintf('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n');
         itr
-        Trace.samples(counter-N_G-1,:)=[];
-        Trace.values(counter-N_G-1)=[];
-        Trace.times(counter-N_G-1)=[];
-        counter=counter-1;
+        Trace.samples(end-N_G-1,:)=[];
+        Trace.values(end-N_G-1)=[];
+        Trace.times(end-N_G-1)=[];
     end
     opt.resume_trace_data = Trace;
-    counter=counter+1;
+%     counter=counter+1;
+end
+% delete last trace of surrogate G2 for plots
+if withSurrogate==true && idx~=0
+    Trace.samples(end-idx,:)=[];
+    Trace.values(end-idx)=[];
+    Trace.times(end-idx)=[];
 end
 
 %% Print results
