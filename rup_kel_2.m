@@ -747,7 +747,6 @@ else
     data = merge(data, iddata(ytmp,utmp,sampleTs));
     idx= idx +1;
 end
-
 end
 
 function [objective] = myObjfun_Loop(vars, G)
