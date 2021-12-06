@@ -1,9 +1,10 @@
 function GBO_plots(ms, mv, Trace, gain_mins, gain_maxes, N0, N_iter, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
-
 % true_objective DC motor numeric
-true_objective=3.1672;
+% true_objective=3.1672;
+true_objective = 2.43936437324367;
+
 JminObserv=Trace.values(N0+1:end);
 for j=N0+1:N_iter
     JminObserv(j-N0)=nanmin(Trace.values(N0+1:j));
@@ -137,7 +138,7 @@ plot(metrics(N0+1:end,3),'o', 'MarkerFaceColor', color);
 grid on
 xlabel('iteration')
 ylabel('T_r')
-title('Rise Time from 10% to 100% of Reference')
+title('Rise Time from 10% to 98% of Reference')
 
 subplot(3,2,4)
 hold on;
@@ -211,7 +212,7 @@ grid on
 xlabel('Kp')
 xlim([gain_mins(1), gain_maxes(1)])
 ylabel('T_r')
-title('Rise Time from 10% to 100% of Reference')
+title('Rise Time from 10% to 98% of Reference')
 
 subplot(3,2,4)
 hold on;
@@ -296,7 +297,7 @@ grid on
 xlabel('Ki')
 xlim([gain_mins(2), gain_maxes(2)])
 ylabel('T_r')
-title('Rise Time from 10% to 100% of Reference')
+title('Rise Time from 10% to 98% of Reference')
 
 subplot(3,2,4)
 hold on;

@@ -57,159 +57,160 @@ Td=2e-3;
 G = tf(num, den, 'InputDelay',Td);
 
 %%
-% uncomment to estimate stable gain bounds
-% auto tune
-C_tuned = pidtune(G,'PI');
-% Kd_nominal=C_tuned.Kd;
-Kp_nominal=C_tuned.Kp;
-Ki_nominal=C_tuned.Ki;
-
-% Tf=1e-8;
-
-% C=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
-% CL=feedback(C*G, 1);
-% if abs(stepinfo(CL).Overshoot)<1
-%     objective = abs(1*stepinfo(CL).SettlingTime);
-% else
-%     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+% % uncomment to estimate stable gain bounds
+% % auto tune
+% C_tuned = pidtune(G,'PI');
+% % Kd_nominal=C_tuned.Kd;
+% Kp_nominal=C_tuned.Kp;
+% Ki_nominal=C_tuned.Ki;
+% 
+% % Tf=1e-8;
+% 
+% % C=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
+% % CL=feedback(C*G, 1);
+% % if abs(stepinfo(CL).Overshoot)<1
+% %     objective = abs(1*stepinfo(CL).SettlingTime);
+% % else
+% %     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
+% % end
+% % objective
+% 
+% limit_objective=0;
+% d=1e-1;
+% while limit_objective<50 && ~isnan(limit_objective)
+%     d
+%     lb=[Kp_nominal-d, Ki_nominal-d];
+%     ub=[Kp_nominal+d, Ki_nominal+d];
+%     funPS_handle = @(x)funPS(x, G);
+%     x_ps = particleswarm(funPS_handle,2,lb,ub);
+% 
+%     Ctmp=tf([x_ps(1), x_ps(1)*x_ps(2)], [1, 0]);
+%     CLtmp=feedback(Ctmp*G, 1);
+% %     max_overshoot=stepinfo(CLtmp).Overshoot
+%     limit_objective = -funPS(x_ps, G)
+% 
+%     d = d*1.1;
 % end
-% objective
-
-limit_objective=0;
-d=1e-1;
-while limit_objective<50 && ~isnan(limit_objective)
-    d
-    lb=[Kp_nominal-d, Ki_nominal-d];
-    ub=[Kp_nominal+d, Ki_nominal+d];
-    funPS_handle = @(x)funPS(x, G);
-    x_ps = particleswarm(funPS_handle,2,lb,ub);
-
-    Ctmp=tf([x_ps(1), x_ps(1)*x_ps(2)], [1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-    limit_objective = -funPS(x_ps, G)
-
-    d = d*1.1;
-end
+% %     function [objective] = funPS(x, G)
+% %         %     todo move some lines outside with handler@: faster?
+% %         C=tf([x(1), x(1)*x(2)], [1, 0]);
+% %         CL=feedback(C*G, 1);
+% %         objective=-abs(stepinfo(CL).Overshoot);
+% %         if isnan(objective)
+% %             objective=-1e10;
+% %         end
+% %     end
 %     function [objective] = funPS(x, G)
-%         %     todo move some lines outside with handler@: faster?
+% 
 %         C=tf([x(1), x(1)*x(2)], [1, 0]);
 %         CL=feedback(C*G, 1);
-%         objective=-abs(stepinfo(CL).Overshoot);
-%         if isnan(objective)
-%             objective=-1e10;
+% 
+%         ov=abs(stepinfo(CL).Overshoot);
+%         st=stepinfo(CL).SettlingTime;
+% 
+%         [y,t]=step(CL);
+%         reference=1;
+%         e=abs(y-reference);
+%         Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.98]).RiseTime;
+%         ITAE = trapz(t, t.*abs(e));
+% 
+%         if isnan(ov) || isinf(ov) || ov>1e3
+%             ov=1e3;
 %         end
-%     end
-    function [objective] = funPS(x, G)
-
-        C=tf([x(1), x(1)*x(2)], [1, 0]);
-        CL=feedback(C*G, 1);
-
-        ov=abs(stepinfo(CL).Overshoot);
-        st=stepinfo(CL).SettlingTime;
-
-        [y,t]=step(CL);
-        reference=1;
-        e=abs(y-reference);
-        Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.98]).RiseTime;
-        ITAE = trapz(t, t.*abs(e));
-
-        if isnan(ov) || isinf(ov) || ov>1e3
-            ov=1e3;
-        end
-        if isnan(st) || isinf(st) || st>1e5
-            st=1e5;
-        end
-        if isnan(Tr) || isinf(Tr) || Tr>1e5
-            Tr=1e5;
-        end
-        if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-            ITAE=1e5;
-        end
-
-        w1=1;
-        w2=1;
-        w3=1;
-        w4=1;
-        objective=-abs(abs(ov)/w1+st/w2+Tr/w3+ITAE/w4);
-    end
-d=d/1.1;
-Kp_min=Kp_nominal-d
-Kp_max=Kp_nominal+d
-Ki_min=Ki_nominal-d
-Ki_max=Ki_nominal+d
-
-% max_overshoot=0;
-% dp=1e-1;
-% di=1e-6;
-% dd=1e-6;
-% while max_overshoot<25 && ~isnan(max_overshoot)
-%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-%     funPS_handle = @(x)funPS(x, G, Tf);
-%     x = particleswarm(funPS_handle,3,lb,ub);
-%
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CLtmp=feedback(Ctmp*G, 1);
-%     dp
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-%     dp = dp*1.5;
-% end
-% dp = dp/1.5;
-% max_overshoot=0;
-% while max_overshoot<50 && ~isnan(max_overshoot)
-%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-%     funPS_handle = @(x)funPS(x, G, Tf);
-%     x = particleswarm(funPS_handle,3,lb,ub);
-%
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CLtmp=feedback(Ctmp*G, 1);
-%     di
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-%     di = di*1.5;
-% end
-% di = di/1.5;
-% max_overshoot=0;
-% while max_overshoot<75 && ~isnan(max_overshoot)
-%     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
-%     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
-%     funPS_handle = @(x)funPS(x, G, Tf);
-%     x = particleswarm(funPS_handle,3,lb,ub);
-%
-%     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%     CLtmp=feedback(Ctmp*G, 1);
-%     dd
-%     max_overshoot=stepinfo(CLtmp).Overshoot
-%     dd = dd*1.5;
-% end
-% dd = dd/1.5;
-%     function [objective] = funPS(x, G, Tf)
-%         %     todo move some lines outside with handler@: faster?
-%         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
-%         CL=feedback(C*G, 1);
-%         objective=-abs(stepinfo(CL).Overshoot);
-%         if isnan(objective)
-%             objective=-1e10;
+%         if isnan(st) || isinf(st) || st>1e5
+%             st=1e5;
 %         end
+%         if isnan(Tr) || isinf(Tr) || Tr>1e5
+%             Tr=1e5;
+%         end
+%         if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+%             ITAE=1e5;
+%         end
+% 
+%         w1=1;
+%         w2=1;
+%         w3=1;
+%         w4=1;
+%         objective=-abs(abs(ov)/w1+st/w2+Tr/w3+ITAE/w4);
 %     end
-%
-% Kp_min=Kp_nominal-dp;
-% Kp_max=Kp_nominal+dp;
-% Ki_min=Ki_nominal-di;
-% Ki_max=Ki_nominal+di;
-% Kd_min=Kd_nominal-dd;
-% Kd_max=Kd_nominal+dd;
-% save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
-if sys=="ball_screw"
-    dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="robot_arm"
-    dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
-end
-load(dir_gains)
+% d=d/1.1;
+% Kp_min=Kp_nominal-d
+% Kp_max=Kp_nominal+d
+% Ki_min=Ki_nominal-d
+% Ki_max=Ki_nominal+d
+% 
+% % max_overshoot=0;
+% % dp=1e-1;
+% % di=1e-6;
+% % dd=1e-6;
+% % while max_overshoot<25 && ~isnan(max_overshoot)
+% %     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+% %     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+% %     funPS_handle = @(x)funPS(x, G, Tf);
+% %     x = particleswarm(funPS_handle,3,lb,ub);
+% %
+% %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+% %     CLtmp=feedback(Ctmp*G, 1);
+% %     dp
+% %     max_overshoot=stepinfo(CLtmp).Overshoot
+% %     dp = dp*1.5;
+% % end
+% % dp = dp/1.5;
+% % max_overshoot=0;
+% % while max_overshoot<50 && ~isnan(max_overshoot)
+% %     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+% %     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+% %     funPS_handle = @(x)funPS(x, G, Tf);
+% %     x = particleswarm(funPS_handle,3,lb,ub);
+% %
+% %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+% %     CLtmp=feedback(Ctmp*G, 1);
+% %     di
+% %     max_overshoot=stepinfo(CLtmp).Overshoot
+% %     di = di*1.5;
+% % end
+% % di = di/1.5;
+% % max_overshoot=0;
+% % while max_overshoot<75 && ~isnan(max_overshoot)
+% %     lb=[Kp_nominal-dp, Ki_nominal-di, Kd_nominal-dd];
+% %     ub=[Kp_nominal+dp, Ki_nominal+di, Kd_nominal+dd];
+% %     funPS_handle = @(x)funPS(x, G, Tf);
+% %     x = particleswarm(funPS_handle,3,lb,ub);
+% %
+% %     Ctmp=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+% %     CLtmp=feedback(Ctmp*G, 1);
+% %     dd
+% %     max_overshoot=stepinfo(CLtmp).Overshoot
+% %     dd = dd*1.5;
+% % end
+% % dd = dd/1.5;
+% %     function [objective] = funPS(x, G, Tf)
+% %         %     todo move some lines outside with handler@: faster?
+% %         C=tf([x(3)+Tf*x(1),x(1)+Tf*x(2),x(2)], [Tf, 1, 0]);
+% %         CL=feedback(C*G, 1);
+% %         objective=-abs(stepinfo(CL).Overshoot);
+% %         if isnan(objective)
+% %             objective=-1e10;
+% %         end
+% %     end
+% %
+% % Kp_min=Kp_nominal-dp;
+% % Kp_max=Kp_nominal+dp;
+% % Ki_min=Ki_nominal-di;
+% % Ki_max=Ki_nominal+di;
+% % Kd_min=Kd_nominal-dd;
+% % Kd_max=Kd_nominal+dd;
+% % save('/home/mahdi/PhD application/ETH/Rupenyan/code/data_driven_controller/tmp/robot_arm_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min','Kd_min', 'Kp_max','Ki_max','Kd_max')
+% save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKiKd_bounds.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
+%%
+% if sys=="ball_screw"
+%     dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
+% elseif sys=="robot_arm"
+%     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
+% elseif sys=="DC_motor"
+%     dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
+% end
+% load(dir_gains)
 %%
 % % % Find True values
 % % lb=[-0.0954016552295164*1.01,0.186083733952419*0.99,-0.0954016552295164*1.01];
@@ -217,8 +218,11 @@ load(dir_gains)
 
 % lb=[-0.2358, 0.0457, -0.2358];
 % ub=[0.2358, 0.5173, 0.2358];
-lb=[-0.0186267176164606, 1.21563271779725];
-ub=[0.671827525262160, 1.90608696067587];
+% lb=[-0.0186267176164606, 1.21563271779725];
+% ub=[0.671827525262160, 1.90608696067587];
+lb = [0.0412887332118495, 1.27554816862556];
+ub = [0.611912074433850, 1.84617150984756];
+
 funPS_handle = @(x)funPS2(x, G);
 % options = optimoptions('particleswarm','FunctionTolerance', 0, 'MaxIterations', 1e3, 'MaxStallIterations', 1e2, 'ObjectiveLimit', 0);
 true_optimum_vars = particleswarm(funPS_handle,2,lb,ub)
@@ -253,7 +257,7 @@ st=stepinfo(CL).SettlingTime;
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,1.0]).RiseTime;
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.98]).RiseTime;
 ITAE = trapz(t, t.*abs(e));
 
 if isnan(ov) || isinf(ov) || ov>1e3
