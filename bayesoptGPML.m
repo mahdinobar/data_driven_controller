@@ -56,7 +56,14 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 		samples = scale_point(botrace.samples,opt.mins,opt.maxes);
 		values = botrace.values;
 		times = botrace.times;
-		if DO_CBO,
+        if ~isfield(botrace, 'post_mus')
+            post_mus=zeros(size(botrace.values));
+            post_sigma2s=zeros(size(botrace.values));
+        else
+            post_mus=botrace.post_mus;
+            post_sigma2s=botrace.post_sigma2s;
+        end
+		if DO_CBO
 			con_values = botrace.con_values;
 		end
 		clear botrace
@@ -65,9 +72,9 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 		values = [];
 		con_values = [];
 		times = [];
-		if isfield(opt,'initial_points'),
+		if isfield(opt,'initial_points')
 			%samples = opt.initial_points;
-			for i = 1:size(opt.initial_points,1),
+			for i = 1:size(opt.initial_points,1)
 				fprintf('Running initial point #%d...\n',i);
 				init_pt = opt.initial_points(i,:);
 				sinit_pt = scale_point(init_pt,opt.mins,opt.maxes);
@@ -117,7 +124,7 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
     for i = i_start:opt.max_iters-2,
 		hidx = -1;
 		if PAR_JOBS <= 1,
-	        [hyper_cand,hidx,aq_val] = get_next_cand(samples,values,hyper_grid,opt,DO_CBO,con_values,OPT_EI,EI_BURN);
+	        [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN);
 		else
 			% Pick first candidate
 			[mu_obj,sigma2_obj] = get_posterior(samples,values,hyper_grid,opt,-1);
@@ -211,7 +218,7 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 			
 		if PAR_JOBS <= 1,
 			if ~DO_CBO, 
-        		fprintf('Iteration %d, ei = %f',i+2,aq_val);
+        		fprintf('Iteration %d, Maximum EI = %f',i+2,aq_val);
 			else
 				fprintf('Iteration %d, eic = %f',i+2,aq_val);
 			end
@@ -231,6 +238,8 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
         		times(end+1) = toc;
 		        samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
 		        values(end+1) = value;
+                post_mus(end+1) = post_mu(hidx);
+                post_sigma2s(end+1)=post_sigma2(hidx);
 			else
 				par_values = {};
 				par_times = {};
@@ -298,7 +307,8 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 				fprintf('Overall min = %f\n\n',min(values(which_feas)));
 			end
 		end
-		
+		botrace.post_mus=post_mus;
+        botrace.post_sigma2s=post_sigma2s;
         botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
         botrace.values = values;
         botrace.times = times;
@@ -323,7 +333,7 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 		minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 	end
 
-function [hyper_cand,hidx,aq_val] = get_next_cand(samples,values,hyper_grid,opt,DO_CBO,con_values,OPT_EI,EI_BURN)
+function [hyper_cand,hidx,aq_val, mu, sigma2] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN)
         % Get posterior means and variances for all points on the grid.
         [mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,-1);
         
@@ -336,7 +346,9 @@ function [hyper_cand,hidx,aq_val] = get_next_cand(samples,values,hyper_grid,opt,
 			if isempty(best),
 				best = max(values)+999;
 			end
-		end
+        end
+%         given posterior mu and sigma on grid_set points, compute EI taken
+%         best sample (at the sampled point(among N0 data or taken by acquisition function) with minimum value(cost))
         ei = compute_ei(best,mu,sigma2);
 
         hyps = {};
@@ -385,12 +397,15 @@ function [hyper_cand,hidx,aq_val] = get_next_cand(samples,values,hyper_grid,opt,
 			[mei,meidx] = max(ei);
 			hyper_cand = unscale_point(hg_star(meidx,:),opt.mins,opt.maxes);
 			hidx = -1;
-		else
+        else
+%             find where we have the maximum EI on our grid_set enquiry
+%             data on posterior
     		[mei,meidx] = max(ei);
+%             get location(x) on the GP posterior with maximum EI
         	hyper_cand = unscale_point(hyper_grid(meidx,:),opt.mins,opt.maxes);
         	hidx = meidx;
         end
-		
+% 		maximum EI acquired at hyper_cand
 		aq_val = mei;
 
 function [mu,sigma2,hyp] = get_posterior(X,y,x_hats,opt,hyp)
@@ -413,6 +428,7 @@ function [mu,sigma2,hyp] = get_posterior(X,y,x_hats,opt,hyp)
         hyp.lik = log(0.1);
 		hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
     end
+%     x_hats are test inputs given to gp to predict
     [mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,y,x_hats);
 
 function zstar = optimize_ei(z,X,y,best,hyp,opt)

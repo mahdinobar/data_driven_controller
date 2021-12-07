@@ -1,40 +1,95 @@
-function GBO_plots(ms, mv, Trace, gain_mins, gain_maxes, N0, N_iter, idName, G)
+function GBO_plots(ms, mv, TraceGBO, gain_mins, gain_maxes, N0, N_iter, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 % true_objective DC motor numeric
 % true_objective=3.1672;
 true_objective = 2.43936437324367;
+ms_true=[0.6119, 1.6642];
 
-JminObserv=Trace.values(N0+1:end);
+JminObserv=TraceGBO.values(N0+1:end);
 for j=N0+1:N_iter
-    JminObserv(j-N0)=nanmin(Trace.values(N0+1:j));
+    JminObserv(j-N0)=nanmin(TraceGBO.values(N0+1:j));
 end
 fig=figure();hold on
 fig.Position=[200 0 1600 800];
-h1=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [1, 0, 0, 1], 'LineWidth', 1);
+h1=semilogy(TraceGBO.values(N0+1:end)./true_objective, '--', 'Color', [1, 0, 0, 1], 'LineWidth', 1);
 h2=semilogy(JminObserv./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 3);
 
-% %--------------------------------------------------------------------------
-% % todo automatize code
-% load(append(dir,'trace_file_BO.mat'))
-% JminObserv=Trace.values(N0+1:end);
+% JminEst=TraceGBO.values(N0+1:end);
 % for j=N0+1:N_iter
-%     JminObserv(j-N0)=nanmin(Trace.values(N0+1:j));
+%     JminEst(j-N0)=nanmin(TraceGBO.post_mus(N0+1:j));
 % end
-% h3=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
-% h4=semilogy(JminObserv./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
-% legend([h1, h2, h3, h4],{'GBO: Minimum Estimated','GBO: Minimum Observed', 'BO: Minimum Estimated','BO: Minimum Observed'}, 'Location', 'best');
-% %--------------------------------------------------------------------------
+% h5=semilogy(TraceGBO.post_mus(N0+1:end)./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 1);
+% h6=semilogy(JminEst./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 3);
 
-legend([h1, h2],{'GBO: Minimum Estimated','GBO: Minimum Observed'}, 'Location', 'best')
+%--------------------------------------------------------------------------
+% todo automatize code
+load(append(dir,'trace_file_BO.mat'))
+TraceBO=Trace;
+clear Trace
+JminObserv=TraceBO.values(N0+1:end);
+for j=N0+1:N_iter
+    JminObserv(j-N0)=nanmin(TraceBO.values(N0+1:j));
+end
+h3=semilogy(TraceBO.values(N0+1:end)./true_objective, '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
+h4=semilogy(JminObserv./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
+legend([h1, h2, h3, h4],{'GBO: Minimum Evaluated','GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated','BO: Minimum Observed Evaluation'}, 'Location', 'best');
+%--------------------------------------------------------------------------
+% legend([h1, h2],{'GBO: Minimum Estimated','GBO: Minimum Observed'}, 'Location', 'best')
 grid on
 % ylim([1 2])
 xlabel('Iteration')
 ylabel('Optimality Ratio')
+title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times')
+set(gca,'yscale','log')
+figName=append(dir, idName,'_ORi.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_ORi.fig');
+saveas(gcf,figName)
+
+
+JminObserv=TraceGBO.values(N0+1:end);
+for j=N0+1:N_iter
+    JminObserv(j-N0)=nanmin(TraceGBO.values(N0+1:j));
+end
+fig=figure();hold on
+fig.Position=[200 0 1600 800];
+h1=plot(TraceGBO.values(N0+1:end), '--', 'Color', [1, 0, 0, 1], 'LineWidth', 1);
+h2=plot(JminObserv, 'Color', [1, 0, 0, 1], 'LineWidth', 3);
+% JminEst=TraceGBO.values(N0+1:end);
+% for j=N0+1:N_iter
+%     JminEst(j-N0)=nanmin(TraceGBO.post_mus(N0+1:j));
+% end
+h5=plot(TraceGBO.post_mus(N0+1:end), 'Color', [0, 1, 0, 1], 'LineWidth', 3);
+y=TraceGBO.post_mus(N0+1:end);
+CI=TraceGBO.post_sigma2s(N0+1:end)/2;
+x=linspace(1,length(y),length(y))';
+
+h6=plot(y-CI, 'Color', [0, 1, 0, 1], 'LineWidth', 1);
+plot(y+CI, 'Color', [0, 1, 0, 1], 'LineWidth', 1)
+
+% h6=semilogy(JminEst./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 3);
+%--------------------------------------------------------------------------
+% todo automatize code
+load(append(dir,'trace_file_BO.mat'))
+TraceBO=Trace;
+clear Trace
+JminObserv=TraceBO.values(N0+1:end);
+for j=N0+1:N_iter
+    JminObserv(j-N0)=nanmin(TraceBO.values(N0+1:j));
+end
+h3=plot(TraceBO.values(N0+1:end), '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
+h4=plot(JminObserv, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
+legend([h1, h2, h3, h4, h5, h6],{'GBO: Minimum Evaluated','GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated','BO: Minimum Observed Evaluation', 'GBO: Prediction', 'GBO: 95% Confidence Interval'}, 'Location', 'southeast');
+%--------------------------------------------------------------------------
+grid on
+% ylim([1 2])
+xlabel('Iteration')
+ylabel('J')
 % ylabel('Cost function')
 title(append('Objective vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times')
-set(gca,'yscale','log')
 figName=append(dir, idName,'_Ji.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_Ji.fig');
@@ -43,9 +98,10 @@ saveas(gcf,figName)
 fig=figure();hold on
 fig.Position=[200 0 1600 800];
 c = linspace(1,N_iter-N0,N_iter-N0); 
-h=scatter(Trace.samples(N0+1:end, 1), Trace.values(N0+1:end)./true_objective,[],c,'filled');
+h=scatter(TraceGBO.samples(N0+1:end, 1), TraceGBO.values(N0+1:end)./true_objective,[],c,'filled');
+h2=scatter(TraceBO.samples(N0+1:end, 1), TraceBO.values(N0+1:end)./true_objective,[],c,'filled', '*');
 cbar = colorbar;
-colormap jet
+colormap hot
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -62,9 +118,9 @@ saveas(gcf,figName)
 
 fig=figure();hold on
 fig.Position=[200 0 1600 800];
-h=scatter(Trace.samples(N0+1:end, 2), Trace.values(N0+1:end)./true_objective,[],c,'filled');
+h=scatter(TraceGBO.samples(N0+1:end, 2), TraceGBO.values(N0+1:end)./true_objective,[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -84,24 +140,27 @@ saveas(gcf,figName)
 C=tf([ms(1),ms(1)*ms(2)], [1, 0]);
 CL=feedback(C*G, 1);
 
+C_true=tf([ms_true(1),ms_true(1)*ms_true(2)], [1, 0]);
+CL_true=feedback(C_true*G, 1);
+
 % todo ?
 reference=1; % reference signal
 
 % plot output error over time: e=|y-r| vs t
 plot_et(CL, reference, idName, dir)
 % plot y,r vs t
-plot_yrt(CL, reference, idName, dir)
+plot_yrt(CL, CL_true, reference, idName, dir)
 
 % plot metrics vs iteration
 % for exper=1:repeat_experiment
 metrics=[];
 for i=1:N_iter
-    gainsi=Trace.samples(i, :);
+    gainsi=TraceGBO.samples(i, :);
     Ci=tf([gainsi(1),gainsi(1)*gainsi(2)], [1, 0]);
     CLi=feedback(Ci*G, 1);
     metrics=[metrics; calc_metrics(CLi, reference)];
 end
-plot_metrics(metrics, Trace, gain_mins, gain_maxes, N0, dir, idName)
+plot_metrics(metrics, TraceGBO, gain_mins, gain_maxes, N0, dir, idName)
 % end
 pause;
 close all;
@@ -193,7 +252,7 @@ plot(Trace.samples(1:N0, 1), metrics(1:N0,1),'x', 'MarkerFaceColor', color);
 c = linspace(1,length(metrics(N0+1:end,1)),length(metrics(N0+1:end,1))); 
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,1),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -206,7 +265,7 @@ hold on;
 plot(Trace.samples(1:N0, 1), metrics(1:N0,2),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,2),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -219,7 +278,7 @@ hold on;
 plot(Trace.samples(1:N0, 1), metrics(1:N0,3),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,3),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -232,7 +291,7 @@ hold on;
 plot(Trace.samples(1:N0, 1), metrics(1:N0,4),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,4),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -245,7 +304,7 @@ hold on;
 plot(Trace.samples(1:N0, 1), metrics(1:N0,5),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,5),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -258,7 +317,7 @@ hold on;
 plot(Trace.samples(1:N0, 1), metrics(1:N0,6),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 1), metrics(N0+1:end,6),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Kp')
@@ -278,7 +337,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,1),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,1),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -291,7 +350,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,2),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,2),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -304,7 +363,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,3),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,3),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -317,7 +376,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,4),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,4),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 grid on
 ylabel(cbar, 'iteration')
 xlabel('Ki')
@@ -330,7 +389,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,5),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,5),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -343,7 +402,7 @@ hold on;
 plot(Trace.samples(1:N0, 2), metrics(1:N0,6),'x', 'MarkerFaceColor', color);
 scatter(Trace.samples(N0+1:end, 2), metrics(N0+1:end,6),[],c,'filled');
 cbar = colorbar;
-colormap jet
+colormap copper
 ylabel(cbar, 'iteration')
 grid on
 xlabel('Ki')
@@ -372,7 +431,7 @@ figName=append(dir, idName,'_et.png');
 saveas(gcf,figName)
 end
 
-function plot_yrt(TF, r, idName, dir)
+function plot_yrt(TF, TFtrue, r, idName, dir)
 % plot e over t
 fig=figure();
 hold on;
@@ -381,7 +440,10 @@ fig.Position=[200 0 1600 800];
 graph1=plot(t, y,'Color', [0, 0, 1, 1], 'LineWidth', 2);
 graph2=plot(t, r.*ones(size(t)), ':', 'Color', [0.2, 0.2, 0.2, 1], 'LineWidth', 2);
 
-legend([graph1, graph2],{'y: output', 'r: reference'}, 'Location', 'best')
+[y_ture,t_ture]=step(TFtrue);
+graph3=plot(t_ture, y_ture,'Color', [0, 1, 0, 1], 'LineWidth', 2);
+
+legend([graph1, graph2, graph3],{'y: output', 'r: reference', 'nominal output'}, 'Location', 'best')
 
 grid on
 xlabel('Time (sec)')

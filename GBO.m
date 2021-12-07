@@ -186,6 +186,8 @@ for itr=N0+1:N_iter
         itr
         Trace.samples(end-N_G-1,:)=[];
         Trace.values(end-N_G-1)=[];
+        Trace.post_mus(end-N_G-1)=[];
+        Trace.post_sigma2s(end-N_G-1)=[];
         Trace.times(end-N_G-1)=[];
     end
     opt.resume_trace_data = Trace;
@@ -195,6 +197,8 @@ end
 if withSurrogate==true && idx~=0
     Trace.samples(end-idx,:)=[];
     Trace.values(end-idx)=[];
+    Trace.post_mus(end-idx)=[];
+    Trace.post_sigma2s(end-idx)=[];
     Trace.times(end-idx)=[];
 end
 save(append(dir, 'trace_file.mat'),'Trace')
