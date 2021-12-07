@@ -11,9 +11,22 @@ for j=N0+1:N_iter
 end
 fig=figure();hold on
 fig.Position=[200 0 1600 800];
-h1=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
-h2=semilogy(JminObserv./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
-legend([h1, h2],{'BO: Minimum Estimated','BO: Minimum Observed'}, 'Location', 'best')
+h1=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [1, 0, 0, 1], 'LineWidth', 1);
+h2=semilogy(JminObserv./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 3);
+
+% %--------------------------------------------------------------------------
+% % todo automatize code
+% load(append(dir,'trace_file_BO.mat'))
+% JminObserv=Trace.values(N0+1:end);
+% for j=N0+1:N_iter
+%     JminObserv(j-N0)=nanmin(Trace.values(N0+1:j));
+% end
+% h3=semilogy(Trace.values(N0+1:end)./true_objective, '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
+% h4=semilogy(JminObserv./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
+% legend([h1, h2, h3, h4],{'GBO: Minimum Estimated','GBO: Minimum Observed', 'BO: Minimum Estimated','BO: Minimum Observed'}, 'Location', 'best');
+% %--------------------------------------------------------------------------
+
+legend([h1, h2],{'GBO: Minimum Estimated','GBO: Minimum Observed'}, 'Location', 'best')
 grid on
 % ylim([1 2])
 xlabel('Iteration')

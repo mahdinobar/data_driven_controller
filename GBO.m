@@ -3,7 +3,7 @@ function GBO
 clear; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_7';
+idName= 'demo_GBO_1_1';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -118,8 +118,10 @@ opt.resume_trace=true;
 % save(append(dir,'trace_file.mat'),'botrace')
 opt.resume_trace_data = botrace;
 clear botrace
+if withSurrogate
+    G2 = tfest(G2data,npG2);
+end
 
-G2 = tfest(G2data,npG2);
 %% We define the function we would like to optimize
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
@@ -195,7 +197,7 @@ if withSurrogate==true && idx~=0
     Trace.values(end-idx)=[];
     Trace.times(end-idx)=[];
 end
-
+save(append(dir, 'trace_file.mat'),'Trace')
 %% Print results
 fprintf('******************************************************\n');
 fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
