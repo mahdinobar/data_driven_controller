@@ -65,9 +65,15 @@ h5=plot(TraceGBO.post_mus(N0+1:end), 'Color', [0, 1, 0, 1], 'LineWidth', 3);
 y=TraceGBO.post_mus(N0+1:end);
 CI=TraceGBO.post_sigma2s(N0+1:end)/2;
 x=linspace(1,length(y),length(y))';
-
 h6=plot(y-CI, 'Color', [0, 1, 0, 1], 'LineWidth', 1);
 plot(y+CI, 'Color', [0, 1, 0, 1], 'LineWidth', 1)
+
+h7=plot(TraceBO.post_mus(N0+1:end), 'Color', [0, 0, 0, 1], 'LineWidth', 3);
+y=TraceBO.post_mus(N0+1:end);
+CI=TraceBO.post_sigma2s(N0+1:end)/2;
+x=linspace(1,length(y),length(y))';
+h8=plot(y-CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1);
+plot(y+CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1)
 
 % h6=semilogy(JminEst./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 3);
 %--------------------------------------------------------------------------
@@ -81,7 +87,7 @@ for j=N0+1:N_iter
 end
 h3=plot(TraceBO.values(N0+1:end), '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
 h4=plot(JminObserv, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
-legend([h1, h2, h3, h4, h5, h6],{'GBO: Minimum Evaluated','GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated','BO: Minimum Observed Evaluation', 'GBO: Prediction', 'GBO: 95% Confidence Interval'}, 'Location', 'southeast');
+legend([h1, h2, h3, h4, h5, h6, h7, h8],{'GBO: Minimum Evaluated','GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated','BO: Minimum Observed Evaluation', 'GBO: Prediction', 'GBO: 95% Confidence Interval', 'BO: Prediction', 'BO: 95% Confidence Interval'}, 'Location', 'southeast');
 %--------------------------------------------------------------------------
 grid on
 % ylim([1 2])
