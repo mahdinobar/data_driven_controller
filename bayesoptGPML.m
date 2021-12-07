@@ -49,7 +49,7 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
     incomplete = logical(ones(size(hyper_grid,1),1));
 	
 	% Check for existing trace
-	if isfield(opt,'resume_trace') && opt.resume_trace && exist(opt.trace_file,'file')
+	if isfield(opt,'resume_trace') && opt.resume_trace && (exist(opt.trace_file,'file') || isfield(opt, 'resume_trace_data'))
 % 		load(opt.trace_file);
         botrace=opt.resume_trace_data;
 %         so initial data needs to be scaled between [0,1] to be in consistent with the code. At the end the unscaled samples are collected as the trace nad final resuts.

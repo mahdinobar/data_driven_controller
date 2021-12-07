@@ -1,9 +1,9 @@
 function GBO
 % GPML toolbox based implementation
-clear; clc; close all;
+clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_1';
+idName= 'demo_GBO_1_2';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -208,7 +208,8 @@ Trace.G2_samples=G2_samples;
 Trace.G2_values=G2_values;
 Trace.G2_post_mus=G2_post_mus;
 Trace.G2_post_sigma2s=G2_post_sigma2s;
-save(append(dir, 'trace_file.mat'),'Trace')
+
+save(append(dir, 'trace_file_BO.mat'),'Trace')
 
 %% Print results
 fprintf('******************************************************\n');
@@ -222,9 +223,11 @@ plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2
 
 %% plots
 if withSurrogate
+    save(append(dir, 'trace_file.mat'),'Trace')
     GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
 else
-    GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter, idName, G)
+    save(append(dir, 'trace_file_BO.mat'),'Trace')
+    %     GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter, N_G, idName, G)
 end
 end
 
@@ -259,11 +262,9 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w1=0.1;
-w2=1;
-w3=1;
-w4=0.5;
-objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
+w=[0.1, 4, 2, 2];
+w=w./sum(w);
+objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;
 end
 

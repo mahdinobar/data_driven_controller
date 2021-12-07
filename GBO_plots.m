@@ -457,7 +457,7 @@ graph2=plot(t, r.*ones(size(t)), ':', 'Color', [0.2, 0.2, 0.2, 1], 'LineWidth', 
 [y_ture,t_ture]=step(TFtrue);
 graph3=plot(t_ture, y_ture,'Color', [0, 1, 0, 1], 'LineWidth', 2);
 
-legend([graph1, graph2, graph3],{'y: output', 'r: reference', 'nominal output'}, 'Location', 'best')
+legend([graph1, graph2, graph3],{'y: output', 'r: reference', 'ground true'}, 'Location', 'best')
 
 grid on
 xlabel('Time (sec)')
