@@ -165,6 +165,10 @@ global idx
 N=[];
 idx=[];
 counter=N0+1;
+G2_samples=[];
+G2_values=[];
+G2_post_mus=[];
+G2_post_sigma2s=[];
 for itr=N0+1:N_iter
 %     itr
 %     iteration=itr-N0
@@ -172,18 +176,13 @@ for itr=N0+1:N_iter
     opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
     [ms,mv,Trace] = bayesoptGPML(fun,opt);
 
-    %         remove previos data of older surrogate(G2) model
-%     if withSurrogate==true && rem(itr-N0-1,N_G+1)==0 && itr>N0+1
-%         fprintf('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n');
-%         itr
-%         Trace.samples(counter-N_G-1,:)=[];
-%         Trace.values(counter-N_G-1)=[];
-%         Trace.times(counter-N_G-1)=[];
-%         counter=counter-1;
-%     end
+    % remove previos data of older surrogate(G2) model, but keep them 
+    % seperately for plots
     if withSurrogate==true && N~=1 && idx==0
-        fprintf('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n');
-        itr
+        G2_samples=[G2_samples; Trace.samples(end-N_G-1,:)];
+        G2_values=[G2_values; Trace.values(end-N_G-1,:)];
+        G2_post_mus=[G2_post_mus; Trace.post_mus(end-N_G-1,:)];
+        G2_post_sigma2s=[G2_post_sigma2s; Trace.post_sigma2s(end-N_G-1,:)];
         Trace.samples(end-N_G-1,:)=[];
         Trace.values(end-N_G-1)=[];
         Trace.post_mus(end-N_G-1)=[];
@@ -195,13 +194,22 @@ for itr=N0+1:N_iter
 end
 % delete last trace of surrogate G2 for plots
 if withSurrogate==true && idx~=0
+    G2_samples=[G2_samples; Trace.samples(end-idx,:)];
+    G2_values=[G2_values; Trace.values(end-idx)];
+    G2_post_mus=[G2_post_mus; Trace.post_mus(end-idx)];
+    G2_post_sigma2s=[G2_post_sigma2s; Trace.post_sigma2s(end-idx)];
     Trace.samples(end-idx,:)=[];
     Trace.values(end-idx)=[];
     Trace.post_mus(end-idx)=[];
     Trace.post_sigma2s(end-idx)=[];
     Trace.times(end-idx)=[];
 end
+Trace.G2_samples=G2_samples;
+Trace.G2_values=G2_values;
+Trace.G2_post_mus=G2_post_mus;
+Trace.G2_post_sigma2s=G2_post_sigma2s;
 save(append(dir, 'trace_file.mat'),'Trace')
+
 %% Print results
 fprintf('******************************************************\n');
 fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
@@ -214,7 +222,7 @@ plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2
 
 %% plots
 if withSurrogate
-    GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter-N_extra, idName, G)
+    GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
 else
     GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter, idName, G)
 end

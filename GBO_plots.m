@@ -1,4 +1,4 @@
-function GBO_plots(ms, mv, TraceGBO, gain_mins, gain_maxes, N0, N_iter, idName, G)
+function GBO_plots(ms, mv, TraceGBO, gain_mins, gain_maxes, N0, N_iter, N_G, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 % true_objective DC motor numeric
@@ -75,6 +75,10 @@ x=linspace(1,length(y),length(y))';
 h8=plot(y-CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1);
 plot(y+CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1)
 
+x=0:N_G:N_iter-N0-1;
+y=TraceGBO.G2_post_mus;
+err=TraceGBO.G2_post_sigma2s;
+h9=errorbar(x, y, err, '-s','MarkerSize',10,'MarkerEdgeColor','red','MarkerFaceColor','red', 'LineStyle','none');
 % h6=semilogy(JminEst./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 3);
 %--------------------------------------------------------------------------
 % todo automatize code
@@ -87,7 +91,11 @@ for j=N0+1:N_iter
 end
 h3=plot(TraceBO.values(N0+1:end), '--', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
 h4=plot(JminObserv, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
-legend([h1, h2, h3, h4, h5, h6, h7, h8],{'GBO: Minimum Evaluated','GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated','BO: Minimum Observed Evaluation', 'GBO: Prediction', 'GBO: 95% Confidence Interval', 'BO: Prediction', 'BO: 95% Confidence Interval'}, 'Location', 'southeast');
+legend([h1, h2, h3, h4, h5, h6, h7, h8, h9],{'GBO: Minimum Evaluated', ...
+    'GBO: Minimum Observed Evaluation', 'BO: Minimum Evaluated', ...
+    'BO: Minimum Observed Evaluation', 'GBO: Prediction', ...
+    'GBO: 95% Confidence Interval', 'BO: Prediction', ...
+    'BO: 95% Confidence Interval', 'GBO: Simulation Prediction with Confidence Bar'}, 'Location', 'southeast');
 %--------------------------------------------------------------------------
 grid on
 % ylim([1 2])

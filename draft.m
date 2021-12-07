@@ -12,7 +12,8 @@ N0=3;
 true_objective = 2.43936437324367;
 
 fig=figure();hold on
-% fig.Position=[200 0 1600 800];
+fig.Position=[200 0 1600 800];
+grid on
 % c = linspace(1,N_iter-N0,N_iter-N0);
 % h=scatter(TraceGBO.samples(N0+1:end, 1), TraceGBO.values(N0+1:end)./true_objective,[],c,'filled', 'SizeData', 100);
 % h2=scatter(TraceBO.samples(N0+1:end, 1), TraceBO.values(N0+1:end)./true_objective,[],c, 'filled', '^', 'SizeData', 100);
@@ -24,6 +25,11 @@ x=linspace(1,length(y),length(y))';
 
 plot(y-CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1)
 plot(y+CI, 'Color', [0, 0, 0, 1], 'LineWidth', 1)
+
+x=0:5:29;
+y=TraceGBO.G2_post_mus;
+err=TraceGBO.G2_post_sigma2s;
+errorbar(x, y, err, '-s','MarkerSize',10,'MarkerEdgeColor','red','MarkerFaceColor','red', 'LineStyle','none');
 
 
 % fill([x;fliplr(x)], [y-CI;fliplr(y+CI)], [0, 1, 0], 'FaceAlpha',0.5)
