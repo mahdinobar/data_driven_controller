@@ -3,13 +3,13 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_2';
+idName= 'demo_GBO_1_4';
 sys='DC_motor';
 N0=3;
 N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
-withSurrogate=true;
+withSurrogate=false;
 if withSurrogate
     npG2=2;
     N_G = 5; %number of consecutive optimization on real plant before surrogate
@@ -87,6 +87,8 @@ for i=1:N0
         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     end
 end
+clear ytmp
+clear utmp
 botrace.samples=[Kp, Ki];
 botrace.values=InitobjectiveData;
 % todo need to correct time?
@@ -100,7 +102,7 @@ startup;
 opt = defaultopt(); % Get some default values for non problem-specific options.
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
-opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter. 
+opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
 opt.grid_size = 20000;
 %opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
 opt.lt_const = 0.0;
@@ -109,7 +111,7 @@ opt.lt_const = 0.0;
 %less grid size.
 %opt.grid_size = 300; % If you use the optimize_ei option
 opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
-opt.save_trace = 1;
+opt.save_trace = 0;
 %opt.trace_file = 'demo_trace.mat';
 %matlabpool 3; % Uncomment to do certain things in parallel. Suggested if optimize_ei is turned on. If parallel_jobs is > 1, bayesopt does this for you.
 opt.trace_file=append(dir,'trace_file.mat');
@@ -121,6 +123,108 @@ clear botrace
 if withSurrogate
     G2 = tfest(G2data,npG2);
 end
+
+
+%% find optimum GP hyperparameters
+% priors
+opt.meanfunc={@meanConst};
+opt.covfunc={@covSEard};
+% liklihood
+likfunc={@likGauss};
+% inference method
+infer=@infExact;
+
+% sample from latin (denoted as ltn) hypercube
+N_ltn=5;
+RAND_ltn = lhsdesign(N_ltn,N_ltn);
+
+RAND_ltn = sort(RAND_ltn(:));
+
+Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+J_ltn = zeros(N_ltn^2,1);
+for i=1:N_ltn
+    C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
+    CL=feedback(C*G, 1);
+    J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+end
+
+N_hat=100;
+RAND_hat = linspace(0,1,N_hat);
+RAND_hat = RAND_hat(:);
+Kp_hat = (Kp_max-Kp_min).*RAND_hat + Kp_min;
+Ki_hat = (Ki_max-Ki_min).*RAND_hat + Ki_min;
+J_hat = zeros(N_hat,1);
+for i=1:N_hat
+    C=tf([Kp_hat(i), Kp_hat(i)*Ki_hat(i)], [1, 0]);
+    CL=feedback(C*G, 1);
+    J_hat(i) = ObjFun([Kp_hat(i), Ki_hat(i)], G);
+end
+
+% train data for GP
+X=[Kp_ltn, Ki_ltn];
+y=J_ltn;
+
+% test data x_hats for GP and ground truth y_hats
+x_hats=[Kp_hat, Ki_hat];
+y_hats=J_hat;
+
+meanfunc = opt.meanfunc;
+covfunc = opt.covfunc;
+if isfield(opt,'num_mean_hypers')
+    n_mh = opt.num_mean_hypers;
+else
+    n_mh = num_hypers(meanfunc{1},opt);
+end
+if isfield(opt,'num_cov_hypers')
+    n_ch = opt.num_cov_hypers;
+else
+    n_ch = num_hypers(covfunc{1},opt);
+end
+hyp = [];
+hyp.mean = zeros(n_mh,1);
+hyp.cov = zeros(n_ch,1);
+hyp.lik = log(0.1);
+% calculate GP mean/cov/lik hyperparameters
+hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X,y);
+
+%     x_hats are test inputs given to gp to predict
+[mu,sigma2] = gp(hyp,infer,meanfunc,covfunc,likfunc,X,y,x_hats);
+
+fig=figure();
+fig.Position=[0 0 1600 1200];
+subplot(2,1,1)
+grid on
+hold on
+plot(X(:,1),y, 'r', 'LineWidth',3)
+plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
+plot(x_hats(:,1),mu,'k', 'LineWidth',3)
+plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
+plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
+title(append('mean = ', func2str(opt.meanfunc{1}), ': ', num2str(hyp.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}), ' : ', ...
+    num2str(hyp.cov', '%05.3f'), ' & lik = ', func2str(likfunc{1}), ' : ', num2str(hyp.lik,'%05.3f')))
+xlabel('Kp')
+ylabel('cost')
+legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+xlim([Kp_min, Kp_max])
+subplot(2, 1, 2)
+grid on
+hold on
+plot(X(:,2),y, 'r', 'LineWidth',3)
+plot(x_hats(:,2),y_hats,'g', 'LineWidth',1)
+plot(x_hats(:,2),mu,'k', 'LineWidth',3)
+plot(x_hats(:,2),mu+sigma2/2,'--k', 'LineWidth',1)
+plot(x_hats(:,2),mu-sigma2/2,'--k', 'LineWidth',1)
+legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+xlabel('Ki')
+ylabel('cost')
+legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+xlim([Ki_min, Ki_max])
+
+figName=append(dir, idName,'_GP_hypr_tune.png');
+saveas(gcf,figName)
+pause;
+
 
 %% We define the function we would like to optimize
 if withSurrogate==true
@@ -156,9 +260,9 @@ drawnow;
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
 % [ms,mv,Trace] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
-                               % mv - best function value for that setting L(ms)
-                               % Trace  - Trace of all settings tried, their function values, and constraint values.
-                
+% mv - best function value for that setting L(ms)
+% Trace  - Trace of all settings tried, their function values, and constraint values.
+
 %%
 global N
 global idx
@@ -170,13 +274,13 @@ G2_values=[];
 G2_post_mus=[];
 G2_post_sigma2s=[];
 for itr=N0+1:N_iter
-%     itr
-%     iteration=itr-N0
-    
+    %     itr
+    %     iteration=itr-N0
+
     opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
     [ms,mv,Trace] = bayesoptGPML(fun,opt);
 
-    % remove previos data of older surrogate(G2) model, but keep them 
+    % remove previos data of older surrogate(G2) model, but keep them
     % seperately for plots
     if withSurrogate==true && N~=1 && idx==0
         G2_samples=[G2_samples; Trace.samples(end-N_G-1,:)];
@@ -190,7 +294,7 @@ for itr=N0+1:N_iter
         Trace.times(end-N_G-1)=[];
     end
     opt.resume_trace_data = Trace;
-%     counter=counter+1;
+    %     counter=counter+1;
 end
 % delete last trace of surrogate G2 for plots
 if withSurrogate==true && idx~=0
@@ -209,7 +313,7 @@ Trace.G2_values=G2_values;
 Trace.G2_post_mus=G2_post_mus;
 Trace.G2_post_sigma2s=G2_post_sigma2s;
 
-save(append(dir, 'trace_file_BO.mat'),'Trace')
+% save(append(dir, 'trace_file_BO.mat'),'Trace')
 
 %% Print results
 fprintf('******************************************************\n');
@@ -262,7 +366,7 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[0.1, 4, 2, 2];
+w=[0.1, 1, 1, 0.5];
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;
@@ -294,4 +398,20 @@ else
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     idx= idx +1;
 end
+end
+
+function nh = num_hypers(func,opt)
+    str = func();
+    nm = str2num(str);
+    if ~isempty(nm)
+        nh = nm;
+    else
+        if all(str == '(D+1)')
+            nh = opt.dims + 1;
+        elseif all(str == '(D+2)')
+            nh = opt.dims + 2;
+        else
+            error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
+        end
+    end
 end
