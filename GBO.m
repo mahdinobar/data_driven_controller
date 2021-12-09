@@ -9,7 +9,7 @@ N0=3;
 N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
-withSurrogate=false;
+withSurrogate=true;
 if withSurrogate
     npG2=2;
     N_G = 5; %number of consecutive optimization on real plant before surrogate
@@ -128,7 +128,7 @@ end
 %% find optimum GP hyperparameters
 % priors
 opt.meanfunc={@meanConst};
-opt.covfunc={@covSEard};
+opt.covfunc={@covMaternard, 5};
 % liklihood
 likfunc={@likGauss};
 % inference method
@@ -181,15 +181,15 @@ if isfield(opt,'num_cov_hypers')
 else
     n_ch = num_hypers(covfunc{1},opt);
 end
-hyp = [];
-hyp.mean = zeros(n_mh,1);
-hyp.cov = zeros(n_ch,1);
-hyp.lik = log(0.1);
+hyp_latin = [];
+hyp_latin.mean = zeros(n_mh,1);
+hyp_latin.cov = zeros(n_ch,1);
+hyp_latin.lik = log(0.1);
 % calculate GP mean/cov/lik hyperparameters
-hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X,y);
+hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X,y);
 
 %     x_hats are test inputs given to gp to predict
-[mu,sigma2] = gp(hyp,infer,meanfunc,covfunc,likfunc,X,y,x_hats);
+[mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X,y,x_hats);
 
 fig=figure();
 fig.Position=[0 0 1600 1200];
@@ -201,8 +201,8 @@ plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
 plot(x_hats(:,1),mu,'k', 'LineWidth',3)
 plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
 plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
-title(append('mean = ', func2str(opt.meanfunc{1}), ': ', num2str(hyp.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}), ' : ', ...
-    num2str(hyp.cov', '%05.3f'), ' & lik = ', func2str(likfunc{1}), ' : ', num2str(hyp.lik,'%05.3f')))
+title(append('mean = ', func2str(opt.meanfunc{1}), ': ', num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}), ' : ', ...
+    num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
 xlabel('Kp')
 ylabel('cost')
 legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
@@ -221,10 +221,10 @@ ylabel('cost')
 legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
 xlim([Ki_min, Ki_max])
 
-figName=append(dir, idName,'_GP_hypr_tune.png');
+figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
 saveas(gcf,figName)
 pause;
-
+close;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
@@ -256,7 +256,8 @@ xlabel('Kp')
 ylabel('Ki')
 zlabel('J')
 drawnow;
-
+pause;
+close;
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
 % [ms,mv,Trace] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
@@ -278,7 +279,7 @@ for itr=N0+1:N_iter
     %     iteration=itr-N0
 
     opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-    [ms,mv,Trace] = bayesoptGPML(fun,opt);
+    [ms,mv,Trace] = bayesoptGPML(fun,opt,hyp_latin);
 
     % remove previos data of older surrogate(G2) model, but keep them
     % seperately for plots
@@ -401,14 +402,16 @@ end
 end
 
 function nh = num_hypers(func,opt)
-    str = func();
+    str = func(1);
     nm = str2num(str);
     if ~isempty(nm)
         nh = nm;
     else
-        if all(str == '(D+1)')
+        if isequal(str, 'D*1')
+            nh = opt.dims * 1;
+        elseif isequal(str,'(D+1)')
             nh = opt.dims + 1;
-        elseif all(str == '(D+2)')
+        elseif isequal(str,'(D+2)')
             nh = opt.dims + 2;
         else
             error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');

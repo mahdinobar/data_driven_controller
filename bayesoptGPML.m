@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
+function [minsample,minvalue,botrace] = bayesoptGPML(F,opt, hyp_latin)
     warning('off')
     % Check options for minimum level of validity
     check_opts(opt);
@@ -124,7 +124,7 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
     for i = i_start:opt.max_iters-2,
 		hidx = -1;
 		if PAR_JOBS <= 1,
-	        [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN);
+	        [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN,hyp_latin);
 		else
 			% Pick first candidate
 			[mu_obj,sigma2_obj] = get_posterior(samples,values,hyper_grid,opt,-1);
@@ -333,9 +333,9 @@ function [minsample,minvalue,botrace] = bayesoptGPML(F,opt)
 		minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 	end
 
-function [hyper_cand,hidx,aq_val, mu, sigma2] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN)
+function [hyper_cand,hidx,aq_val, mu, sigma2] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN,hyp_latin)
         % Get posterior means and variances for all points on the grid.
-        [mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,-1);
+        [mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,hyp_latin);
         
         % Compute EI for all points in the grid, and find the maximum.
 		if ~DO_CBO,

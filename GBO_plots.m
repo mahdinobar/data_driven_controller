@@ -98,7 +98,7 @@ legend([h1, h2, h3, h4, h5, h6, h7, h8, h9],{'GBO: Minimum Evaluated', ...
     'BO: 95% Confidence Interval', 'GBO: Simulation Prediction with Confidence Bar'}, 'Location', 'southeast');
 %--------------------------------------------------------------------------
 grid on
-ylim([-100 100])
+% ylim([-100 100])
 xlabel('Iteration')
 ylabel('J')
 % ylabel('Cost function')
