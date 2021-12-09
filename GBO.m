@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_4';
+idName= 'demo_GBO_1_5';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -256,8 +256,7 @@ xlabel('Kp')
 ylabel('Ki')
 zlabel('J')
 drawnow;
-pause;
-close;
+
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
 % [ms,mv,Trace] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
