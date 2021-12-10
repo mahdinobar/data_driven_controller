@@ -6,10 +6,12 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 idName= 'demo_GBO_1_6';
 sys='DC_motor';
 N0=5;
+
 N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
-withSurrogate=false;
+withSurrogate=true;
+
 if withSurrogate
     npG2=2;
     N_G = 5; %number of consecutive optimization on real plant before surrogate
@@ -119,7 +121,7 @@ opt.resume_trace=true;
 
 %% find optimum GP hyperparameters
 % priors
-opt.meanfunc={@meanConst};
+opt.meanfunc={@meanLinear};
 opt.covfunc={@covMaternard, 5};
 % liklihood
 likfunc={@likGauss};
@@ -129,8 +131,8 @@ infer=@infExact;
 % sample from latin (denoted as ltn) hypercube
 N_ltn=N0;
 
-if withSurrogate
-    load(append(dir,'RAND_ltn.mat'))
+if withSurrogate==true
+    load(append(dir,'RAND_ltn.mat'), 'RAND_ltn')
 else
     RAND_ltn = sort(lhsdesign(N_ltn,1));
     save(append(dir,'RAND_ltn.mat'))
@@ -201,6 +203,7 @@ hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X_ltn
 
 %     x_hats are test inputs given to gp to predict
 [mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X_ltn,y_ltn,x_hats);
+save(append(dir, 'hyp_latin.mat'), 'hyp_latin')
 
 %% plot latin tuning GP hyperparams
 fig=figure();
@@ -213,12 +216,17 @@ plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
 plot(x_hats(:,1),mu,'k', 'LineWidth',3)
 plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
 plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
-title(append('mean = ', func2str(opt.meanfunc{1}), ': ', num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}), ' : ', ...
-    num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
+% title(append('mean = ', func2str(opt.meanfunc{1}), ': ' ...
+%     , num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}) ...
+%     , ' : ', num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', ...
+%     func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
+title(append('mean = ', func2str(opt.meanfunc{1}), ' & cov = ', ...
+    func2str(opt.covfunc{1}), ' & lik = ', func2str(likfunc{1})))
 xlabel('Kp')
 ylabel('cost')
 legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
 xlim([Kp_min, Kp_max])
+ylim([0, max(y_hats)+10])
 subplot(2, 1, 2)
 grid on
 hold on
@@ -232,7 +240,7 @@ xlabel('Ki')
 ylabel('cost')
 legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
 xlim([Ki_min, Ki_max])
-
+ylim([0, max(y_hats)+10])
 figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
 saveas(gcf,figName)
 pause;
@@ -305,7 +313,7 @@ for itr=N0+1:N_iter
     %     iteration=itr-N0
 
     opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-    [ms,mv,Trace] = bayesoptGPML(fun,opt,hyp_latin);
+    [ms,mv,Trace] = bayesoptGPML(fun,opt,N0);
 
     % remove previos data of older surrogate(G2) model, but keep them
     % seperately for plots
@@ -445,6 +453,8 @@ function nh = num_hypers(func,opt)
             nh = opt.dims + 1;
         elseif isequal(str,'(D+2)')
             nh = opt.dims + 2;
+        elseif isequal(str,'D')
+            nh = opt.dims ;
         else
             error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
         end
