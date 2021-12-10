@@ -166,6 +166,9 @@ for i=1:N_ltn
     end
 end
 G2data=G2data_init;
+if withSurrogate
+    G2 = tfest(G2data, npG2);
+end
 
 N_hat=100;
 RAND_hat = linspace(0,1,N_hat);
@@ -252,10 +255,6 @@ pause(1.5);
 close;
 
 %% We define the function we would like to optimize
-if withSurrogate
-    G2 = tfest(G2data, npG2);
-end
-
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
 else
@@ -358,29 +357,30 @@ for expr=1:N_expr
     Trace(expr)=Trace_tmp;
     delete Trace_tmp
 
-    if withSurrogate==true && expr<N_expr
+    if withSurrogate==true
         save(append(dir, 'trace_file.mat'),'Trace')
-        load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
-        RAND_ltn=RAND_ltn_all(:,expr+1);
-        Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
-        Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
-        J_ltn = zeros(N_ltn,1);
-        for i=1:N_ltn
-            C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
-            CL=feedback(C*G, 1);
-            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
-            CLU=feedback(C, G);
-            ytmp=step(CL,0:sampleTs:sampleTf);
-            utmp=step(CLU,0:sampleTs:sampleTf);
-            %         todo check concept?
-            if i==1
-                G2data_init = iddata(ytmp,utmp,sampleTs);
-            else
-                G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
+        if expr<N_expr
+            load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
+            RAND_ltn=RAND_ltn_all(:,expr+1);
+            Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+            Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+            J_ltn = zeros(N_ltn,1);
+            for i=1:N_ltn
+                C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
+                CL=feedback(C*G, 1);
+                J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+                CLU=feedback(C, G);
+                ytmp=step(CL,0:sampleTs:sampleTf);
+                utmp=step(CLU,0:sampleTs:sampleTf);
+                %         todo check concept?
+                if i==1
+                    G2data_init = iddata(ytmp,utmp,sampleTs);
+                else
+                    G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
+                end
             end
+            G2data=G2data_init;
         end
-        G2data=G2data_init;
-
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
         RAND_ltn = sort(lhsdesign(N_ltn,1));

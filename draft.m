@@ -36,11 +36,11 @@ ms_true=[0.6119, 1.6642];
 fig=figure();hold on
 fig.Position=[200 0 1600 1200];
 for expr=1:length(TraceGBO)
-    JminObservGBO=TraceGBO(expr).values(N0+1:end);
-    JminObservBO=TraceBO(expr).values(N0+1:end);
-    for j=N0+1:N_iter
-        JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(N0+1:j));
-        JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(N0+1:j));
+    JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:end);
+    JminObservBO(:,expr)=TraceBO(expr).values(N0+1:end);
+    for j=1+N0:N_iter
+        JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+        JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
     end
     h1=semilogy(JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, 1], 'LineWidth', 1);
     h2=semilogy(JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
@@ -58,12 +58,12 @@ grid on
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times')
-set(gca,'yscale','log')
-figName=append(dir, idName,'_ORi_MonteCarlo.png');
-saveas(gcf,figName)
-figName=append(dir, idName,'_ORi_MonteCarlo.fig');
-saveas(gcf,figName)
+% set(gca, 'DefaultAxesFontName', 'Times')
+% set(gca,'yscale','log')
+% figName=append(dir, idName,'_ORi_MonteCarlo.png');
+% saveas(gcf,figName)
+% figName=append(dir, idName,'_ORi_MonteCarlo.fig');
+% saveas(gcf,figName)
 end
 
 % function draft()
