@@ -124,7 +124,6 @@ if withSurrogate
     G2 = tfest(G2data,npG2);
 end
 
-
 %% find optimum GP hyperparameters
 % priors
 opt.meanfunc={@meanConst};
@@ -135,14 +134,12 @@ likfunc={@likGauss};
 infer=@infExact;
 
 % sample from latin (denoted as ltn) hypercube
-N_ltn=5;
-RAND_ltn = lhsdesign(N_ltn,N_ltn);
-
-RAND_ltn = sort(RAND_ltn(:));
+N_ltn=25;
+RAND_ltn = sort(lhsdesign(N_ltn,1));
 
 Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
 Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
-J_ltn = zeros(N_ltn^2,1);
+J_ltn = zeros(N_ltn,1);
 for i=1:N_ltn
     C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
     CL=feedback(C*G, 1);
