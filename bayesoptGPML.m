@@ -424,20 +424,20 @@ else
 end
 
 % calculate hyp: the optimum hyperparameters of GP posterior
-if size(X,1)==N0
-    hyp = [];
-    hyp.mean = zeros(n_mh,1);
-    hyp.cov = zeros(n_ch,1);
-    hyp.lik = log(0.1);
-    hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
-else
-    hyp = [];
-    hyp.mean = zeros(n_mh,1);
-    hyp.cov = zeros(n_ch,1);
-    hyp.lik = log(0.1);
-    hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X(1:end-1,:),y(1:end-1,:));
-    hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
-end
+% if size(X,1)==N0
+hyp = [];
+hyp.mean = zeros(n_mh,1);
+hyp.cov = zeros(n_ch,1);
+hyp.lik = log(0.1);
+hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+% else
+%     hyp = [];
+%     hyp.mean = zeros(n_mh,1);
+%     hyp.cov = zeros(n_ch,1);
+%     hyp.lik = log(0.1);
+%     hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X(1:end-1,:),y(1:end-1,:));
+%     hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+% end
 %     x_hats are test inputs given to gp to predict
 [mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,y,x_hats);
 

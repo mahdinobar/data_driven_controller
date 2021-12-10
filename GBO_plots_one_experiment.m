@@ -1,6 +1,8 @@
-function GBO_plots(ms, mv, TraceGBO, gain_mins, gain_maxes, N0, N_iter, N_G, idName, G)
+function GBO_plots_one_experiment(ms, Trace, experiment, gain_mins, gain_maxes, N0, N_iter, N_G, idName, G)
 
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+TraceGBO=Trace(experiment);
+clear Trace
 % true_objective DC motor numeric
 % true_objective=3.1672;
 true_objective = 2.43936437324367;
@@ -25,7 +27,7 @@ h2=semilogy(JminObserv./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 3);
 %--------------------------------------------------------------------------
 % todo automatize code
 load(append(dir,'trace_file_BO.mat'))
-TraceBO=Trace;
+TraceBO=Trace(experiment);
 clear Trace
 JminObserv=TraceBO.values(N0+1:end);
 for j=N0+1:N_iter

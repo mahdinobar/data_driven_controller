@@ -3,9 +3,10 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_6';
+idName= 'demo_GBO_1_7';
 sys='DC_motor';
 N0=5;
+N_expr=2;
 
 N_iter=30;
 N_iter=N_iter+N0;
@@ -50,16 +51,16 @@ load(dir_gains)
 
 %% create initial dataset
 % tmp=[];
-% 
+%
 % % set random seed
 % rng('default')
 % rng(123)
-% 
+%
 % % % initial values for GP of BO
 % RAND=rand(N0,1);
-% 
+%
 % % load(append(dir,'RAND.mat'))
-% 
+%
 % Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 % Ki = (Ki_max-Ki_min).*RAND + Ki_min;
 % InitobjectiveData = zeros(N0,1);
@@ -119,7 +120,7 @@ opt.save_trace = 0;
 opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 
-%% find optimum GP hyperparameters
+%% find optimum GP hyperparameters (and initial data for first experiment)
 % priors
 opt.meanfunc={@meanLinear};
 opt.covfunc={@covMaternard, 5};
@@ -130,12 +131,15 @@ infer=@infExact;
 
 % sample from latin (denoted as ltn) hypercube
 N_ltn=N0;
+RAND_ltn_all=zeros(N0,N_expr);
 
 if withSurrogate==true
-    load(append(dir,'RAND_ltn.mat'), 'RAND_ltn')
+    load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
+    RAND_ltn=RAND_ltn_all(:,1);
 else
     RAND_ltn = sort(lhsdesign(N_ltn,1));
-    save(append(dir,'RAND_ltn.mat'))
+    RAND_ltn_all(:,1)=RAND_ltn;
+    save(append(dir,'RAND_ltn_all.mat'))
 end
 
 Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
@@ -156,11 +160,12 @@ for i=1:N_ltn
     utmp=step(CLU,0:sampleTs:sampleTf);
     %         todo check concept?
     if i==1
-        G2data = iddata(ytmp,utmp,sampleTs);
+        G2data_init = iddata(ytmp,utmp,sampleTs);
     else
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+        G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
     end
 end
+G2data=G2data_init;
 
 N_hat=100;
 RAND_hat = linspace(0,1,N_hat);
@@ -243,25 +248,14 @@ xlim([Ki_min, Ki_max])
 ylim([0, max(y_hats)+10])
 figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
 saveas(gcf,figName)
-pause;
+pause(1.5);
 close;
 
-
-%% set initial dataset with latin hypercube samples
-hyp_latin=-1;
-
-botrace.samples=X_ltn;
-botrace.values=y_ltn;
-% todo need to correct time?
-botrace.times=RAND_ltn';
-% save(append(dir,'trace_file.mat'),'botrace')
-opt.resume_trace_data = botrace;
-clear botrace
+%% We define the function we would like to optimize
 if withSurrogate
-    G2 = tfest(G2data,npG2);
+    G2 = tfest(G2data, npG2);
 end
 
-%% We define the function we would like to optimize
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
 else
@@ -301,52 +295,106 @@ fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
 %%
 global N
 global idx
-N=[];
-idx=[];
-counter=N0+1;
-G2_samples=[];
-G2_values=[];
-G2_post_mus=[];
-G2_post_sigma2s=[];
-for itr=N0+1:N_iter
-    %     itr
-    %     iteration=itr-N0
+global G2data
 
-    opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-    [ms,mv,Trace] = bayesoptGPML(fun,opt,N0);
+for expr=1:N_expr
+    N=[];
+    idx=[];
+    G2_samples=[];
+    G2_values=[];
+    G2_post_mus=[];
+    G2_post_sigma2s=[];
+    % set initial dataset with latin hypercube samples
+    % train data for GP
+    X_ltn=[Kp_ltn, Ki_ltn];
+    y_ltn=J_ltn;
+    botrace.samples=X_ltn;
+    botrace.values=y_ltn;
+    % todo need to correct time?
+    botrace.times=RAND_ltn';
+    % save(append(dir,'trace_file.mat'),'botrace')
+    opt.resume_trace_data = botrace;
+    clear botrace
 
-    % remove previos data of older surrogate(G2) model, but keep them
-    % seperately for plots
-    if withSurrogate==true && N~=1 && idx==0
-        G2_samples=[G2_samples; Trace.samples(end-N_G-1,:)];
-        G2_values=[G2_values; Trace.values(end-N_G-1,:)];
-        G2_post_mus=[G2_post_mus; Trace.post_mus(end-N_G-1,:)];
-        G2_post_sigma2s=[G2_post_sigma2s; Trace.post_sigma2s(end-N_G-1,:)];
-        Trace.samples(end-N_G-1,:)=[];
-        Trace.values(end-N_G-1)=[];
-        Trace.post_mus(end-N_G-1)=[];
-        Trace.post_sigma2s(end-N_G-1)=[];
-        Trace.times(end-N_G-1)=[];
+    for itr=N0+1:N_iter
+        %     itr
+        %     iteration=itr-N0
+
+        opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
+        [ms,mv,Trace_tmp] = bayesoptGPML(fun,opt,N0);
+
+        % remove previos data of older surrogate(G2) model, but keep them
+        % seperately for plots
+        if withSurrogate==true && N~=1 && idx==0
+            G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-1,:)];
+            G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
+            G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
+            G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-1,:)];
+            Trace_tmp.samples(end-N_G-1,:)=[];
+            Trace_tmp.values(end-N_G-1)=[];
+            Trace_tmp.post_mus(end-N_G-1)=[];
+            Trace_tmp.post_sigma2s(end-N_G-1)=[];
+            Trace_tmp.times(end-N_G-1)=[];
+        end
+        opt.resume_trace_data = Trace_tmp;
+        %     counter=counter+1;
     end
-    opt.resume_trace_data = Trace;
-    %     counter=counter+1;
+    % delete last trace of surrogate G2 for plots
+    if withSurrogate==true && idx~=0
+        G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
+        G2_values=[G2_values; Trace_tmp.values(end-idx)];
+        G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-idx)];
+        G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-idx)];
+        Trace_tmp.samples(end-idx,:)=[];
+        Trace_tmp.values(end-idx)=[];
+        Trace_tmp.post_mus(end-idx)=[];
+        Trace_tmp.post_sigma2s(end-idx)=[];
+        Trace_tmp.times(end-idx)=[];
+    end
+    Trace_tmp.G2_samples=G2_samples;
+    Trace_tmp.G2_values=G2_values;
+    Trace_tmp.G2_post_mus=G2_post_mus;
+    Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
+    Trace(expr)=Trace_tmp;
+    delete Trace_tmp
+
+    if withSurrogate==true && expr<N_expr
+        save(append(dir, 'trace_file.mat'),'Trace')
+        load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
+        RAND_ltn=RAND_ltn_all(:,expr+1);
+        Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+        Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+        J_ltn = zeros(N_ltn,1);
+        for i=1:N_ltn
+            C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
+            CL=feedback(C*G, 1);
+            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+            CLU=feedback(C, G);
+            ytmp=step(CL,0:sampleTs:sampleTf);
+            utmp=step(CLU,0:sampleTs:sampleTf);
+            %         todo check concept?
+            if i==1
+                G2data_init = iddata(ytmp,utmp,sampleTs);
+            else
+                G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
+            end
+        end
+        G2data=G2data_init;
+
+    else
+        save(append(dir, 'trace_file_BO.mat'),'Trace')
+        RAND_ltn = sort(lhsdesign(N_ltn,1));
+        RAND_ltn_all(:,expr+1)=RAND_ltn;
+        save(append(dir,'RAND_ltn_all.mat'))
+        Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+        Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+        J_ltn = zeros(N_ltn,1);
+        for i=1:N_ltn
+            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+        end
+    end
+
 end
-% delete last trace of surrogate G2 for plots
-if withSurrogate==true && idx~=0
-    G2_samples=[G2_samples; Trace.samples(end-idx,:)];
-    G2_values=[G2_values; Trace.values(end-idx)];
-    G2_post_mus=[G2_post_mus; Trace.post_mus(end-idx)];
-    G2_post_sigma2s=[G2_post_sigma2s; Trace.post_sigma2s(end-idx)];
-    Trace.samples(end-idx,:)=[];
-    Trace.values(end-idx)=[];
-    Trace.post_mus(end-idx)=[];
-    Trace.post_sigma2s(end-idx)=[];
-    Trace.times(end-idx)=[];
-end
-Trace.G2_samples=G2_samples;
-Trace.G2_values=G2_values;
-Trace.G2_post_mus=G2_post_mus;
-Trace.G2_post_sigma2s=G2_post_sigma2s;
 
 % save(append(dir, 'trace_file_BO.mat'),'Trace')
 
@@ -368,11 +416,9 @@ saveas(gcf,figName)
 
 %% plots
 if withSurrogate
-    save(append(dir, 'trace_file.mat'),'Trace')
-    GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
-else
-    save(append(dir, 'trace_file_BO.mat'),'Trace')
-    %     GBO_plots(ms, mv, Trace, opt.mins, opt.maxes, N0, N_iter, N_G, idName, G)
+    %     experiment=1;
+    %     GBO_plots_one_experiment(ms, Trace, experiment, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
+    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
 end
 end
 
@@ -442,21 +488,21 @@ end
 end
 
 function nh = num_hypers(func,opt)
-    str = func(1);
-    nm = str2num(str);
-    if ~isempty(nm)
-        nh = nm;
+str = func(1);
+nm = str2num(str);
+if ~isempty(nm)
+    nh = nm;
+else
+    if isequal(str, 'D*1')
+        nh = opt.dims * 1;
+    elseif isequal(str,'(D+1)')
+        nh = opt.dims + 1;
+    elseif isequal(str,'(D+2)')
+        nh = opt.dims + 2;
+    elseif isequal(str,'D')
+        nh = opt.dims ;
     else
-        if isequal(str, 'D*1')
-            nh = opt.dims * 1;
-        elseif isequal(str,'(D+1)')
-            nh = opt.dims + 1;
-        elseif isequal(str,'(D+2)')
-            nh = opt.dims + 2;
-        elseif isequal(str,'D')
-            nh = opt.dims ;
-        else
-            error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
-        end
+        error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
     end
+end
 end
