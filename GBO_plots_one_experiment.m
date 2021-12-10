@@ -84,9 +84,9 @@ h9=errorbar(x, y, err, '-s','MarkerSize',10,'MarkerEdgeColor','red','MarkerFaceC
 % h6=semilogy(JminEst./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 3);
 %--------------------------------------------------------------------------
 % todo automatize code
-load(append(dir,'trace_file_BO.mat'))
-TraceBO=Trace;
-clear Trace
+% load(append(dir,'trace_file_BO.mat'))
+% TraceBO=Trace;
+% clear Trace
 JminObserv=TraceBO.values(N0+1:end);
 for j=N0+1:N_iter
     JminObserv(j-N0)=nanmin(TraceBO.values(N0+1:j));

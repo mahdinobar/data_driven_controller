@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_7';
+idName= 'demo_GBO_1_9';
 sys='DC_motor';
 N0=5;
 N_expr=2;
@@ -12,6 +12,7 @@ N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
 withSurrogate=true;
+only_visualize=false;
 
 if withSurrogate
     npG2=2;
@@ -39,6 +40,8 @@ Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
 
+
+
 %% load gain limits
 if sys=="ball_screw"
     dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
@@ -49,6 +52,16 @@ elseif sys=="DC_motor"
 end
 load(dir_gains)
 
+%% only_visualize
+if only_visualize
+    load(append(dir, 'trace_file.mat'),'Trace')
+    experiment=1;
+    mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
+    maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
+    ms=[0 0];
+    GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
+    return
+end
 %% create initial dataset
 % tmp=[];
 %
@@ -167,7 +180,7 @@ for i=1:N_ltn
 end
 G2data=G2data_init;
 if withSurrogate
-    G2 = tfest(G2data, npG2);
+    G2=idtf(n4sid(G2data,npG2));
 end
 
 N_hat=100;
@@ -470,7 +483,7 @@ if isempty(N)
     idx= 0;
 elseif idx==N_G
     N = N+1;
-    G2 = tfest(G2data,npG2);
+    G2=idtf(n4sid(G2data,npG2));
     objective=ObjFun(X, G2);
     idx= 0;
 else
