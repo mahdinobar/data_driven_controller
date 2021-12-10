@@ -5,11 +5,11 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_GBO_1_6';
 sys='DC_motor';
-N0=3;
+N0=5;
 N_iter=30;
 N_iter=N_iter+N0;
 Nsample=50;
-withSurrogate=true;
+withSurrogate=false;
 if withSurrogate
     npG2=2;
     N_G = 5; %number of consecutive optimization on real plant before surrogate
@@ -47,52 +47,52 @@ end
 load(dir_gains)
 
 %% create initial dataset
-tmp=[];
-
-% set random seed
-rng('default')
-rng(123)
-
-% % initial values for GP of BO
-RAND=rand(N0,1);
-
-% load(append(dir,'RAND.mat'))
-
-Kp = (Kp_max-Kp_min).*RAND + Kp_min;
-Ki = (Ki_max-Ki_min).*RAND + Ki_min;
-InitobjectiveData = zeros(N0,1);
-% todo pay attention how you choose sampleTf?
-sampleTf=1.5;
-sampleTs=sampleTf/(Nsample-1);
-global G2data
-for i=1:N0
-    C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
-    CL=feedback(C*G, 1);
-    InitobjectiveData(i) = ObjFun([Kp(i), Ki(i)], G);
-    while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
-        RAND(i)=rand(1,1);
-        Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
-        Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
-        C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
-        CL=feedback(C*G, 1);
-        InitobjectiveData(i) = ObjFun(Kp(i), Ki(i), G);
-    end
-    CLU=feedback(C, G);
-    ytmp=step(CL,0:sampleTs:sampleTf);
-    utmp=step(CLU,0:sampleTs:sampleTf);
-    %         todo check concept?
-    if i==1
-        G2data = iddata(ytmp,utmp,sampleTs);
-    else
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    end
-end
-clear ytmp
-clear utmp
-botrace.samples=[Kp, Ki];
-botrace.values=InitobjectiveData;
-% todo need to correct time?
-botrace.times=RAND';
+% tmp=[];
+% 
+% % set random seed
+% rng('default')
+% rng(123)
+% 
+% % % initial values for GP of BO
+% RAND=rand(N0,1);
+% 
+% % load(append(dir,'RAND.mat'))
+% 
+% Kp = (Kp_max-Kp_min).*RAND + Kp_min;
+% Ki = (Ki_max-Ki_min).*RAND + Ki_min;
+% InitobjectiveData = zeros(N0,1);
+% % todo pay attention how you choose sampleTf?
+% sampleTf=1.5;
+% sampleTs=sampleTf/(Nsample-1);
+% global G2data
+% for i=1:N0
+%     C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
+%     CL=feedback(C*G, 1);
+%     InitobjectiveData(i) = ObjFun([Kp(i), Ki(i)], G);
+%     while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
+%         RAND(i)=rand(1,1);
+%         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
+%         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
+%         C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
+%         CL=feedback(C*G, 1);
+%         InitobjectiveData(i) = ObjFun(Kp(i), Ki(i), G);
+%     end
+%     CLU=feedback(C, G);
+%     ytmp=step(CL,0:sampleTs:sampleTf);
+%     utmp=step(CLU,0:sampleTs:sampleTf);
+%     %         todo check concept?
+%     if i==1
+%         G2data = iddata(ytmp,utmp,sampleTs);
+%     else
+%         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+%     end
+% end
+% clear ytmp
+% clear utmp
+% botrace.samples=[Kp, Ki];
+% botrace.values=InitobjectiveData;
+% % todo need to correct time?
+% botrace.times=RAND';
 
 %% Setup the Gaussian Process (GP) Library
 addpath ./gpml/
@@ -117,13 +117,6 @@ opt.save_trace = 0;
 opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 
-% save(append(dir,'trace_file.mat'),'botrace')
-opt.resume_trace_data = botrace;
-clear botrace
-if withSurrogate
-    G2 = tfest(G2data,npG2);
-end
-
 %% find optimum GP hyperparameters
 % priors
 opt.meanfunc={@meanConst};
@@ -134,16 +127,37 @@ likfunc={@likGauss};
 infer=@infExact;
 
 % sample from latin (denoted as ltn) hypercube
-N_ltn=25;
-RAND_ltn = sort(lhsdesign(N_ltn,1));
+N_ltn=N0;
+
+if withSurrogate
+    load(append(dir,'RAND_ltn.mat'))
+else
+    RAND_ltn = sort(lhsdesign(N_ltn,1));
+    save(append(dir,'RAND_ltn.mat'))
+end
 
 Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
 Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
 J_ltn = zeros(N_ltn,1);
+
+sampleTf=1.5;
+sampleTs=sampleTf/(Nsample-1);
+global G2data
+
 for i=1:N_ltn
     C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
     CL=feedback(C*G, 1);
     J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+
+    CLU=feedback(C, G);
+    ytmp=step(CL,0:sampleTs:sampleTf);
+    utmp=step(CLU,0:sampleTs:sampleTf);
+    %         todo check concept?
+    if i==1
+        G2data = iddata(ytmp,utmp,sampleTs);
+    else
+        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+    end
 end
 
 N_hat=100;
@@ -159,8 +173,8 @@ for i=1:N_hat
 end
 
 % train data for GP
-X=[Kp_ltn, Ki_ltn];
-y=J_ltn;
+X_ltn=[Kp_ltn, Ki_ltn];
+y_ltn=J_ltn;
 
 % test data x_hats for GP and ground truth y_hats
 x_hats=[Kp_hat, Ki_hat];
@@ -183,17 +197,18 @@ hyp_latin.mean = zeros(n_mh,1);
 hyp_latin.cov = zeros(n_ch,1);
 hyp_latin.lik = log(0.1);
 % calculate GP mean/cov/lik hyperparameters
-hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X,y);
+hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X_ltn,y_ltn);
 
 %     x_hats are test inputs given to gp to predict
-[mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X,y,x_hats);
+[mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X_ltn,y_ltn,x_hats);
 
+%% plot latin tuning GP hyperparams
 fig=figure();
 fig.Position=[0 0 1600 1200];
 subplot(2,1,1)
 grid on
 hold on
-plot(X(:,1),y, 'r', 'LineWidth',3)
+plot(X_ltn(:,1),y_ltn, 'r', 'LineWidth',3)
 plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
 plot(x_hats(:,1),mu,'k', 'LineWidth',3)
 plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
@@ -207,7 +222,7 @@ xlim([Kp_min, Kp_max])
 subplot(2, 1, 2)
 grid on
 hold on
-plot(X(:,2),y, 'r', 'LineWidth',3)
+plot(X_ltn(:,2),y_ltn, 'r', 'LineWidth',3)
 plot(x_hats(:,2),y_hats,'g', 'LineWidth',1)
 plot(x_hats(:,2),mu,'k', 'LineWidth',3)
 plot(x_hats(:,2),mu+sigma2/2,'--k', 'LineWidth',1)
@@ -222,7 +237,22 @@ figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
 saveas(gcf,figName)
 pause;
 close;
+
+
+%% set initial dataset with latin hypercube samples
 hyp_latin=-1;
+
+botrace.samples=X_ltn;
+botrace.values=y_ltn;
+% todo need to correct time?
+botrace.times=RAND_ltn';
+% save(append(dir,'trace_file.mat'),'botrace')
+opt.resume_trace_data = botrace;
+clear botrace
+if withSurrogate
+    G2 = tfest(G2data,npG2);
+end
+
 %% We define the function we would like to optimize
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
@@ -321,6 +351,12 @@ fprintf('******************************************************\n');
 %% Draw optimium
 hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
+if withSurrogate
+    figName=append(dir, idName,'_SurfGrid_GBO_Solution.png');
+else
+    figName=append(dir, idName,'_SurfGrid_BO_Solution.png');
+end
+saveas(gcf,figName)
 
 %% plots
 if withSurrogate
