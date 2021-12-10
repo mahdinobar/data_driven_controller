@@ -644,15 +644,18 @@ function check_opts(opt)
 		warning('bayesopt:optwarning','Warning: opt.optimize_ei is set, but opt.cov_grad_f is not. By default, covSEard is assumed.');
 	end
     
+
 function nh = num_hypers(func,opt)
-    str = func();
+    str = func(1);
     nm = str2num(str);
     if ~isempty(nm)
         nh = nm;
     else
-        if all(str == '(D+1)')
+        if isequal(str, 'D*1')
+            nh = opt.dims * 1;
+        elseif isequal(str,'(D+1)')
             nh = opt.dims + 1;
-        elseif all(str == '(D+2)')
+        elseif isequal(str,'(D+2)')
             nh = opt.dims + 2;
         else
             error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');

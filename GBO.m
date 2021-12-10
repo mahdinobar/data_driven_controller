@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_1_5';
+idName= 'demo_GBO_1_6';
 sys='DC_motor';
 N0=3;
 N_iter=30;
@@ -222,7 +222,7 @@ figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
 saveas(gcf,figName)
 pause;
 close;
-
+hyp_latin=-1;
 %% We define the function we would like to optimize
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
