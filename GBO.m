@@ -6,7 +6,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 idName= 'demo_GBO_1_9';
 sys='DC_motor';
 N0=5;
-N_expr=2;
+N_expr=20;
 
 N_iter=30;
 N_iter=N_iter+N0;
@@ -180,7 +180,9 @@ for i=1:N_ltn
 end
 G2data=G2data_init;
 if withSurrogate
-    G2=idtf(n4sid(G2data,npG2));
+    G2idtf=idtf(n4sid(G2data,npG2));
+    [a,b]=tfdata(G2idtf);
+    G2=tf(a,b);
 end
 
 N_hat=100;
@@ -483,7 +485,9 @@ if isempty(N)
     idx= 0;
 elseif idx==N_G
     N = N+1;
-    G2=idtf(n4sid(G2data,npG2));
+    G2idtf=idtf(n4sid(G2data,npG2));
+    [a,b]=tfdata(G2idtf);
+    G2=tf(a,b);
     objective=ObjFun(X, G2);
     idx= 0;
 else
