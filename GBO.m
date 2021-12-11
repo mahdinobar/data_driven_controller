@@ -3,14 +3,14 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_10';
+idName= 'demo_GBO_0_11';
 sys='DC_motor';
 N0=20;
 N_expr=10;
 
 N_iter=50;
 N_iter=N_iter+N0;
-Nsample=150;
+Nsample=50;
 withSurrogate=true;
 only_visualize=false;
 
