@@ -3,10 +3,10 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_20';
+idName= 'demo_GBO_0_22';
 sys='DC_motor';
-N0=5; %number of initial data
-N_expr=2;
+N0=10; %number of initial data
+N_expr=10;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -287,7 +287,6 @@ Ki_surf_resol=Ki_range/resol;
 j_pt=zeros(size(kp_pt));
 c_pt=zeros(size(kp_pt));
 for i=1:size(kp_pt,1)
-    i/size(kp_pt,1)
     for j=1:size(kp_pt,2)
         [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
         j_pt(i,j)=l;
