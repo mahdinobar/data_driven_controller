@@ -273,11 +273,9 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w1=0.1;
-w2=1;
-w3=1;
-w4=0.5;
-objective=ov/w1+st/w2+Tr/w3+ITAE/w4;
+w=[0.1, 1, 1, 0.5];
+w=w./sum(w);
+objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 end
 
 

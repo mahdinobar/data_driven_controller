@@ -10,7 +10,7 @@ clear Trace
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 2.43936437324367;
+true_objective = 4.1000;
 ms_true=[0.6119, 1.6642];
 
 fig=figure();

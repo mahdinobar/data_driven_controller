@@ -3,10 +3,10 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_18';
+idName= 'demo_GBO_0_20';
 sys='DC_motor';
-N0=10; %number of initial data
-N_expr=3;
+N0=5; %number of initial data
+N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -40,8 +40,6 @@ den = [1, 1.61335];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
-
-
 
 %% load gain limits
 if sys=="ball_screw"
@@ -136,7 +134,7 @@ opt.resume_trace=true;
 
 %% find optimum GP hyperparameters (and initial data for first experiment)
 % priors
-opt.meanfunc={@meanLinear};
+opt.meanfunc={@meanConst};
 opt.covfunc={@covMaternard, 5};
 % liklihood
 likfunc={@likGauss};
@@ -289,6 +287,7 @@ Ki_surf_resol=Ki_range/resol;
 j_pt=zeros(size(kp_pt));
 c_pt=zeros(size(kp_pt));
 for i=1:size(kp_pt,1)
+    i/size(kp_pt,1)
     for j=1:size(kp_pt,2)
         [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
         j_pt(i,j)=l;
@@ -300,6 +299,9 @@ surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
 xlabel('Kp')
 ylabel('Ki')
 zlabel('J')
+% [true_objective, b]=min(j_pt,[],'all');
+% kp_true=kp_pt(b)
+% ki_true=ki_pt(b)
 drawnow;
 
 %% Start the optimization
@@ -453,7 +455,7 @@ st=stepinfo(CL).SettlingTime;
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.98]).RiseTime;
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
 ITAE = trapz(t, t.*abs(e));
 
 if isnan(ov) || isinf(ov) || ov>1e3
