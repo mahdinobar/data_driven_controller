@@ -17,8 +17,8 @@ only_visualize=false;
 if withSurrogate
     npG2=2;
     N_G2_activated=9999; %total number of times G2 is used
-    N_G = 2; %number of consecutive optimization on real plant before surrogate
-    N_extra= 40; % to compensate deleted iteration of surrogate(for N_G=2 use N_extra=40)
+    N_G = 5; %number of consecutive optimization on real plant before surrogate
+    N_extra= 10; % to compensate deleted iteration of surrogate(for N_G=2 use N_extra=40)
     N_iter=N_iter+N_extra;
 end
 
