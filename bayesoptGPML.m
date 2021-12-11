@@ -238,7 +238,7 @@ for i = i_start:opt.max_iters-2,
             times(end+1) = toc;
             samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
             values(end+1) = value;
-            post_mus(end+1) = post_mu(hidx);
+            post_mus(end+1) = post_mu(hidx); %keep the posterior mean where EI is maximum
             post_sigma2s(end+1)=post_sigma2(hidx);
         else
             par_values = {};

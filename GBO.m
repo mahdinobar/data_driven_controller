@@ -3,21 +3,22 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_11';
+idName= 'demo_GBO_0_14';
 sys='DC_motor';
 N0=20;
-N_expr=10;
+N_expr=5;
 
 N_iter=50;
 N_iter=N_iter+N0;
-Nsample=50;
+Nsample=150;
 withSurrogate=true;
-only_visualize=false;
+only_visualize=true;
 
 if withSurrogate
-    npG2=1;
+    npG2=2;
+    N_G2_activated=2; %total number of times G2 is used
     N_G = 5; %number of consecutive optimization on real plant before surrogate
-    N_extra= 10; % to compensate deleted iteration of surrogate
+    N_extra= N_G2_activated-1; % to compensate deleted iteration of surrogate
     N_iter=N_iter+N_extra;
 end
 
@@ -180,9 +181,10 @@ for i=1:N_ltn
 end
 G2data=G2data_init;
 if withSurrogate
-    G2idtf=idtf(n4sid(G2data,npG2));
-    [a,b]=tfdata(G2idtf);
-    G2=tf(a,b);
+%     G2idtf=idtf(n4sid(G2data,npG2));
+%     [a,b]=tfdata(G2idtf);
+%     G2=tf(a,b);
+G2=tfest(G2data, npG2);
 end
 
 N_hat=100;
@@ -271,7 +273,7 @@ close;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G);
+    fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G, N_G2_activated);
 else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
@@ -310,6 +312,7 @@ fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
 global N
 global idx
 global G2data
+global N_G2_activated_counter
 
 for expr=1:N_expr
     N=[];
@@ -339,7 +342,7 @@ for expr=1:N_expr
 
         % remove previos data of older surrogate(G2) model, but keep them
         % seperately for plots
-        if withSurrogate==true && N~=1 && idx==0
+        if withSurrogate==true && N~=1 && idx==0 
             G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-1,:)];
             G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
             G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
@@ -353,18 +356,19 @@ for expr=1:N_expr
         opt.resume_trace_data = Trace_tmp;
         %     counter=counter+1;
     end
-    % delete last trace of surrogate G2 for plots
-    if withSurrogate==true && idx~=0
-        G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
-        G2_values=[G2_values; Trace_tmp.values(end-idx)];
-        G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-idx)];
-        G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-idx)];
-        Trace_tmp.samples(end-idx,:)=[];
-        Trace_tmp.values(end-idx)=[];
-        Trace_tmp.post_mus(end-idx)=[];
-        Trace_tmp.post_sigma2s(end-idx)=[];
-        Trace_tmp.times(end-idx)=[];
-    end
+    
+%     % delete last trace of surrogate G2 for plots
+%     if withSurrogate==true && idx~=0
+%         G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
+%         G2_values=[G2_values; Trace_tmp.values(end-idx)];
+%         G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-idx)];
+%         G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-idx)];
+%         Trace_tmp.samples(end-idx,:)=[];
+%         Trace_tmp.values(end-idx)=[];
+%         Trace_tmp.post_mus(end-idx)=[];
+%         Trace_tmp.post_sigma2s(end-idx)=[];
+%         Trace_tmp.times(end-idx)=[];
+%     end
     Trace_tmp.G2_samples=G2_samples;
     Trace_tmp.G2_values=G2_values;
     Trace_tmp.G2_post_mus=G2_post_mus;
@@ -475,21 +479,27 @@ constraints=-1;
 end
 
 
-function [objective] = ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G)
+function [objective] = ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G,N_G2_activated)
 global N
 global idx
 global G2data
+global N_G2_activated_counter
+
 if isempty(N)
+%     initially use G2
     N=1;
     objective=ObjFun(X, G2);
     idx= 0;
-elseif idx==N_G
+    N_G2_activated_counter=1;
+elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     N = N+1;
-    G2idtf=idtf(n4sid(G2data,npG2));
-    [a,b]=tfdata(G2idtf);
-    G2=tf(a,b);
+%     G2idtf=idtf(n4sid(G2data,npG2));
+%     [a,b]=tfdata(G2idtf);
+%     G2=tf(a,b);
+    G2=tfest(G2data, npG2);
     objective=ObjFun(X, G2);
     idx= 0;
+    N_G2_activated_counter=N_G2_activated_counter+1;
 else
     N = N+1;
     %     todo move some lines outside with handler@: faster?
