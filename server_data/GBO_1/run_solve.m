@@ -18,12 +18,12 @@ dir_gains=append('../', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
 idName= 'results_1';
 sys='DC_motor';
 N0=10; %number of initial data
-N_expr=2;
+N_expr=1000;
 
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
-withSurrogate=false;
+withSurrogate=true;
 only_visualize=false;
 
 if withSurrogate
@@ -63,10 +63,9 @@ end
 
 %% Setup the Gaussian Process (GP) Library
 addpath ../gpml/
-startup;
 
 % Setting parameters for Bayesian Global Optimization
-opt = defaultopt(); % Get some default values for non problem-specific options.
+opt.hyp = -1; % Set hyperparameters using MLE.
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
@@ -96,7 +95,7 @@ if withSurrogate==true
 else
     RAND_ltn = sort(lhsdesign(N_ltn,1));
     RAND_ltn_all(:,1)=RAND_ltn;
-    save(append(dir,'RAND_ltn_all.mat'))
+    save(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
 end
 
 Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
@@ -155,7 +154,6 @@ for expr=1:N_expr
     botrace.values=y_ltn;
     % todo need to correct time?
     botrace.times=RAND_ltn';
-    % save(append(dir,'trace_file.mat'),'botrace')
     opt.resume_trace_data = botrace;
     clear botrace
 
@@ -228,14 +226,16 @@ for expr=1:N_expr
         end
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
-        RAND_ltn = sort(lhsdesign(N_ltn,1));
-        RAND_ltn_all(:,expr+1)=RAND_ltn;
-        save(append(dir,'RAND_ltn_all.mat'))
-        Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
-        Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
-        J_ltn = zeros(N_ltn,1);
-        for i=1:N_ltn
-            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+        if expr<N_expr
+            RAND_ltn = sort(lhsdesign(N_ltn,1));
+            RAND_ltn_all(:,expr+1)=RAND_ltn;
+            save(append(dir,'RAND_ltn_all.mat'),'RAND_ltn_all')
+            Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+            Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+            J_ltn = zeros(N_ltn,1);
+            for i=1:N_ltn
+                J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+            end
         end
     end
 
@@ -260,13 +260,14 @@ function [objective, constraints] = ObjFun(X, G)
 C=tf([X(1), X(1)*X(2)], [1, 0]);
 CL=feedback(C*G, 1);
 
-ov=abs(stepinfo(CL).Overshoot);
-st=stepinfo(CL).SettlingTime;
+STPinfo=stepinfo(CL,'RiseTimeLimits',[0.1,0.6]);
+ov=abs(STPinfo.Overshoot);
+st=STPinfo.SettlingTime;
 
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
+Tr=STPinfo.RiseTime;
 ITAE = trapz(t, t.*abs(e));
 
 if isnan(ov) || isinf(ov) || ov>1e3
