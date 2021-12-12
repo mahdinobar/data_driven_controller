@@ -1,12 +1,12 @@
-function GBO
+function GBO_server_1
 % GPML toolbox based implementation
 clear all; clc; close all;
-tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
+tmp_dir='/cluster/home/mnobar/GBO/GBO_1';
 % hyper-params
-idName= 'demo_GBO_0_25';
+idName= 'results_1';
 sys='DC_motor';
 N0=10; %number of initial data
-N_expr=500;
+N_expr=1000;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -28,12 +28,6 @@ if not(isfolder(dir))
 end
 
 %% define plant
-% % robot-arm System ("Simultaneous computation of model order..., Badaruddin Muhammad et al.")
-% num = [-0.0118, 0.0257, 0, 0, 0];
-% den = [1, -3.1016, 4.3638, -3.1528, 1.0899, -0.0743];
-% ts=1;
-% G = d2c(tf(num,den, ts));
-
 % DC motor at FHNW lab
 num = [5.19908];
 den = [1, 1.61335];
@@ -61,53 +55,6 @@ if only_visualize
     GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
     return
 end
-%% create initial dataset
-% tmp=[];
-%
-% % set random seed
-% rng('default')
-% rng(123)
-%
-% % % initial values for GP of BO
-% RAND=rand(N0,1);
-%
-% % load(append(dir,'RAND.mat'))
-%
-% Kp = (Kp_max-Kp_min).*RAND + Kp_min;
-% Ki = (Ki_max-Ki_min).*RAND + Ki_min;
-% InitobjectiveData = zeros(N0,1);
-% % todo pay attention how you choose sampleTf?
-% sampleTf=1.5;
-% sampleTs=sampleTf/(Nsample-1);
-% global G2data
-% for i=1:N0
-%     C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
-%     CL=feedback(C*G, 1);
-%     InitobjectiveData(i) = ObjFun([Kp(i), Ki(i)], G);
-%     while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
-%         RAND(i)=rand(1,1);
-%         Kp(i) = (Kp_max-Kp_min).*RAND(i) + Kp_min;
-%         Ki(i) = (Ki_max-Ki_min).*RAND(i) + Ki_min;
-%         C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
-%         CL=feedback(C*G, 1);
-%         InitobjectiveData(i) = ObjFun(Kp(i), Ki(i), G);
-%     end
-%     CLU=feedback(C, G);
-%     ytmp=step(CL,0:sampleTs:sampleTf);
-%     utmp=step(CLU,0:sampleTs:sampleTf);
-%     %         todo check concept?
-%     if i==1
-%         G2data = iddata(ytmp,utmp,sampleTs);
-%     else
-%         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-%     end
-% end
-% clear ytmp
-% clear utmp
-% botrace.samples=[Kp, Ki];
-% botrace.values=InitobjectiveData;
-% % todo need to correct time?
-% botrace.times=RAND';
 
 %% Setup the Gaussian Process (GP) Library
 addpath ./gpml/
@@ -119,16 +66,9 @@ opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
 opt.grid_size = 20000;
-%opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
 opt.lt_const = 0.0;
-%opt.optimize_ei = 1; % Uncomment this to optimize EI/EIC at each candidate
-%rather than optimize over a discrete grid. This will be slow but requires
-%less grid size.
-%opt.grid_size = 300; % If you use the optimize_ei option
 opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
 opt.save_trace = 0;
-%opt.trace_file = 'demo_trace.mat';
-%matlabpool 3; % Uncomment to do certain things in parallel. Suggested if optimize_ei is turned on. If parallel_jobs is > 1, bayesopt does this for you.
 opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 
@@ -179,95 +119,8 @@ for i=1:N_ltn
 end
 G2data=G2data_init;
 if withSurrogate
-%     G2idtf=idtf(n4sid(G2data,npG2));
-%     [a,b]=tfdata(G2idtf);
-%     G2=tf(a,b);
-G2=tfest(G2data, npG2);
+    G2=tfest(G2data, npG2);
 end
-
-N_hat=100;
-RAND_hat = linspace(0,1,N_hat);
-RAND_hat = RAND_hat(:);
-Kp_hat = (Kp_max-Kp_min).*RAND_hat + Kp_min;
-Ki_hat = (Ki_max-Ki_min).*RAND_hat + Ki_min;
-J_hat = zeros(N_hat,1);
-for i=1:N_hat
-    C=tf([Kp_hat(i), Kp_hat(i)*Ki_hat(i)], [1, 0]);
-    CL=feedback(C*G, 1);
-    J_hat(i) = ObjFun([Kp_hat(i), Ki_hat(i)], G);
-end
-
-% train data for GP
-X_ltn=[Kp_ltn, Ki_ltn];
-y_ltn=J_ltn;
-
-% test data x_hats for GP and ground truth y_hats
-x_hats=[Kp_hat, Ki_hat];
-y_hats=J_hat;
-
-meanfunc = opt.meanfunc;
-covfunc = opt.covfunc;
-if isfield(opt,'num_mean_hypers')
-    n_mh = opt.num_mean_hypers;
-else
-    n_mh = num_hypers(meanfunc{1},opt);
-end
-if isfield(opt,'num_cov_hypers')
-    n_ch = opt.num_cov_hypers;
-else
-    n_ch = num_hypers(covfunc{1},opt);
-end
-hyp_latin = [];
-hyp_latin.mean = zeros(n_mh,1);
-hyp_latin.cov = zeros(n_ch,1);
-hyp_latin.lik = log(0.1);
-% calculate GP mean/cov/lik hyperparameters
-hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X_ltn,y_ltn);
-
-%     x_hats are test inputs given to gp to predict
-[mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X_ltn,y_ltn,x_hats);
-save(append(dir, 'hyp_latin.mat'), 'hyp_latin')
-
-%% plot latin tuning GP hyperparams
-fig=figure();
-fig.Position=[0 0 1600 1200];
-subplot(2,1,1)
-grid on
-hold on
-plot(X_ltn(:,1),y_ltn, 'r', 'LineWidth',3)
-plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
-plot(x_hats(:,1),mu,'k', 'LineWidth',3)
-plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
-plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
-% title(append('mean = ', func2str(opt.meanfunc{1}), ': ' ...
-%     , num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}) ...
-%     , ' : ', num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', ...
-%     func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
-title(append('mean = ', func2str(opt.meanfunc{1}), ' & cov = ', ...
-    func2str(opt.covfunc{1}), ' & lik = ', func2str(likfunc{1})))
-xlabel('Kp')
-ylabel('cost')
-legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-xlim([Kp_min, Kp_max])
-ylim([0, max(y_hats)+10])
-subplot(2, 1, 2)
-grid on
-hold on
-plot(X_ltn(:,2),y_ltn, 'r', 'LineWidth',3)
-plot(x_hats(:,2),y_hats,'g', 'LineWidth',1)
-plot(x_hats(:,2),mu,'k', 'LineWidth',3)
-plot(x_hats(:,2),mu+sigma2/2,'--k', 'LineWidth',1)
-plot(x_hats(:,2),mu-sigma2/2,'--k', 'LineWidth',1)
-legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-xlabel('Ki')
-ylabel('cost')
-legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-xlim([Ki_min, Ki_max])
-ylim([0, max(y_hats)+10])
-figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
-saveas(gcf,figName)
-pause(1.5);
-close;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
@@ -275,39 +128,6 @@ if withSurrogate==true
 else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
-%% plot true J (grid)
-% Let's plot grid of points just to see what we are trying to optimize
-clf;
-Kp_range=Kp_max-Kp_min;
-resol=15;
-Kp_surf_resol=Kp_range/resol;
-Ki_range=Ki_max-Ki_min;
-Ki_surf_resol=Ki_range/resol;
-[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
-j_pt=zeros(size(kp_pt));
-c_pt=zeros(size(kp_pt));
-for i=1:size(kp_pt,1)
-    for j=1:size(kp_pt,2)
-        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
-        j_pt(i,j)=l;
-        c_pt(i,j)=c;
-    end
-end
-j_pt(c_pt>opt.lt_const)=NaN;
-surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-xlabel('Kp')
-ylabel('Ki')
-zlabel('J')
-% [true_objective, b]=min(j_pt,[],'all');
-% kp_true=kp_pt(b)
-% ki_true=ki_pt(b)
-drawnow;
-
-%% Start the optimization
-fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
-% [ms,mv,Trace] = bayesoptGPML(fun,opt);   % ms - Best parameter setting found
-% mv - best function value for that setting L(ms)
-% Trace  - Trace of all settings tried, their function values, and constraint values.
 
 %%
 global N
@@ -343,7 +163,7 @@ for expr=1:N_expr
 
         % remove previos data of older surrogate(G2) model, but keep them
         % seperately for plots
-        if withSurrogate==true && N~=1 && idx==0 
+        if withSurrogate==true && N~=1 && idx==0
             G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-1,:)];
             G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
             G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
@@ -357,7 +177,7 @@ for expr=1:N_expr
         opt.resume_trace_data = Trace_tmp;
         %     counter=counter+1;
     end
-    
+
     % delete last trace of surrogate G2 for plots
     if withSurrogate==true && idx~=0
         G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
@@ -416,30 +236,12 @@ for expr=1:N_expr
 
 end
 
-% save(append(dir, 'trace_file_BO.mat'),'Trace')
-
 %% Print results
 fprintf('******************************************************\n');
 fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
 fprintf('Associated cost: J([Kp,Ki])=%2.4f\n',mv);
 fprintf('******************************************************\n');
 
-%% Draw optimium
-hold on;
-plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
-if withSurrogate
-    figName=append(dir, idName,'_SurfGrid_GBO_Solution.png');
-else
-    figName=append(dir, idName,'_SurfGrid_BO_Solution.png');
-end
-saveas(gcf,figName)
-
-%% plots
-if withSurrogate
-    %     experiment=1;
-    %     GBO_plots_one_experiment(ms, Trace, experiment, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
-    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
-end
 end
 
 function [objective, constraints] = ObjFun(X, G)
@@ -479,7 +281,6 @@ objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;
 end
 
-
 function [objective] = ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G,N_G2_activated)
 global N
 global idx
@@ -487,16 +288,16 @@ global G2data
 global N_G2_activated_counter
 
 if isempty(N)
-%     initially use G2
+    %     initially use G2
     N=1;
     objective=ObjFun(X, G2);
     idx= 0;
     N_G2_activated_counter=1;
 elseif idx==N_G %&& N_G2_activated_counter<N_G2_activated
     N = N+1;
-%     G2idtf=idtf(n4sid(G2data,npG2));
-%     [a,b]=tfdata(G2idtf);
-%     G2=tf(a,b);
+    %     G2idtf=idtf(n4sid(G2data,npG2));
+    %     [a,b]=tfdata(G2idtf);
+    %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
     objective=ObjFun(X, G2);
     idx= 0;
