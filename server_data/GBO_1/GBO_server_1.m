@@ -1,12 +1,12 @@
 function GBO_server_1
 % GPML toolbox based implementation
-clear all; clc; close all;
 tmp_dir='/cluster/home/mnobar/GBO/GBO_1';
+dir_gains=append('../', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
 % hyper-params
 idName= 'results_1';
 sys='DC_motor';
 N0=10; %number of initial data
-N_expr=1000;
+N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -27,6 +27,9 @@ if not(isfolder(dir))
     mkdir(dir)
 end
 
+%% load gain limits
+load(dir_gains, 'Kp_min', 'Kp_max', 'Ki_min', 'Ki_max')
+
 %% define plant
 % DC motor at FHNW lab
 num = [5.19908];
@@ -34,16 +37,6 @@ den = [1, 1.61335];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
-
-%% load gain limits
-if sys=="ball_screw"
-    dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="robot_arm"
-    dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
-elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
-end
-load(dir_gains)
 
 %% only_visualize
 if only_visualize
@@ -57,7 +50,7 @@ if only_visualize
 end
 
 %% Setup the Gaussian Process (GP) Library
-addpath ./gpml/
+addpath ../gpml/
 startup;
 
 % Setting parameters for Bayesian Global Optimization
