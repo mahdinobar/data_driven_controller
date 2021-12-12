@@ -1,4 +1,16 @@
-function GBO_server_1
+function run_solve(tag)
+%
+% Solve a computation:
+%     - make the computation
+%     - save the results
+%
+% The code should use (if possible) parfor loops (or any other parallel features).
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fprintf('start solve: %s\n', tag)
+
+
+% =========================================================================
 % GPML toolbox based implementation
 tmp_dir='/cluster/home/mnobar/GBO/GBO_1';
 dir_gains=append('../', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
@@ -234,11 +246,16 @@ fprintf('******************************************************\n');
 fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
 fprintf('Associated cost: J([Kp,Ki])=%2.4f\n',mv);
 fprintf('******************************************************\n');
+% =========================================================================
 
+
+% teardown
+fprintf('end solve: %s\n', tag)
 end
 
-function [objective, constraints] = ObjFun(X, G)
 
+% =========================================================================
+function [objective, constraints] = ObjFun(X, G)
 %     todo move some lines outside with handler@: faster?
 C=tf([X(1), X(1)*X(2)], [1, 0]);
 CL=feedback(C*G, 1);
@@ -328,3 +345,4 @@ else
     end
 end
 end
+% =========================================================================
