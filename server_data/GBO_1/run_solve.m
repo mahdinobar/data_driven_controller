@@ -63,6 +63,7 @@ end
 
 %% Setup the Gaussian Process (GP) Library
 addpath ../gpml/
+startup;
 
 % Setting parameters for Bayesian Global Optimization
 opt.hyp = -1; % Set hyperparameters using MLE.
