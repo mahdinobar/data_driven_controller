@@ -3,22 +3,22 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_28';
+idName= 'demo_GBO_0_29';
 sys='DC_motor';
 N0=10; %number of initial data
-N_expr=3;
+N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
 withSurrogate=true;
-only_visualize=false;
+only_visualize=true;
 
 if withSurrogate
     npG2=5;
     N_G2_activated=9999; %total number of times G2 is used
-    N_G = 10; %number of consecutive optimization on real plant before surrogate
-    N_extra= 5; % to compensate deleted iteration of surrogate(for N_G=2 use N_extra=40)
+    N_G = 2; %number of consecutive optimization on real plant before surrogate
+    N_extra= 27; % to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=26)
     N_iter=N_iter+N_extra;
 end
 
@@ -60,6 +60,7 @@ if only_visualize
     val_tmp=(Trace.values);
     [mv_tmp,mi_tmp] = min(val_tmp);
     ms=Trace(experiment).samples(mi_tmp,:);
+    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
     GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
     return
 end

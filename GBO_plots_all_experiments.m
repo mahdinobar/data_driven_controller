@@ -17,8 +17,8 @@ fig=figure();
 hold on
 fig.Position=[200 0 1600 1200];
 for expr=1:length(TraceGBO)
-    JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:end);
-    JminObservBO(:,expr)=TraceBO(expr).values(N0+1:end);
+    JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
+    JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     for j=1+N0:N_iter
         JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
         JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
