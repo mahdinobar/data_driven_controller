@@ -11,14 +11,14 @@ N_expr=3;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
-withSurrogate=true;
+withSurrogate=false;
 only_visualize=false;
 
 if withSurrogate
     npG2=2;
     N_G2_activated=2; %total number of times G2 is used
-    N_G = 5; %number of consecutive optimization on real plant before surrogate
-    N_extra= 10; % to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
+    N_G = 1; %number of consecutive optimization on real plant before surrogate
+    N_extra= N_G2_activated; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
 end
 
@@ -514,7 +514,13 @@ else
     ytmp=step(CL,0:sampleTs:sampleTf);
     utmp=step(CLU,0:sampleTs:sampleTf);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    idx= idx +1;
+%     first condition to delete the last simulation after being used
+    if N_G2_activated_counter==N_G2_activated && idx==5
+        N_G2_activated_counter=N_G2_activated_counter+1;
+        idx=0;
+    else
+        idx= idx +1;
+    end
 end
 end
 
