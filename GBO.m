@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_27';
+idName= 'demo_GBO_0_28';
 sys='DC_motor';
 N0=10; %number of initial data
 N_expr=3;
@@ -17,8 +17,8 @@ only_visualize=false;
 if withSurrogate
     npG2=5;
     N_G2_activated=9999; %total number of times G2 is used
-    N_G = 5; %number of consecutive optimization on real plant before surrogate
-    N_extra= 10; % to compensate deleted iteration of surrogate(for N_G=2 use N_extra=40)
+    N_G = 10; %number of consecutive optimization on real plant before surrogate
+    N_extra= 5; % to compensate deleted iteration of surrogate(for N_G=2 use N_extra=40)
     N_iter=N_iter+N_extra;
 end
 
