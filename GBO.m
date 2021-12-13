@@ -5,7 +5,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
 idName= 'demo_GBO_0_29';
 sys='DC_motor';
-N0=1; %number of initial data
+N0=10; %number of initial data
 N_expr=2;
 
 N_iter=50;
