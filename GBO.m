@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_30';
+idName= 'demo_GBO_0_31';
 sys='DC_motor';
 N0=1; %number of initial data
 N_expr=3;
@@ -16,7 +16,7 @@ only_visualize=false;
 
 if withSurrogate
     npG2=2;
-    N_G2_activated=9999; %total number of times G2 is used
+    N_G2_activated=2; %total number of times G2 is used
     N_G = 5; %number of consecutive optimization on real plant before surrogate
     N_extra= 10; % to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
@@ -360,19 +360,19 @@ for expr=1:N_expr
         opt.resume_trace_data = Trace_tmp;
         %     counter=counter+1;
     end
-    
-    % delete last trace of surrogate G2 for plots
-    if withSurrogate==true && idx~=0
-        G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
-        G2_values=[G2_values; Trace_tmp.values(end-idx)];
-        G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-idx)];
-        G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-idx)];
-        Trace_tmp.samples(end-idx,:)=[];
-        Trace_tmp.values(end-idx)=[];
-        Trace_tmp.post_mus(end-idx)=[];
-        Trace_tmp.post_sigma2s(end-idx)=[];
-        Trace_tmp.times(end-idx)=[];
-    end
+% %     comment if use N_G2_activated
+%     % delete last trace of surrogate G2 for plots
+%     if withSurrogate==true && idx~=0
+%         G2_samples=[G2_samples; Trace_tmp.samples(end-idx,:)];
+%         G2_values=[G2_values; Trace_tmp.values(end-idx)];
+%         G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-idx)];
+%         G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-idx)];
+%         Trace_tmp.samples(end-idx,:)=[];
+%         Trace_tmp.values(end-idx)=[];
+%         Trace_tmp.post_mus(end-idx)=[];
+%         Trace_tmp.post_sigma2s(end-idx)=[];
+%         Trace_tmp.times(end-idx)=[];
+%     end
     Trace_tmp.G2_samples=G2_samples;
     Trace_tmp.G2_values=G2_values;
     Trace_tmp.G2_post_mus=G2_post_mus;
@@ -495,7 +495,7 @@ if isempty(N)
     objective=ObjFun(X, G2);
     idx= 0;
     N_G2_activated_counter=1;
-elseif idx==N_G %&& N_G2_activated_counter<N_G2_activated
+elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     N = N+1;
 %     G2idtf=idtf(n4sid(G2data,npG2));
 %     [a,b]=tfdata(G2idtf);
