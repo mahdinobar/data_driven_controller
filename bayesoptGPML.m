@@ -237,9 +237,9 @@ for i = i_start:opt.max_iters-2,
             value = F(hyper_cand);
             times(end+1) = toc;
             samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
-            values(end+1) = value;
-            post_mus(end+1) = post_mu(hidx); %keep the posterior mean where EI is maximum
-            post_sigma2s(end+1)=post_sigma2(hidx);
+            values(end+1,1) = value;
+            post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
+            post_sigma2s(end+1,1)=post_sigma2(hidx);
         else
             par_values = {};
             par_times = {};
@@ -261,7 +261,7 @@ for i = i_start:opt.max_iters-2,
             [value,con_value] = F(hyper_cand);
             times(end+1) = toc;
             con_values = [con_values;con_value];
-            values(end+1) = value;
+            values(end+1,1) = value;
             samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
         else
             par_values = {};
@@ -439,7 +439,7 @@ hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 %     hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 % end
 %     x_hats are test inputs given to gp to predict
-[mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,y,x_hats);
+[mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
 
 function zstar = optimize_ei(z,X,y,best,hyp,opt)
 
