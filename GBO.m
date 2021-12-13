@@ -12,7 +12,7 @@ N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
 withSurrogate=true;
-only_visualize=false;
+only_visualize=true;
 
 if withSurrogate
     npG2=2;
@@ -57,7 +57,9 @@ if only_visualize
     experiment=1;
     mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
     maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
-    ms=[0 0];
+    val_tmp=(Trace.values);
+    [mv_tmp,mi_tmp] = min(val_tmp);
+    ms=Trace(experiment).samples(mi_tmp,:);
     GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
     return
 end
