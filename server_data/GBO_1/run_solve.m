@@ -57,7 +57,7 @@ if only_visualize
     mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
     maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
     ms=[0 0];
-    GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
+    GBO_plots_server(Trace, N0)
     return
 end
 
@@ -141,6 +141,7 @@ global G2data
 global N_G2_activated_counter
 
 for expr=1:N_expr
+    fprintf('>>>>>experiment: %d', expr);
     N=[];
     idx=[];
     G2_samples=[];
