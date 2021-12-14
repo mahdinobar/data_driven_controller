@@ -23,7 +23,7 @@ N_expr=1000;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
-withSurrogate=false;
+withSurrogate=true;
 only_visualize=false;
 
 if withSurrogate

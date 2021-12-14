@@ -23,7 +23,7 @@ echo "start"
 echo "#######################################################"
 
 # ressource allocation
-max_time="08:00" # maximum time (hour:second") allocated for the job (max 120:00 / large value implies low priority)
+max_time="20:00" # maximum time (hour:second") allocated for the job (max 120:00 / large value implies low priority)
 n_core="4" # number of core (large value implies low priority)
 memory="2048" # memory allocation (in MB) per core (large value implies low priority)
 scratch="500" # disk space (in MB) for temporary data per core
