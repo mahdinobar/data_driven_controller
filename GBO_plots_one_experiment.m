@@ -44,7 +44,6 @@ plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
 % =========================================================================
 
 % true_objective DC motor numeric
-% true_objective=3.1672;
 true_objective = 2.43936437324367;
 ms_true=[0.6119, 1.6642];
 
@@ -533,8 +532,10 @@ for i=1:size(kp_pt,1)
     end
 end
 j_pt(c_pt>0.0)=NaN;
-ax1 = axes;
+ax1 = axes; hold on;
 surf(ax1, kp_pt,ki_pt,reshape(j_pt,size(kp_pt)),'EdgeColor','Interp','FaceColor','Interp');
+ms_true=[0.6119, 1.6642];
+htrue=plot3(ax1,ms_true(1), ms_true(2), 1e3,'p', 'MarkerFaceColor', [0,1,0], 'MarkerSize',40);
 xlabel(ax1,'Kp')
 ylabel(ax1,'Ki')
 zlabel(ax1,'J')
@@ -549,6 +550,8 @@ ax2.XTick = [];
 ax2.YTick = [];
 % plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
 hold on;
+
+% plot mean of sampled gains over all experiments
 meanExperGBO=[];
 meanExperBO=[];
 for i=1:1000
@@ -562,7 +565,7 @@ c = linspace(1,length(meanExperGBO(N0+1:end, 1)),length(meanExperGBO(N0+1:end, 1
 hGBO=scatter3(ax2, meanExperGBO(N0+1:end, 1), meanExperGBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled');
 hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled','^');
 
-
+% plot for specific experiment
 % plot3(ax2, TraceGBO.samples(1:N0, 1), TraceGBO.samples(1:N0, 2), TraceGBO.values(1:N0, 1),'x', 'MarkerFaceColor', [0,0,0]);
 % c = linspace(1,length(TraceGBO.values(N0+1:end,1)),length(TraceGBO.values(N0+1:end,1))); 
 % hGBO=scatter3(ax2, TraceGBO.samples(N0+1:end, 1), TraceGBO.samples(N0+1:end, 2), TraceGBO.values(N0+1:end, 1), [100],c,'filled');
@@ -570,12 +573,13 @@ hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(lengt
 % Give each one its colormap
 colormap(ax1);
 colormap(ax2,'hot');
+set(ax1,'ColorScale','log')
 % get everthin lined up
 cb1 = colorbar(ax1,'Position',[0.96 0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
 cb2 = colorbar(ax2,'Position',[0.915 0.11 0.01 0.815]);
 cb1.Label.String = 'Cost';
 cb2.Label.String = 'iteration';
-legend([hGBO, hBO],{'GBO', 'BO'}, 'Location', 'northeast');
+legend([hGBO, hBO, htrue],{'GBO', 'BO', 'Ground Truth'}, 'Location', 'northeast');
 grid on
 
 set(gca, 'DefaultAxesFontName', 'Times')
