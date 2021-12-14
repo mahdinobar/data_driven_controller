@@ -1,8 +1,48 @@
-function GBO_plots_one_experiment(ms, Trace, experiment, gain_mins, gain_maxes, N0, N_iter, N_G, idName, G)
+% function GBO_plots_one_experiment(ms, Trace, experiment, gain_mins, gain_maxes, N0, N_iter, N_G, idName, G)
+% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% TraceGBO=Trace(experiment);
+% clear Trace
 
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
-TraceGBO=Trace(experiment);
+% =========================================================================
+% uncomment for server plots
+function GBO_plots_one_experiment
+close all;
+clc;
+clear;
+idName= 'results_1';
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_3/', idName, '/');
+N0=1; %number of initial data
+N_iter=50;
+N_iter=N_iter+N0;
+% todo automatize code
+load(append(dir,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
 clear Trace
+load(append(dir,'trace_file_BO.mat'),'Trace')
+TraceBO=Trace;
+clear Trace
+
+dir_gains=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/DC_motor_gain_bounds/KpKi_bounds.mat');
+load(dir_gains, 'Kp_min', 'Kp_max', 'Ki_min', 'Ki_max')
+gain_mins=[Kp_min, Ki_min];
+gain_maxes=[Kp_max, Ki_max];
+% DC motor at FHNW lab
+num = [5.19908];
+den = [1, 1.61335];
+Td=2e-3;
+G = tf(num, den, 'InputDelay',Td);
+
+% for expr=2:1000 
+%     if TraceGBO(expr).values(10,1)>TraceGBO(expr-1).values(10,1)
+%         EE=expr;
+%     end
+% end
+% EE
+
+plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
+
+% =========================================================================
+
 % true_objective DC motor numeric
 % true_objective=3.1672;
 true_objective = 2.43936437324367;
@@ -469,4 +509,116 @@ ylim([min([r;y])-ymargin,max([r;y])+ymargin]);
 title(append('System Response and Setpoint vs Time using Optimum Controller Gains'))
 figName=append(dir, idName,'_yrt.png');
 saveas(gcf,figName)
+end
+
+function plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
+
+% =========================================================================
+fig=figure();
+fig.Position=[200 0 1600 800];
+
+Kp_range=gain_maxes(1)-gain_mins(1);
+resol=20;
+Kp_surf_resol=Kp_range/resol;
+Ki_range=gain_maxes(2)-gain_mins(2);
+Ki_surf_resol=Ki_range/resol;
+[kp_pt,ki_pt]=meshgrid(gain_mins(1):Kp_surf_resol:gain_maxes(1),gain_mins(2):Ki_surf_resol:gain_maxes(2));
+j_pt=zeros(size(kp_pt));
+c_pt=zeros(size(kp_pt));
+for i=1:size(kp_pt,1)
+    for j=1:size(kp_pt,2)
+        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
+        j_pt(i,j)=l;
+        c_pt(i,j)=c;
+    end
+end
+j_pt(c_pt>0.0)=NaN;
+ax1 = axes;
+surf(ax1, kp_pt,ki_pt,reshape(j_pt,size(kp_pt)),'EdgeColor','Interp','FaceColor','Interp');
+xlabel(ax1,'Kp')
+ylabel(ax1,'Ki')
+zlabel(ax1,'J')
+view(ax1,[0,0,1])
+xlim(ax1, [gain_mins(1), gain_maxes(1)])
+ylim(ax1, [gain_mins(2), gain_maxes(2)])
+
+ax2 = axes;
+% Hide the top axes
+ax2.Visible = 'off';
+ax2.XTick = [];
+ax2.YTick = [];
+% plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
+hold on;
+meanExperGBO=[];
+meanExperBO=[];
+for i=1:1000
+    meanExperGBO(:,:,i)=TraceGBO(i).samples(1:end, :);
+    meanExperBO(:,:,i)=TraceBO(i).samples(1:end, :);
+end
+meanExperGBO=mean(meanExperGBO,3);
+meanExperBO=mean(meanExperBO,3);
+plot3(ax2, meanExperGBO(1:N0, 1), meanExperGBO(1:N0, 2), ones(N0, 1),'x', 'MarkerFaceColor', [0,0,0]);
+c = linspace(1,length(meanExperGBO(N0+1:end, 1)),length(meanExperGBO(N0+1:end, 1))); 
+hGBO=scatter3(ax2, meanExperGBO(N0+1:end, 1), meanExperGBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled');
+hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled','^');
+
+
+% plot3(ax2, TraceGBO.samples(1:N0, 1), TraceGBO.samples(1:N0, 2), TraceGBO.values(1:N0, 1),'x', 'MarkerFaceColor', [0,0,0]);
+% c = linspace(1,length(TraceGBO.values(N0+1:end,1)),length(TraceGBO.values(N0+1:end,1))); 
+% hGBO=scatter3(ax2, TraceGBO.samples(N0+1:end, 1), TraceGBO.samples(N0+1:end, 2), TraceGBO.values(N0+1:end, 1), [100],c,'filled');
+% hBO=scatter3(ax2, TraceBO.samples(N0+1:end, 1), TraceBO.samples(N0+1:end, 2), TraceBO.values(N0+1:end, 1), [100],c,'filled','^');
+% Give each one its colormap
+colormap(ax1);
+colormap(ax2,'hot');
+% get everthin lined up
+cb1 = colorbar(ax1,'Position',[0.96 0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
+cb2 = colorbar(ax2,'Position',[0.915 0.11 0.01 0.815]);
+cb1.Label.String = 'Cost';
+cb2.Label.String = 'iteration';
+legend([hGBO, hBO],{'GBO', 'BO'}, 'Location', 'northeast');
+grid on
+
+set(gca, 'DefaultAxesFontName', 'Times')
+figName=append(dir, idName,'_KpKiJItr.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_KpKiJItr.fig');
+saveas(gcf,figName)
+% ylabel('Ki')
+% title('Maximum absolute tracking error')
+end
+function [objective, constraints] = ObjFun(X, G)
+%     todo move some lines outside with handler@: faster?
+C=tf([X(1), X(1)*X(2)], [1, 0]);
+CL=feedback(C*G, 1);
+
+STPinfo=stepinfo(CL,'RiseTimeLimits',[0.1,0.6]);
+ov=abs(STPinfo.Overshoot);
+st=STPinfo.SettlingTime;
+
+[y,t]=step(CL);
+reference=1;
+e=abs(y-reference);
+Tr=STPinfo.RiseTime;
+ITAE = trapz(t, t.*abs(e));
+
+if isnan(ov) || isinf(ov) || ov>1e3
+    ov=1e3;
+end
+
+if isnan(st) || isinf(st) || st>1e5
+    st=1e5;
+end
+
+if isnan(Tr) || isinf(Tr) || Tr>1e5
+    Tr=1e5;
+end
+
+if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+    ITAE=1e5;
+end
+
+w=[0.1, 1, 1, 0.5];
+w=w./sum(w);
+objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
+constraints=-1;
 end
