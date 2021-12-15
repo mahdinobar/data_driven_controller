@@ -6,13 +6,13 @@ idName= 'Histogram_convergence';
 N0=1;
 N_iter=50;
 
-dir='/home/mahdi/ETH/GBO/code/results/server_runs_ver_3';
+dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/server_runs_ver_3';
 
 tmp=[];
 for m=1:4
     load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
     objectiveData_all_server_1_tmp=InitobjectiveData_all;
-    objectiveData_all_server_1_tmp=reshape(objectiveData_all_server_1_tmp(1:end),[50,250]);
+    objectiveData_all_server_1_tmp=reshape(objectiveData_all_server_1_tmp(1:end),[50,20]);
     tmp=[tmp, objectiveData_all_server_1_tmp];
 end
 objectiveData_all_server_1=tmp;
@@ -21,7 +21,7 @@ tmp=[];
 for m=17:20
     load(append(dir,'/InitobjectiveData_all_',num2str(m),'.mat'))
     objectiveData_all_server_surrogate_tmp=InitobjectiveData_all;
-    objectiveData_all_server_surrogate_tmp=reshape(objectiveData_all_server_surrogate_tmp(1:end),[50,250]);
+    objectiveData_all_server_surrogate_tmp=reshape(objectiveData_all_server_surrogate_tmp(1:end),[50,20]);
     tmp=[tmp, objectiveData_all_server_surrogate_tmp];
 end
 

@@ -8,7 +8,8 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_3/', idName, '/');
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_2' ...
+    '/'], idName, '/');
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
@@ -37,8 +38,11 @@ true_objective = 4.1000;
 ms_true=[0.6119, 1.6642];
 
 fig=figure();
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=20;
+ax1.FontName='Times New Roman';
 hold on
-fig.Position=[200 0 1600 1200];
 for expr=1:length(TraceGBO)
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
@@ -55,23 +59,24 @@ for expr=1:length(TraceGBO)
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
         end
     end
-    h1=semilogy(JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', .5);
-    h2=semilogy(JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', .5);
+%     h1=semilogy(ax1, JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
+%     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 end
-
+h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
+h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 meanJminObservGBO=nanmean(JminObservGBO,2);
-h3=semilogy(meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 4);
+h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 
 meanJminObservBO=nanmean(JminObservBO,2);
-h4=semilogy(meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 4);
+h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 
-legend([h1, h2, h3, h4],{'GBO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'GBO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
+legend([h1(1), h2(1), h3, h4],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Guided BO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
 grid on
-ylim([1 10])
-xlabel('Iteration')
-ylabel('Optimality Ratio')
-title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times')
+ylim(ax1, [1 3])
+xlabel(ax1, 'Iteration')
+ylabel(ax1, 'Optimality Ratio')
+% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 20)
 set(gca,'yscale','log')
 figName=append(dir, idName,'_ORi_MonteCarlo.png');
 saveas(gcf,figName)

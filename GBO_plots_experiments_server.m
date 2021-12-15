@@ -5,12 +5,13 @@
 
 % =========================================================================
 % uncomment for server plots
-function GBO_plots_one_experiment
+function GBO_plots_experiments_server
 close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_1/', idName, '/');
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_2/', idName, '/');
+N_G = 5;
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
@@ -39,8 +40,10 @@ G = tf(num, den, 'InputDelay',Td);
 % end
 % EE
 
-plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
+plot_EvalsPoster(TraceGBO, TraceBO, N0, N_iter,N_G, dir, idName)
 
+
+plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
 % =========================================================================
 
 % true_objective DC motor numeric
@@ -83,8 +86,8 @@ grid on
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times')
-set(gca,'yscale','log')
+set(gca, 'DefaultAxesFontName', 'Times','FontSize',20)
+set(gca,'yscale','log', 'FontSize',20)
 figName=append(dir, idName,'_ORi.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_ORi.fig');
@@ -146,7 +149,7 @@ xlabel('Iteration')
 ylabel('J')
 % ylabel('Cost function')
 title(append('Objective vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times')
+set(gca, 'DefaultAxesFontName', 'Times', 'FontSize',20)
 figName=append(dir, idName,'_Ji.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_Ji.fig');
@@ -536,12 +539,14 @@ for i=1:size(kp_pt,1)
 end
 j_pt(c_pt>0.0)=NaN;
 ax1 = axes; hold on;
+ax1.FontSize=20;
+ax1.FontName='Times New Roman';
 surf(ax1, kp_pt,ki_pt,reshape(j_pt,size(kp_pt)),'EdgeColor','Interp','FaceColor','Interp');
 ms_true=[0.6119, 1.6642];
-htrue=plot3(ax1,ms_true(1), ms_true(2), 1e3,'p', 'MarkerFaceColor', [0,1,0], 'MarkerSize',30);
-xlabel(ax1,'Kp')
-ylabel(ax1,'Ki')
-zlabel(ax1,'J')
+htrue=plot3(ax1,ms_true(1), ms_true(2), 1e3,'p', 'MarkerFaceColor', [1,1,0], 'MarkerSize',20);
+xlabel(ax1,'Kp', 'FontSize',20, 'FontName','Times new Roman')
+ylabel(ax1,'Ki', 'FontSize',20, 'FontName','Times new Roman')
+zlabel(ax1,'J', 'FontSize',20, 'FontName','Times new Roman')
 view(ax1,[0,0,1])
 xlim(ax1, [gain_mins(1), gain_maxes(1)])
 ylim(ax1, [gain_mins(2), gain_maxes(2)])
@@ -557,16 +562,16 @@ hold on;
 % plot mean of sampled gains over all experiments
 meanExperGBO=[];
 meanExperBO=[];
-for i=1:696
+for i=1:1000
     meanExperGBO(:,:,i)=TraceGBO(i).samples(1:end, :);
     meanExperBO(:,:,i)=TraceBO(i).samples(1:end, :);
 end
 meanExperGBO=mean(meanExperGBO,3);
 meanExperBO=mean(meanExperBO,3);
-plot3(ax2, meanExperGBO(1:N0, 1), meanExperGBO(1:N0, 2), 1e3.*ones(N0, 1),'x', 'MarkerEdgeColor', [0,0,0] , 'MarkerSize',30);
-c = linspace(1,length(meanExperGBO(N0+1:end, 1)),length(meanExperGBO(N0+1:end, 1))); 
-hGBO=scatter3(ax2, meanExperGBO(N0+1:end, 1), meanExperGBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled');
-hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [100],c,'filled','^');
+hInit=plot3(ax2, meanExperGBO(1:N0, 1), meanExperGBO(1:N0, 2), 1e3.*ones(N0, 1),'x', 'MarkerEdgeColor', [0,0,0] , 'MarkerSize',20);
+c = linspace(1, length(meanExperGBO(N0+1:end, 1)),length(meanExperGBO(N0+1:end, 1))); 
+hGBO=scatter3(ax2, meanExperGBO(N0+1:end, 1), meanExperGBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [120],c,'filled');
+hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [120],c,'filled','^');
 
 % plot for specific experiment
 % plot3(ax2, TraceGBO.samples(1:N0, 1), TraceGBO.samples(1:N0, 2), TraceGBO.values(1:N0, 1),'x', 'MarkerFaceColor', [0,0,0]);
@@ -574,18 +579,24 @@ hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(lengt
 % hGBO=scatter3(ax2, TraceGBO.samples(N0+1:end, 1), TraceGBO.samples(N0+1:end, 2), TraceGBO.values(N0+1:end, 1), [100],c,'filled');
 % hBO=scatter3(ax2, TraceBO.samples(N0+1:end, 1), TraceBO.samples(N0+1:end, 2), TraceBO.values(N0+1:end, 1), [100],c,'filled','^');
 % Give each one its colormap
-colormap(ax1);
-colormap(ax2,'hot');
+colormap(ax1, flipud(parula));
+colormap(ax2,gray);
 set(ax1,'ColorScale','log')
 % get everthin lined up
-cb1 = colorbar(ax1,'Position',[0.96 0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
-cb2 = colorbar(ax2,'Position',[0.915 0.11 0.01 0.815]);
+cb1 = colorbar(ax1,'Position',[0.06 ...
+    0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
+cb2 = colorbar(ax2,'Position',[0.92 0.11 0.01 0.815]);
 cb1.Label.String = 'Cost';
+cb1.FontName='Times New Roman';
+cb1.FontSize=20;
 cb2.Label.String = 'iteration';
-legend([hGBO, hBO, htrue],{'GBO', 'BO', 'Ground Truth'}, 'Location', 'northeast');
+cb2.FontName='Times New Roman';
+cb2.FontSize=20;
+legend([hGBO ...
+    , hBO, htrue, hInit],{'Guided BO', 'BO', 'Ground Truth', 'Initial Sample'}, 'Location', 'southeast', 'fontname','Times New Roman');
 grid on
 
-set(gca, 'DefaultAxesFontName', 'Times')
+set(gca, 'DefaultAxesFontName', 'Times', 'FontSize', 20), 
 figName=append(dir, idName,'_KpKiJItr.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_KpKiJItr.fig');
