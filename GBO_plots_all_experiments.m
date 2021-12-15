@@ -40,7 +40,7 @@ ms_true=[0.6119, 1.6642];
 fig=figure();
 fig.Position=[200 0 1600 800];
 ax1=axes;
-ax1.FontSize=20;
+ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
 for expr=1:length(TraceGBO)
@@ -76,7 +76,7 @@ ylim(ax1, [1 3])
 xlabel(ax1, 'Iteration')
 ylabel(ax1, 'Optimality Ratio')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 20)
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 set(gca,'yscale','log')
 figName=append(dir, idName,'_ORi_MonteCarlo.png');
 saveas(gcf,figName)

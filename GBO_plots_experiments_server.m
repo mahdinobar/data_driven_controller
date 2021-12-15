@@ -86,8 +86,8 @@ grid on
 xlabel('Iteration')
 ylabel('Optimality Ratio')
 title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times','FontSize',20)
-set(gca,'yscale','log', 'FontSize',20)
+set(gca, 'DefaultAxesFontName', 'Times','FontSize',24)
+set(gca,'yscale','log', 'FontSize',24)
 figName=append(dir, idName,'_ORi.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_ORi.fig');
@@ -149,7 +149,7 @@ xlabel('Iteration')
 ylabel('J')
 % ylabel('Cost function')
 title(append('Objective vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times', 'FontSize',20)
+set(gca, 'DefaultAxesFontName', 'Times', 'FontSize',24)
 figName=append(dir, idName,'_Ji.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_Ji.fig');
@@ -520,7 +520,7 @@ function plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName
 
 % =========================================================================
 fig=figure();
-fig.Position=[200 0 1600 800];
+fig.Position=[200 0 1800 800];
 
 Kp_range=gain_maxes(1)-gain_mins(1);
 resol=20;
@@ -539,14 +539,14 @@ for i=1:size(kp_pt,1)
 end
 j_pt(c_pt>0.0)=NaN;
 ax1 = axes; hold on;
-ax1.FontSize=20;
+ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 surf(ax1, kp_pt,ki_pt,reshape(j_pt,size(kp_pt)),'EdgeColor','Interp','FaceColor','Interp');
 ms_true=[0.6119, 1.6642];
 htrue=plot3(ax1,ms_true(1), ms_true(2), 1e3,'p', 'MarkerFaceColor', [1,1,0], 'MarkerSize',20);
-xlabel(ax1,'Kp', 'FontSize',20, 'FontName','Times new Roman')
-ylabel(ax1,'Ki', 'FontSize',20, 'FontName','Times new Roman')
-zlabel(ax1,'J', 'FontSize',20, 'FontName','Times new Roman')
+xlabel(ax1,'Kp', 'FontSize',24, 'FontName','Times new Roman')
+ylabel(ax1,'Ki', 'FontSize',24, 'FontName','Times new Roman')
+zlabel(ax1,'J', 'FontSize',24, 'FontName','Times new Roman')
 view(ax1,[0,0,1])
 xlim(ax1, [gain_mins(1), gain_maxes(1)])
 ylim(ax1, [gain_mins(2), gain_maxes(2)])
@@ -583,20 +583,19 @@ colormap(ax1, flipud(parula));
 colormap(ax2,gray);
 set(ax1,'ColorScale','log')
 % get everthin lined up
-cb1 = colorbar(ax1,'Position',[0.06 ...
-    0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
+cb1 = colorbar(ax1,'Position',[0.05 0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
 cb2 = colorbar(ax2,'Position',[0.92 0.11 0.01 0.815]);
 cb1.Label.String = 'Cost';
 cb1.FontName='Times New Roman';
-cb1.FontSize=20;
+cb1.FontSize=24;
 cb2.Label.String = 'iteration';
 cb2.FontName='Times New Roman';
-cb2.FontSize=20;
+cb2.FontSize=24;
 legend([hGBO ...
     , hBO, htrue, hInit],{'Guided BO', 'BO', 'Ground Truth', 'Initial Sample'}, 'Location', 'southeast', 'fontname','Times New Roman');
 grid on
 
-set(gca, 'DefaultAxesFontName', 'Times', 'FontSize', 20), 
+set(gca, 'DefaultAxesFontName', 'Times', 'FontSize', 24), 
 figName=append(dir, idName,'_KpKiJItr.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_KpKiJItr.fig');
