@@ -10,7 +10,7 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_2/', idName, '/');
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_13/', idName, '/');
 N_G = 5;
 N0=1; %number of initial data
 N_iter=50;
@@ -562,7 +562,7 @@ hold on;
 % plot mean of sampled gains over all experiments
 meanExperGBO=[];
 meanExperBO=[];
-for i=1:1000
+for i=1:min(length(TraceGBO),length(TraceBO))
     meanExperGBO(:,:,i)=TraceGBO(i).samples(1:end, :);
     meanExperBO(:,:,i)=TraceBO(i).samples(1:end, :);
 end

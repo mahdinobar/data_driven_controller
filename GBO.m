@@ -3,20 +3,20 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_31';
+idName= 'demo_GBO_0_37';
 sys='DC_motor';
-N0=1; %number of initial data
+N0=5; %number of initial data
 N_expr=3;
 
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
-withSurrogate=false;
+withSurrogate=true;
 only_visualize=false;
 
 if withSurrogate
-    npG2=2;
-    N_G2_activated=2; %total number of times G2 is used
+    npG2=4;
+    N_G2_activated=20; %total number of times G2 is used
     N_G = 1; %number of consecutive optimization on real plant before surrogate
     N_extra= N_G2_activated; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
@@ -37,7 +37,7 @@ end
 % DC motor at FHNW lab
 num = [5.19908];
 den = [1, 1.61335];
-Td=2e-3;
+Td=0;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
 
@@ -184,10 +184,15 @@ for i=1:N_ltn
 end
 G2data=G2data_init;
 if withSurrogate
-%     G2idtf=idtf(n4sid(G2data,npG2));
-%     [a,b]=tfdata(G2idtf);
-%     G2=tf(a,b);
-G2=tfest(G2data, npG2);
+    %     G2idtf=idtf(n4sid(G2data,npG2));
+    %     [a,b]=tfdata(G2idtf);
+    %     G2=tf(a,b);
+    G2=tfest(G2data, npG2);
+    t=0:sampleTs/100:sampleTf;
+    y = step(G,t);
+    y2 = step(G2,t);
+    step(G); hold on; step(G2,'r')
+    rmse2=sqrt(mean((y-y2).^2))
 end
 
 N_hat=100;
@@ -303,6 +308,7 @@ surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
 xlabel('Kp')
 ylabel('Ki')
 zlabel('J')
+% zlim([0,50])
 % [true_objective, b]=min(j_pt,[],'all');
 % kp_true=kp_pt(b)
 % ki_true=ki_pt(b)
@@ -353,13 +359,16 @@ for expr=1:N_expr
             G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
             G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
             G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-1,:)];
+            Trace_tmp_not_removed=Trace_tmp;
             Trace_tmp.samples(end-N_G-1,:)=[];
             Trace_tmp.values(end-N_G-1)=[];
             Trace_tmp.post_mus(end-N_G-1)=[];
             Trace_tmp.post_sigma2s(end-N_G-1)=[];
             Trace_tmp.times(end-N_G-1)=[];
+        else
+            Trace_tmp_not_removed=Trace_tmp;
         end
-        opt.resume_trace_data = Trace_tmp;
+        opt.resume_trace_data = Trace_tmp_not_removed;
         %     counter=counter+1;
     end
 % %     comment if use N_G2_activated
@@ -375,6 +384,14 @@ for expr=1:N_expr
 %         Trace_tmp.post_sigma2s(end-idx)=[];
 %         Trace_tmp.times(end-idx)=[];
 %     end
+
+%     Trace_tmp_not_removed.G2_samples=G2_samples;
+%     Trace_tmp_not_removed.G2_values=G2_values;
+%     Trace_tmp_not_removed.G2_post_mus=G2_post_mus;
+%     Trace_tmp_not_removed.G2_post_sigma2s=G2_post_sigma2s;
+%     Trace(expr)=Trace_tmp_not_removed;
+%     delete Trace_tmp_not_removed
+%     
     Trace_tmp.G2_samples=G2_samples;
     Trace_tmp.G2_values=G2_values;
     Trace_tmp.G2_post_mus=G2_post_mus;
@@ -503,6 +520,12 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
 %     [a,b]=tfdata(G2idtf);
 %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
+    t=0:sampleTs/100:sampleTf;
+    y = step(G,t);
+    y2 = step(G2,t);
+    step(G); hold on; step(G2,'r')
+    rmse2=sqrt(mean((y-y2).^2))
+
     objective=ObjFun(X, G2);
     idx= 0;
     N_G2_activated_counter=N_G2_activated_counter+1;

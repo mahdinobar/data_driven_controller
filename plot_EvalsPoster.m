@@ -10,7 +10,7 @@ TraceBOpost_mus=[];
 TraceGBOpost_sigma2s=[];
 TraceGBOG2_post_sigma2s=[];
 TraceBOpost_sigma2s=[];
-for i=1:691
+for i=1:min(length(TraceGBO),length(TraceBO))
     TraceGBOvalues(:,i)=TraceGBO(i).values(1:end, 1);
     TraceBOvalues(:,i)=TraceBO(i).values(1:end, 1);
     TraceGBOpost_mus(:,i)=TraceGBO(i).post_mus(1:end, 1);
@@ -58,6 +58,8 @@ h8=plot(y-CI, ':', 'Color', [0, 0, 1, 1], 'LineWidth', 1);
 plot(y+CI, ':', 'Color', [0, 0, 1, 1], 'LineWidth', 1)
 
 x=0:N_G:N_iter-N0-1;
+% todo play if you use N_G2_activated
+x=x(1:2);
 y=TraceGBOG2_post_mus;
 err=TraceGBOG2_post_sigma2s;
 h9=errorbar(x, y, err, '-s','MarkerSize',12, 'Color', 'k', 'MarkerEdgeColor','k', 'LineWidth',1, 'LineStyle','none');
