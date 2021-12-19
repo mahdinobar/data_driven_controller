@@ -1,22 +1,24 @@
-function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% comment for server plots
+% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
+% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% % =========================================================================
-% % uncomment for server plots
-% function GBO_plots_all_experiments
-% close all;
-% clc;
-% clear;
-% idName= 'results_1';
-% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_17/'], idName, '/');
-% N0=1; %number of initial data
-% N_iter=50;
-% N_iter=N_iter+N0;
-% % todo automatize code
-% load(append(dir,'trace_file.mat'),'Trace')
-% TraceGBO=Trace;
-% clear Trace
-% % =========================================================================
+% =========================================================================
+% uncomment for server plots
+function GBO_plots_all_experiments
+close all;
+clc;
+clear;
+idName= 'results_1';
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_22' ...
+    '/'], idName, '/');
+N0=1; %number of initial data
+N_iter=50;
+N_iter=N_iter+N0;
+% todo automatize code
+load(append(dir,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
+clear Trace
+% =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -42,7 +44,7 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-for expr=1:min(length(TraceGBO),length(TraceBO))
+for expr=576:min(length(TraceGBO),length(TraceBO))
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     for j=1+N0:N_iter
@@ -72,6 +74,15 @@ h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineW
 legend([h1(1), h2(1), h3, h4],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Guided BO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
 grid on
 ylim(ax1, [1 3])
+
+fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
+fprintf('length(TraceBO)=%d \n',length(TraceBO))
+thr=1.4;
+[~,idx]=max(meanJminObservGBO./true_objective<thr);
+fprintf('idx_GBO=%d \n',idx)
+[~,idx]=max(meanJminObservBO./true_objective<thr);
+fprintf('idx_BO=%d \n',idx)
+
 % plot(ax1, 1.2.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
 % plot(ax1, 1.4.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
 xlabel(ax1, 'Iteration')

@@ -1,4 +1,4 @@
-function plot_EvalsPoster(TraceGBO, TraceBO, N0, N_iter, N_G, dir, idName)
+function plot_EvalsPoster(TraceGBO, TraceBO, N0, N_iter, N_G, N_G2_activated, dir, idName)
 %##########################################################################
 % plot mean of sampled gains over all experiments
 TraceGBOvalues=[];
@@ -59,7 +59,7 @@ plot(y+CI, ':', 'Color', [0, 0, 1, 1], 'LineWidth', 1)
 
 x=0:N_G:N_iter-N0-1;
 % todo play if you use N_G2_activated
-x=x(1:2);
+x=x(1:N_G2_activated);
 y=TraceGBOG2_post_mus;
 err=TraceGBOG2_post_sigma2s;
 h9=errorbar(x, y, err, '-s','MarkerSize',12, 'Color', 'k', 'MarkerEdgeColor','k', 'LineWidth',1, 'LineStyle','none');

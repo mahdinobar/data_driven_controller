@@ -10,8 +10,9 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_13/', idName, '/');
-N_G = 5;
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_19/', idName, '/');
+N_G = 1;
+N_G2_activated=5;
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
@@ -40,7 +41,7 @@ G = tf(num, den, 'InputDelay',Td);
 % end
 % EE
 
-plot_EvalsPoster(TraceGBO, TraceBO, N0, N_iter,N_G, dir, idName)
+plot_EvalsPoster(TraceGBO, TraceBO, N0, N_iter,N_G, N_G2_activated, dir, idName)
 
 
 plot_KpKiJItr(TraceGBO, TraceBO, gain_mins, gain_maxes, N0, dir, idName, G)
