@@ -9,7 +9,7 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_22' ...
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_2' ...
     '/'], idName, '/');
 N0=1; %number of initial data
 N_iter=50;
@@ -38,13 +38,7 @@ clear Trace
 true_objective = 4.1000;
 ms_true=[0.6119, 1.6642];
 
-fig=figure();
-fig.Position=[200 0 1600 800];
-ax1=axes;
-ax1.FontSize=24;
-ax1.FontName='Times New Roman';
-hold on
-for expr=576:min(length(TraceGBO),length(TraceBO))
+for expr=1:min(length(TraceGBO),length(TraceBO))
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     for j=1+N0:N_iter
@@ -63,12 +57,59 @@ for expr=576:min(length(TraceGBO),length(TraceBO))
 %     h1=semilogy(ax1, JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 end
+meanJminObservGBO=nanmean(JminObservGBO,2);
+meanJminObservBO=nanmean(JminObservBO,2);
+
+x=JminObservGBO'./true_objective;
+y=JminObservBO'./true_objective;
+fig=figure();
+fig.Position=[200 0 2000 800];
+ax0=axes;
+ax0.FontSize=24;
+ax0.FontName='Times New Roman';
+[h,p,ci,stats] = ttest(x,y, 'Tail','left');
+addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/github_repo/boxplot2/
+skip=3;
+xx=1:skip:50;
+zz=cat(3,x(:,xx),y(:,xx));
+zz=permute(zz,[2,3,1]);
+h = boxplot2(zz,xx);
+cmap = [[1,0,0];[0,0,1]];
+for ii = 1:2
+    structfun(@(x) set(x(ii,:), 'color', cmap(ii,:), ...
+        'markeredgecolor', cmap(ii,:)), h);
+end
+set([h.lwhis h.uwhis], 'linestyle', '-');
+% med=median(zz,3);
+med=quantile(y(:,xx),[0.25 0.75])';
+for itext=1:length(xx)
+    htext=text(xx(itext), med(itext,2)*1.05, sprintf('p-value=%.1e',p(xx(itext))));
+    set(htext,'Rotation',90);
+end
+grid on
+ylim([1 3])
+xlim([0, 50])
+set(h.out, 'marker', '.');
+xlabel(ax0, 'Iteration')
+ylabel(ax0, 'Optimality Ratio')
+% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+set(gca,'yscale','log')
+figName=append(dir, idName,'_ORi_boxPval.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_ORi_boxPval.fig');
+saveas(gcf,figName)
+
+fig=figure();
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=24;
+ax1.FontName='Times New Roman';
+hold on
 h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
 h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
-meanJminObservGBO=nanmean(JminObservGBO,2);
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 
-meanJminObservBO=nanmean(JminObservBO,2);
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 
 legend([h1(1), h2(1), h3, h4],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Guided BO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
@@ -83,8 +124,34 @@ fprintf('idx_GBO=%d \n',idx)
 [~,idx]=max(meanJminObservBO./true_objective<thr);
 fprintf('idx_BO=%d \n',idx)
 
+
+% plot(p, '--p', 'LineWidth', 5)
+% plot(ci(1,:)+meanJminObservBO', '--k', 'LineWidth', 5)
 % plot(ax1, 1.2.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
 % plot(ax1, 1.4.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
+
+% addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Violinplot-Matlab-master/
+% fig=figure();
+% boxplot(x, 'PlotStyle','compact', 'OutlierSize', 2)
+% vs = violinplot(x,0.5:49.5);
+
+
+
+
+% group = [    .8:49.8;
+%          1.2:50.2];
+% 
+% boxplot(x,.8:49.8, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','r')
+% hold on
+% boxplot(y,1.2:50.2, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','b')
+% boxplot(x-y, 'PlotStyle','compact', 'OutlierSize', 2)
+% ylim([1 3])
+% set(gca,'yscale','log')
+
+% boxplot([x,y], 'Notch','on', 'Labels',{1:50,1:50}, 'PlotStyle','compact', 'OutlierSize', 2)
+% ylim([1 3])
+% set(gca,'yscale','log')
+
 xlabel(ax1, 'Iteration')
 ylabel(ax1, 'Optimality Ratio')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
