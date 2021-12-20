@@ -9,7 +9,7 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_2' ...
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
     '/'], idName, '/');
 N0=1; %number of initial data
 N_iter=50;
@@ -69,8 +69,8 @@ ax0.FontSize=24;
 ax0.FontName='Times New Roman';
 [h,p,ci,stats] = ttest(x,y, 'Tail','left');
 addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/github_repo/boxplot2/
-skip=3;
-xx=1:skip:50;
+skip=5;
+xx=3:skip:49;
 zz=cat(3,x(:,xx),y(:,xx));
 zz=permute(zz,[2,3,1]);
 h = boxplot2(zz,xx);
@@ -80,11 +80,17 @@ for ii = 1:2
         'markeredgecolor', cmap(ii,:)), h);
 end
 set([h.lwhis h.uwhis], 'linestyle', '-');
+set([h.lwhis h.uwhis, h.box, h.med], 'linewidth', 2);
 % med=median(zz,3);
 med=quantile(y(:,xx),[0.25 0.75])';
 for itext=1:length(xx)
-    htext=text(xx(itext), med(itext,2)*1.05, sprintf('p-value=%.1e',p(xx(itext))));
-    set(htext,'Rotation',90);
+    if itext==1
+        htext=text(xx(itext)-0.05, 1.01, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
+    else
+        htext=text(xx(itext)-0.05, med(itext,2)*1.1, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
+
+    end
+set(htext,'Rotation',90);
 end
 grid on
 ylim([1 3])
