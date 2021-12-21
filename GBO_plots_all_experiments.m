@@ -95,6 +95,7 @@ end
 grid on
 ylim([1 3])
 xlim([0, 50])
+xticks(xx)
 set(h.out, 'marker', '.');
 xlabel(ax0, 'Iteration')
 ylabel(ax0, 'Optimality Ratio')

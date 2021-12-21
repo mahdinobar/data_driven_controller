@@ -37,7 +37,7 @@ end
 % DC motor at FHNW lab
 num = [5.19908];
 den = [1, 1.61335];
-Td=0;
+Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
 
