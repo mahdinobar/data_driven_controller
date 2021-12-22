@@ -35,24 +35,27 @@ clear Trace
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 4.1000;
-ms_true=[0.6119, 1.6642];
+% true_objective = 4.1000;
+% ms_true=[0.6119, 1.6642];
+true_objective=65.9974;
 
 for expr=1:min(length(TraceGBO),length(TraceBO))
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     for j=1+N0:N_iter
         [minObs_tmp,minObs_Idx_tmp]=nanmin(TraceGBO(expr).values(1:j));
-%         remove outlie solutions
-        if minObs_tmp<true_objective*0.1
-            Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G);
-            TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
-            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
-        else
-            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
-        end
+% %         remove outlie solutions
+%         if minObs_tmp<true_objective*0.1
+%             Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G);
+%             TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
+%             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+%             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+%         else
+%             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+%             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+%         end
+        JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+        JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
     end
 %     h1=semilogy(ax1, JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);

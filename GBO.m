@@ -3,7 +3,7 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_38';
+idName= 'demo_GBO_0_39';
 sys='DC_motor';
 N0=1; %number of initial data
 N_expr=2;
@@ -12,11 +12,11 @@ N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
 withSurrogate=true;
-only_visualize=false;
+only_visualize=true;
 
 if withSurrogate
     npG2=2;
-    N_G2_activated=20; %total number of times G2 is used
+    N_G2_activated=10; %total number of times G2 is used
     N_G = 1; %number of consecutive optimization on real plant before surrogate
     N_extra= N_G2_activated; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
@@ -85,7 +85,7 @@ end
 % Ki = (Ki_max-Ki_min).*RAND + Ki_min;
 % InitobjectiveData = zeros(N0,1);
 % % todo pay attention how you choose sampleTf?
-% sampleTf=1.5;
+% sampleTf=0.5;
 % sampleTs=sampleTf/(Nsample-1);
 % global G2data
 % for i=1:N0
@@ -166,7 +166,8 @@ Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
 Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
 J_ltn = zeros(N_ltn,1);
 
-sampleTf=1.5;
+% final simulation sampling time
+sampleTf=0.2;
 sampleTs=sampleTf/(Nsample-1);
 global G2data
 
@@ -194,8 +195,11 @@ if withSurrogate
     t=0:sampleTs/100:sampleTf;
     y = step(G,t);
     y2 = step(G2,t);
-    step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
+
+    % %     uncomment to check simulation
+%     figure()
+%     step(G); hold on; step(G2,'r')
+%     rmse2=sqrt(mean((y-y2).^2))
 end
 
 N_hat=100;
@@ -318,7 +322,17 @@ hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 Kp_nominal=14.75043;
 Ki_nominal=37.76291;
+J_nominal=ObjFun([Kp_nominal, Kp_nominal],G);
+% optimality ratio of nominal gains
+OR_nominal=J_nominal/M
 plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
+
+% % uncomment to inspect for finding sampleTf
+% C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
+% CL=feedback(C*G, 1);
+% figure()
+% step(CL)
+% step(CLU)
 
 % zlim([0,50])
 % [true_objective, b]=min(j_pt,[],'all');
@@ -543,8 +557,11 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     t=0:sampleTs/100:sampleTf;
     y = step(G,t);
     y2 = step(G2,t);
-    step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
+
+% %     uncomment to check simulation
+%     figure()
+%     step(G); hold on; step(G2,'r')
+%     rmse2=sqrt(mean((y-y2).^2))
 
     objective=ObjFun(X, G2);
     idx= 0;
