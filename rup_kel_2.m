@@ -69,11 +69,12 @@ Ki_nominal=C_tuned.Ki;
 taw=1/1.61335;
 kp=5.19908/1.61335;
 L=1/500;
-Am=10;
+Am=7;
 Pm=pi/3;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
+J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
 %
 % Kp_nominal=0.6119;
 % Ki_nominal=1.6560;
@@ -107,7 +108,7 @@ step(CL_pgm);hold on; step(CL_nom, 'k');hold on; step(CL_max,'r');hold on; step(
 %     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
 % end
 % objective
-% global data_tmp
+global data_tmp
 limit_objective=0;
 d=1e-1;
 while limit_objective<200 && ~isnan(limit_objective)
@@ -177,11 +178,12 @@ Kp_min=Kp_nominal-d
 Kp_max=Kp_nominal+d
 Ki_min=Ki_nominal-d
 Ki_max=Ki_nominal+d
-Ki_min=1.27554816862556;
-Ki_max=1.84617150984756;
+% Ki_min=1.27554816862556;
+% Ki_max=1.84617150984756;
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_c.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
 
-Kp_min=0.0672261578128495;
-Kp_max=0.585974649832850;
+% Kp_min=0.0672261578128495;
+% Kp_max=0.585974649832850;
 
 Ctl_pgm=tf([50.32,50.32*1.61335], [1, 0]);
 CL_pgm=feedback(Ctl_pgm*G, 1);
