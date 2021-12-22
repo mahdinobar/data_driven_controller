@@ -3,10 +3,10 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_37';
+idName= 'demo_GBO_0_38';
 sys='DC_motor';
-N0=5; %number of initial data
-N_expr=3;
+N0=1; %number of initial data
+N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -15,7 +15,7 @@ withSurrogate=true;
 only_visualize=false;
 
 if withSurrogate
-    npG2=4;
+    npG2=2;
     N_G2_activated=20; %total number of times G2 is used
     N_G = 1; %number of consecutive optimization on real plant before surrogate
     N_extra= N_G2_activated; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
@@ -49,13 +49,16 @@ J = ObjFun([0.530948417812632	1.76520785322635], G)
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_b.mat');
 end
 load(dir_gains)
 
 %% only_visualize
 if only_visualize
-    load(append(dir, 'trace_file.mat'),'Trace')
+    load(append(dir, 'trace_file_removed_G2.mat'),'Trace_removed_G2')
+    Trace=Trace_removed_G2;
+    clear Trace_removed_G2
+    
     experiment=1;
     mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
     maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
@@ -308,6 +311,15 @@ surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
 xlabel('Kp')
 ylabel('Ki')
 zlabel('J')
+set(gca,'zscale','log')
+set(gca,'ColorScale','log')
+[M,I]=min(j_pt,[],'all');
+hold on;
+plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
+Kp_nominal=14.75043;
+Ki_nominal=37.76291;
+plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
+
 % zlim([0,50])
 % [true_objective, b]=min(j_pt,[],'all');
 % kp_true=kp_pt(b)
@@ -344,7 +356,7 @@ for expr=1:N_expr
     % save(append(dir,'trace_file.mat'),'botrace')
     opt.resume_trace_data = botrace;
     clear botrace
-
+    idx_G2=[];
     for itr=N0+1:N_iter
         %     itr
         %     iteration=itr-N0
@@ -359,16 +371,14 @@ for expr=1:N_expr
             G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
             G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
             G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-1,:)];
-            Trace_tmp_not_removed=Trace_tmp;
-            Trace_tmp.samples(end-N_G-1,:)=[];
-            Trace_tmp.values(end-N_G-1)=[];
-            Trace_tmp.post_mus(end-N_G-1)=[];
-            Trace_tmp.post_sigma2s(end-N_G-1)=[];
-            Trace_tmp.times(end-N_G-1)=[];
-        else
-            Trace_tmp_not_removed=Trace_tmp;
+            idx_G2= [idx_G2;size(Trace_tmp.samples,1)-N_G-1];
+%             Trace_tmp.samples(end-N_G-1,:)=[];
+%             Trace_tmp.values(end-N_G-1)=[];
+%             Trace_tmp.post_mus(end-N_G-1)=[];
+%             Trace_tmp.post_sigma2s(end-N_G-1)=[];
+%             Trace_tmp.times(end-N_G-1)=[];
         end
-        opt.resume_trace_data = Trace_tmp_not_removed;
+        opt.resume_trace_data = Trace_tmp;
         %     counter=counter+1;
     end
 % %     comment if use N_G2_activated
@@ -397,10 +407,19 @@ for expr=1:N_expr
     Trace_tmp.G2_post_mus=G2_post_mus;
     Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
     Trace(expr)=Trace_tmp;
-    delete Trace_tmp
+
+    Trace_tmp_removed_G2=Trace_tmp;
+    Trace_tmp_removed_G2.samples(idx_G2,:)=[];
+    Trace_tmp_removed_G2.values(idx_G2)=[];
+    Trace_tmp_removed_G2.post_mus(idx_G2)=[];
+    Trace_tmp_removed_G2.post_sigma2s(idx_G2)=[];
+    Trace_tmp_removed_G2.times(idx_G2)=[];
+    Trace_removed_G2(expr)=Trace_tmp_removed_G2;
+    delete Trace_tmp Trace_tmp_removed_G2
 
     if withSurrogate==true
         save(append(dir, 'trace_file.mat'),'Trace')
+        save(append(dir, 'trace_file_removed_G2.mat'),'Trace_removed_G2')
         if expr<N_expr
             load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
             RAND_ltn=RAND_ltn_all(:,expr+1);
@@ -456,12 +475,12 @@ else
 end
 saveas(gcf,figName)
 
-%% plots
-if withSurrogate
-    %     experiment=1;
-    %     GBO_plots_one_experiment(ms, Trace, experiment, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
-    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
-end
+% %% plots
+% if withSurrogate
+%     %     experiment=1;
+%     %     GBO_plots_one_experiment(ms, Trace, experiment, opt.mins, opt.maxes, N0, N_iter-N_extra, N_G, idName, G)
+%     GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
+% end
 end
 
 function [objective, constraints] = ObjFun(X, G)
@@ -495,7 +514,8 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[0.1, 1, 1, 0.5];
+% w=[0.1, 1, 1, 0.5];
+w=[91.35, 0.34, 0.028, 0.0019];
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;

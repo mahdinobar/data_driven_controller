@@ -1,24 +1,24 @@
 % comment for server plots
-% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% =========================================================================
-% uncomment for server plots
-function GBO_plots_all_experiments
-close all;
-clc;
-clear;
-idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
-    '/'], idName, '/');
-N0=1; %number of initial data
-N_iter=50;
-N_iter=N_iter+N0;
-% todo automatize code
-load(append(dir,'trace_file.mat'),'Trace')
-TraceGBO=Trace;
-clear Trace
-% =========================================================================
+% % =========================================================================
+% % uncomment for server plots
+% function GBO_plots_all_experiments
+% close all;
+% clc;
+% clear;
+% idName= 'results_1';
+% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
+%     '/'], idName, '/');
+% N0=1; %number of initial data
+% N_iter=50;
+% N_iter=N_iter+N0;
+% % todo automatize code
+% load(append(dir,'trace_file.mat'),'Trace')
+% TraceGBO=Trace;
+% clear Trace
+% % =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
