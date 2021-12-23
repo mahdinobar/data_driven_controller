@@ -53,8 +53,8 @@ elseif sys=="DC_motor"
     dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_GM3_PM60.mat');
 end
 load(dir_gains)
-Kp_min=47;
-Ki_min=-1.5;
+% Kp_min=47;
+% Ki_min=0.1;
 
 %% only_visualize
 if only_visualize
@@ -325,7 +325,7 @@ hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 Kp_nominal=50.3549;
 Ki_nominal=1.6134;
-J_nominal=ObjFun([Kp_nominal, Kp_nominal],G);
+J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
 % optimality ratio of nominal gains
 OR_nominal=J_nominal/M
 plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
