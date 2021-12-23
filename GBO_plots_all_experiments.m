@@ -1,24 +1,24 @@
-% comment for server plots
-function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% % comment for server plots
+% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
+% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% % =========================================================================
-% % uncomment for server plots
-% function GBO_plots_all_experiments
-% close all;
-% clc;
-% clear;
-% idName= 'results_1';
-% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
-%     '/'], idName, '/');
-% N0=1; %number of initial data
-% N_iter=50;
-% N_iter=N_iter+N0;
-% % todo automatize code
-% load(append(dir,'trace_file.mat'),'Trace')
-% TraceGBO=Trace;
-% clear Trace
-% % =========================================================================
+% =========================================================================
+% uncomment for server plots
+function GBO_plots_all_experiments
+close all;
+clc;
+clear;
+idName= 'results_1';
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_41' ...
+    '/'], idName, '/');
+N0=1; %number of initial data
+N_iter=50;
+N_iter=N_iter+N0;
+% todo automatize code
+load(append(dir,'trace_file_removed_G2.mat'),'Trace_removed_G2')
+TraceGBO=Trace_removed_G2;
+clear Trace_removed_G2
+% =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -38,10 +38,18 @@ clear Trace
 % true_objective = 4.1000;
 % ms_true=[0.6119, 1.6642];
 true_objective=65.9974;
+expr=1;
+while expr<min(length(TraceGBO),length(TraceBO))+1
+    try    
+        JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
+        JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
+    catch
+        expr_tmp=expr-1;
+        TraceGBO(expr)=TraceGBO(expr_tmp);
+        TraceBO(expr)=TraceBO(expr_tmp);
+        continue
+    end
 
-for expr=1:min(length(TraceGBO),length(TraceBO))
-    JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
-    JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     for j=1+N0:N_iter
         [minObs_tmp,minObs_Idx_tmp]=nanmin(TraceGBO(expr).values(1:j));
 % %         remove outlie solutions
@@ -59,6 +67,7 @@ for expr=1:min(length(TraceGBO),length(TraceBO))
     end
 %     h1=semilogy(ax1, JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
+expr=expr+1;
 end
 meanJminObservGBO=nanmean(JminObservGBO,2);
 meanJminObservBO=nanmean(JminObservBO,2);
@@ -205,7 +214,7 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[0.1, 1, 1, 0.5];
+w=[91.35, 0.34, 0.028, 0.0019];
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;

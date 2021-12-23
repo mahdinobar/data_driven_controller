@@ -62,15 +62,15 @@ G = tf(num, den, 'InputDelay',Td);
 % auto tune
 [C_tuned,info] = pidtune(G,'PI');
 % Kd_nominal=C_tuned.Kd;
-Kp_nominal=C_tuned.Kp;
-Ki_nominal=C_tuned.Ki;
+Kp_nominal_1=C_tuned.Kp;
+Ki_nominal_1=C_tuned.Ki;
 
 % phase gain margin nominal controller: WENG KHUEN HO et al.
 taw=1/1.61335;
 kp=5.19908/1.61335;
 L=1/500;
-Am=7;
-Pm=pi/3;
+Am=3.0;
+Pm=60*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
@@ -87,13 +87,14 @@ Kp_max=0.585974649832850;
 
 Ctl_pgm=tf([50.32,50.32*1.61335], [1, 0]);
 CL_pgm=feedback(Ctl_pgm*G, 1);
+Ctl_nom_1=tf([Kp_nominal_1,Kp_nominal_1*Ki_nominal_1], [1, 0]);
 Ctl_nom=tf([Kp_nominal,Kp_nominal*Ki_nominal], [1, 0]);
 CL_nom=feedback(Ctl_nom*G, 1);
 Ctl_max=tf([Kp_max,Kp_max*Ki_max], [1, 0]);
 CL_max=feedback(Ctl_max*G, 1);
 Ctl_min=tf([Kp_min,Kp_min*Ki_min], [1, 0]);
 CL_min=feedback(Ctl_min*G, 1);
-[Gm,Pm,Wcg,Wcp] = margin(Ctl_nom*G)
+[Gm,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
 
 step(CL_pgm);hold on; step(CL_nom, 'k');hold on; step(CL_max,'r');hold on; step(CL_min,'r');
 
@@ -108,10 +109,9 @@ step(CL_pgm);hold on; step(CL_nom, 'k');hold on; step(CL_max,'r');hold on; step(
 %     objective = abs(stepinfo(CL).Overshoot*stepinfo(CL).SettlingTime);
 % end
 % objective
-global data_tmp
 limit_objective=0;
 d=1e-1;
-while limit_objective<200 && ~isnan(limit_objective)
+while limit_objective<100 && ~isnan(limit_objective)
     d
     %     lb=[Kp_nominal-d, Ki_nominal-d];
     %     ub=[Kp_nominal+d, Ki_nominal+d];
@@ -166,11 +166,12 @@ end
             ITAE=1e5;
         end
 
-        w=[91.35, 0.34, 0.028, 0.0019];
+%         w=[91.35, 0.34, 0.028, 0.0019];
+w=[40.	0.10	0.01	0.0002];
 % w=[1, 1, 1, 1];
         w=w./sum(w);
         objective=-abs(ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4));
-%         data_tmp=[data_tmp;[ov/w(1), st/w(2), Tr/w(3), ITAE/w(4)]];
+        data_tmp=[ov/w(1), st/w(2), Tr/w(3), ITAE/w(4)];
         %         objective=-abs(abs(ov)/w1+st/w2+Tr/w3+ITAE/w4);
     end
 d=d/1.1;
@@ -180,7 +181,7 @@ Ki_min=Ki_nominal-d
 Ki_max=Ki_nominal+d
 % Ki_min=1.27554816862556;
 % Ki_max=1.84617150984756;
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_c.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_GM3_PM60.mat','Kp_min','Ki_min', 'Kp_max','Ki_max')
 
 % Kp_min=0.0672261578128495;
 % Kp_max=0.585974649832850;

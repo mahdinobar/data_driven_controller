@@ -75,7 +75,7 @@ else
     if isfield(opt,'initial_points')
         %samples = opt.initial_points;
         for i = 1:size(opt.initial_points,1)
-            fprintf('Running initial point #%d...\n',i);
+            %fprintf('Running initial point #%d...\n',i);
             init_pt = opt.initial_points(i,:);
             sinit_pt = scale_point(init_pt,opt.mins,opt.maxes);
             if ~DO_CBO,
@@ -91,7 +91,7 @@ else
         end
     end
     init = floor(rand(1,2)*opt.grid_size);
-    fprintf('Running first point...\n');
+    %fprintf('Running first point...\n');
     % Get values for the first two samples (no point using a GP yet)
     pt1 = unscale_point(hyper_grid(init(1),:),opt.mins,opt.maxes);
     if ~DO_CBO,
@@ -100,7 +100,7 @@ else
         [val1,con1] = F(pt1);
     end
 
-    fprintf('Running second point...\n');
+    %fprintf('Running second point...\n');
     pt2 = unscale_point(hyper_grid(init(2),:),opt.mins,opt.maxes);
     if ~DO_CBO,
         val2 = F(pt2); % Second sample
@@ -218,12 +218,12 @@ for i = i_start:opt.max_iters-2,
 
     if PAR_JOBS <= 1,
         if ~DO_CBO,
-            fprintf('Iteration %d, Maximum EI = %f',i+2,aq_val);
+            %fprintf('Iteration %d, Maximum EI = %f',i+2,aq_val);
         else
-            fprintf('Iteration %d, eic = %f',i+2,aq_val);
+            %fprintf('Iteration %d, eic = %f',i+2,aq_val);
         end
     else
-        fprintf('Iteration %d, running %d jobs in parallel...\n',i+2,PAR_JOBS);
+        %fprintf('Iteration %d, running %d jobs in parallel...\n',i+2,PAR_JOBS);
         for k = 1:PAR_JOBS,
             hyper_cands(k,:) = unscale_point(hyper_cands(k,:),opt.mins,opt.maxes);
         end
@@ -247,7 +247,7 @@ for i = i_start:opt.max_iters-2,
                 tic;
                 par_values{k} = F(hyper_cands(k,:));
                 par_times{k} = toc;
-                fprintf('    * Got value=%f\n',par_values{k});
+                %fprintf('    * Got value=%f\n',par_values{k});
             end
             for k = 1:PAR_JOBS,
                 values = [values;par_values{k}];
@@ -273,7 +273,7 @@ for i = i_start:opt.max_iters-2,
                 par_times{k} = toc;
                 par_values{k} = v;
                 par_con_values{k} = cv;
-                fprintf('    * Got value=%f, feasible=%d\n',v,all(par_con_values{k}<=opt.lt_const));
+                %fprintf('    * Got value=%f, feasible=%d\n',v,all(par_con_values{k}<=opt.lt_const));
             end
             for k = 1:PAR_JOBS,
                 values = [values;par_values{k}];
@@ -294,17 +294,17 @@ for i = i_start:opt.max_iters-2,
 
     if PAR_JOBS <= 1,
         if ~DO_CBO,
-            fprintf(', value = %f, overall min = %f\n',value,min(values));
+            %fprintf(', value = %f, overall min = %f\n',value,min(values));
         else
             which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            fprintf(', value = %f, feasible = %d, overall min = %f\n',value,all(con_value<=opt.lt_const),min(values(which_feas)));
+            %fprintf(', value = %f, feasible = %d, overall min = %f\n',value,all(con_value<=opt.lt_const),min(values(which_feas)));
         end
     else
         if ~DO_CBO,
-            fprintf('Overall min = %f\n\n',min(values));
+            %fprintf('Overall min = %f\n\n',min(values));
         else
             which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            fprintf('Overall min = %f\n\n',min(values(which_feas)));
+            %fprintf('Overall min = %f\n\n',min(values(which_feas)));
         end
     end
     botrace.post_mus=post_mus;

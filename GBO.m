@@ -3,16 +3,17 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_0_39';
+idName= 'demo_GBO_0_40';
 sys='DC_motor';
 N0=1; %number of initial data
 N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;
-Nsample=150;
+Nsample=1500;
+eps=0.05;
 withSurrogate=true;
-only_visualize=true;
+only_visualize=false;
 
 if withSurrogate
     npG2=2;
@@ -49,9 +50,11 @@ J = ObjFun([0.530948417812632	1.76520785322635], G)
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_b.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_GM3_PM60.mat');
 end
 load(dir_gains)
+Kp_min=47;
+Ki_min=-1.5;
 
 %% only_visualize
 if only_visualize
@@ -101,8 +104,8 @@ end
 %         InitobjectiveData(i) = ObjFun(Kp(i), Ki(i), G);
 %     end
 %     CLU=feedback(C, G);
-%     ytmp=step(CL,0:sampleTs:sampleTf);
-%     utmp=step(CLU,0:sampleTs:sampleTf);
+%     ytmp=step(CL,eps:sampleTs:sampleTf);
+%     utmp=step(CLU,eps:sampleTs:sampleTf);
 %     %         todo check concept?
 %     if i==1
 %         G2data = iddata(ytmp,utmp,sampleTs);
@@ -167,7 +170,7 @@ Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
 J_ltn = zeros(N_ltn,1);
 
 % final simulation sampling time
-sampleTf=0.2;
+sampleTf=3.3;
 sampleTs=sampleTf/(Nsample-1);
 global G2data
 
@@ -177,8 +180,8 @@ for i=1:N_ltn
     J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
 
     CLU=feedback(C, G);
-    ytmp=step(CL,0:sampleTs:sampleTf);
-    utmp=step(CLU,0:sampleTs:sampleTf);
+    ytmp=step(CL,eps:sampleTs:sampleTf);
+    utmp=step(CLU,eps:sampleTs:sampleTf);
     %         todo check concept?
     if i==1
         G2data_init = iddata(ytmp,utmp,sampleTs);
@@ -192,11 +195,11 @@ if withSurrogate
     %     [a,b]=tfdata(G2idtf);
     %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
-    t=0:sampleTs/100:sampleTf;
-    y = step(G,t);
-    y2 = step(G2,t);
-
-    % %     uncomment to check simulation
+%     t=0:sampleTs/100:sampleTf;
+%     y = step(G,t);
+%     y2 = step(G2,t);
+% 
+%     % %     uncomment to check simulation
 %     figure()
 %     step(G); hold on; step(G2,'r')
 %     rmse2=sqrt(mean((y-y2).^2))
@@ -320,8 +323,8 @@ set(gca,'ColorScale','log')
 [M,I]=min(j_pt,[],'all');
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
-Kp_nominal=14.75043;
-Ki_nominal=37.76291;
+Kp_nominal=50.3549;
+Ki_nominal=1.6134;
 J_nominal=ObjFun([Kp_nominal, Kp_nominal],G);
 % optimality ratio of nominal gains
 OR_nominal=J_nominal/M
@@ -434,6 +437,7 @@ for expr=1:N_expr
     if withSurrogate==true
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'trace_file_removed_G2.mat'),'Trace_removed_G2')
+        save(append(dir, 'idx_G2.mat'),'idx_G2')
         if expr<N_expr
             load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
             RAND_ltn=RAND_ltn_all(:,expr+1);
@@ -445,8 +449,8 @@ for expr=1:N_expr
                 CL=feedback(C*G, 1);
                 J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
                 CLU=feedback(C, G);
-                ytmp=step(CL,0:sampleTs:sampleTf);
-                utmp=step(CLU,0:sampleTs:sampleTf);
+                ytmp=step(CL,eps:sampleTs:sampleTf);
+                utmp=step(CLU,eps:sampleTs:sampleTf);
                 %         todo check concept?
                 if i==1
                     G2data_init = iddata(ytmp,utmp,sampleTs);
@@ -529,7 +533,9 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
 end
 
 % w=[0.1, 1, 1, 0.5];
-w=[91.35, 0.34, 0.028, 0.0019];
+% w=[91.35, 0.34, 0.028, 0.0019];
+w=[40.	0.10	0.01	0.0002];
+
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;
@@ -554,11 +560,11 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
 %     [a,b]=tfdata(G2idtf);
 %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
-    t=0:sampleTs/100:sampleTf;
-    y = step(G,t);
-    y2 = step(G2,t);
-
-% %     uncomment to check simulation
+%     t=0:sampleTs/100:sampleTf;
+%     y = step(G,t);
+%     y2 = step(G2,t);
+% 
+% % %     uncomment to check simulation
 %     figure()
 %     step(G); hold on; step(G2,'r')
 %     rmse2=sqrt(mean((y-y2).^2))
@@ -573,8 +579,8 @@ else
     C=tf([X(1),X(1)*X(2)], [1, 0]);
     CL=feedback(C*G, 1);
     CLU=feedback(C, G);
-    ytmp=step(CL,0:sampleTs:sampleTf);
-    utmp=step(CLU,0:sampleTs:sampleTf);
+    ytmp=step(CL,eps:sampleTs:sampleTf);
+    utmp=step(CLU,eps:sampleTs:sampleTf);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 %     first condition to delete the last simulation after being used
     if N_G2_activated_counter==N_G2_activated && idx==5
