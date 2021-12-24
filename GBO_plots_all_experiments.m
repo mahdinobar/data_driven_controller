@@ -9,15 +9,15 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_41' ...
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_37' ...
     '/'], idName, '/');
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
 % todo automatize code
-load(append(dir,'trace_file_removed_G2.mat'),'Trace_removed_G2')
-TraceGBO=Trace_removed_G2;
-clear Trace_removed_G2
+load(append(dir,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
+clear Trace
 % =========================================================================
 
 %% define plant
@@ -37,33 +37,43 @@ clear Trace
 % true_objective=3.1672;
 % true_objective = 4.1000;
 % ms_true=[0.6119, 1.6642];
-true_objective=65.9974;
+% true_objective=65.9974;
+true_objective=17.8676;
+
 expr=1;
 while expr<min(length(TraceGBO),length(TraceBO))+1
-    try    
+%     try    
         JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
         JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
-    catch
-        expr_tmp=expr-1;
-        TraceGBO(expr)=TraceGBO(expr_tmp);
-        TraceBO(expr)=TraceBO(expr_tmp);
-        continue
-    end
-
+%     catch
+%         expr_tmp=expr-1;
+%         TraceGBO(expr)=TraceGBO(expr_tmp);
+%         TraceBO(expr)=TraceBO(expr_tmp);
+%         continue
+%     end
+k=0;
     for j=1+N0:N_iter
         [minObs_tmp,minObs_Idx_tmp]=nanmin(TraceGBO(expr).values(1:j));
-% %         remove outlie solutions
-%         if minObs_tmp<true_objective*0.1
-%             Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G);
-%             TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
-%             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-%             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
-%         else
-%             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-%             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
-%         end
-        JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-        JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+%         correct or remove outlie solutions because of computational
+%         failure on server
+        if minObs_tmp<true_objective 
+            j
+            Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G)
+            if Jcorrect<true_objective
+                TraceGBO(expr).samples(minObs_Idx_tmp,:)
+            end
+            TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
+            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+        elseif minObs_tmp>true_objective*10
+            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr-1).values(1:j));
+            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr-1).values(1:j));
+        else
+            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+        end
+%         JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
+%         JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
     end
 %     h1=semilogy(ax1, JminObservGBO(:,expr)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
@@ -214,7 +224,8 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[91.35, 0.34, 0.028, 0.0019];
+% w=[91.35, 0.34, 0.028, 0.0019];
+w=[40, 0.1, 0.01, 0.0002];
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;

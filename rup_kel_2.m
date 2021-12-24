@@ -96,9 +96,53 @@ Ctl_min=tf([Kp_min,Kp_min*Ki_min], [1, 0]);
 CL_min=feedback(Ctl_min*G, 1);
 [Gm,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
 
-step(CL_pgm);hold on; step(CL_nom, 'k');hold on; step(CL_max,'r');hold on; step(CL_min,'r');
+% step(CL_pgm);hold on; step(CL_nom, 'k');hold on; step(CL_max,'r');hold on; step(CL_min,'r');
 
 
+%% plot step response per various benchmark tunings
+fig=figure();
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=24;
+ax1.FontName='Times New Roman';
+hold on
+
+Tf=.06;
+resol=2000;
+dt=Tf/resol;
+x0=0;
+time=0:dt:Tf;
+u_ref1=1.*ones(floor(size(time,2)/2),1);
+u_ref2=0.*ones(ceil(size(time,2)/2),1);
+u_ref=[u_ref1;u_ref2];
+
+Kp_gt=47.00;
+Ki_gt=0.10;
+Ctl_gt=tf([Kp_gt,Kp_gt*Ki_gt], [1, 0]);
+CL_gt=feedback(Ctl_gt*G, 1);
+Ctl_nom=tf([Kp_nominal,Kp_nominal*Ki_nominal], [1, 0]);
+CL_nom=feedback(Ctl_nom*G, 1);
+y_gt = lsim(CL_gt, u_ref, time, x0, 'zoh');
+y_nom = lsim(CL_nom, u_ref, time, x0, 'zoh');
+
+h1=plot(time, y_gt, 'g', 'LineWidth', 2);
+h2=plot(time, y_nom, 'k', 'LineWidth', 2);
+
+legend([h1, h2],{'Ground Truth', 'Nominal PGM'}, 'Location', 'best');
+grid on
+xlim(ax1, [0 Tf])
+
+xlabel(ax1, 'Time')
+ylabel(ax1, 'Velocity')
+% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% set(gca,'yscale','log')
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp','_StepRsps.png');
+saveas(gcf,figName)
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp','_ORi_StepRsps.fig');
+saveas(gcf,figName)
+
+%%
 % Tf=1e-8;
 
 % C=tf([Kd_nominal+Tf*Kp_nominal,Kp_nominal+Tf*Ki_nominal,Ki_nominal], [Tf, 1, 0]);
