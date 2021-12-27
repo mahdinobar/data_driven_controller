@@ -1,24 +1,24 @@
-% comment for server plots
-function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% % comment for server plots
+% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
+% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% % =========================================================================
-% % uncomment for server plots
-% function GBO_plots_all_experiments
-% close all;
-% clc;
-% clear;
-% idName= 'results_1';
-% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_48' ...
-%     '/'], idName, '/');
-% N0=1; %number of initial data
-% N_iter=50;
-% N_iter=N_iter+N0;
-% % todo automatize code
-% load(append(dir,'trace_file.mat'),'Trace')
-% TraceGBO=Trace;
-% clear Trace
-% % =========================================================================
+% =========================================================================
+% uncomment for server plots
+function GBO_plots_all_experiments
+close all;
+clc;
+clear;
+idName= 'results_1';
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
+    '/'], idName, '/');
+N0=1; %number of initial data
+N_iter=50;
+N_iter=N_iter+N0;
+% todo automatize code
+load(append(dir,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
+clear Trace
+% =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -35,16 +35,18 @@ clear Trace
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-% true_objective = 4.1000;
+true_objective = 4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
-true_objective=15.800;
+% true_objective=15.800;
 expr=1;
 while expr<min(length(TraceGBO),length(TraceBO))+1
 %     try    
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
+    JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
+    JminObservBO_samples(:,expr,:)=TraceBO(expr).samples(N0+1:N_iter,:);
 %     catch
 %         if expr==1
 %             expr_tmp=expr+1;
@@ -66,8 +68,10 @@ while expr<min(length(TraceGBO),length(TraceBO))+1
             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
         else
-            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
-            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
+            [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
+            JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
+            [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
+            JminObservBO_samples(j-N0,expr,:)=TraceBO(expr).samples(NDX_BO,:);
         end
 %         JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
 %         JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
@@ -78,6 +82,21 @@ expr=expr+1;
 end
 meanJminObservGBO=nanmean(JminObservGBO,2);
 meanJminObservBO=nanmean(JminObservBO,2);
+
+%%
+% uncomment to find gains corrosponding to the mean cost per iteration over all experiments
+[~,idxGBO]=min(abs(JminObservGBO-meanJminObservGBO),[],2);
+iteration_number=10;
+Gains_meanJ_GBO=JminObservGBO_samples(iteration_number,idxGBO(iteration_number),:)
+[~,idxBO]=min(abs(JminObservBO-meanJminObservBO),[],2);
+iteration_number=10;
+Gains_meanJ_BO=JminObservBO_samples(iteration_number,idxBO(iteration_number),:)
+
+% WRONG calculation of meanJminObservGBO_samples so not use two lines below
+% meanJminObservGBO_samples=squeeze(nanmean(JminObservGBO_samples,2));
+% meanJminObservBO_samples=squeeze(nanmean(JminObservBO_samples,2));
+%%
+
 
 x=JminObservGBO'./true_objective;
 y=JminObservBO'./true_objective;
@@ -222,9 +241,9 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-% w=[0.1, 1, 1, 0.5];
+w=[0.1, 1, 1, 0.5];
 % w=[91.35, 0.34, 0.028, 0.0019];
-w=[40.	0.10	0.01	0.0002];
+% w=[40.	0.10	0.01	0.0002];
 
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);

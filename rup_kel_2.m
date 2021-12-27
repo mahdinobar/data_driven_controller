@@ -77,7 +77,7 @@ Ki_nominal_1=C_tuned.Ki;
 taw=1/1.61335;
 kp=5.19908/1.61335;
 L=1/500;
-Am=200;
+Am=310;
 Pm=90*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
@@ -120,7 +120,7 @@ ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
 
-Tf=.06;
+Tf=4;
 resol=2000;
 dt=Tf/resol;
 x0=0;
@@ -129,19 +129,40 @@ u_ref1=1.*ones(floor(size(time,2)/2),1);
 u_ref2=0.*ones(ceil(size(time,2)/2),1);
 u_ref=[u_ref1;u_ref2];
 
-Kp_gt=47.00;
-Ki_gt=0.10;
+Kp_gt=0.6119;
+Ki_gt=1.6636;
 Ctl_gt=tf([Kp_gt,Kp_gt*Ki_gt], [1, 0]);
 CL_gt=feedback(Ctl_gt*G, 1);
+Kp_nominal=0.4873;
+Ki_nominal=1.5970;
 Ctl_nom=tf([Kp_nominal,Kp_nominal*Ki_nominal], [1, 0]);
 CL_nom=feedback(Ctl_nom*G, 1);
+Kp_GBO_best=0.5605;
+Ki_GBO_best=1.5432;
+Ctl_GBO_best=tf([Kp_GBO_best,Kp_GBO_best*Ki_GBO_best], [1, 0]);
+CL_GBO_best=feedback(Ctl_GBO_best*G, 1);
+Kp_GBO_worst=0.4369;
+Ki_GBO_worst=1.6667;
+Ctl_GBO_worst=tf([Kp_GBO_worst,Kp_GBO_worst*Ki_GBO_worst], [1, 0]);
+CL_GBO_worst=feedback(Ctl_GBO_worst*G, 1);
+Kp_BO=0.5697;
+Ki_BO=1.5057;
+Ctl_BO=tf([Kp_BO,Kp_BO*Ki_BO], [1, 0]);
+CL_BO=feedback(Ctl_BO*G, 1);
 y_gt = lsim(CL_gt, u_ref, time, x0, 'zoh');
 y_nom = lsim(CL_nom, u_ref, time, x0, 'zoh');
+y_GBO_best = lsim(CL_GBO_best, u_ref, time, x0, 'zoh');
+y_GBO_worst = lsim(CL_GBO_worst, u_ref, time, x0, 'zoh');
+y_BO = lsim(CL_BO, u_ref, time, x0, 'zoh');
 
-h1=plot(time, y_gt, 'g', 'LineWidth', 2);
-h2=plot(time, y_nom, 'k', 'LineWidth', 2);
+h1=plot(time, y_gt, 'g', 'LineWidth', 3);
+h2=plot(time, y_nom, 'k', 'LineWidth', 3);
+h3=plot(time, y_GBO_best, 'r', 'LineWidth', 3);
+h4=plot(time, y_GBO_worst, 	'Color', '#EDB120', 'LineWidth', 3);
+% h5=plot(time, y_BO, 'b', 'LineWidth', 3);
 
-legend([h1, h2],{'Ground Truth', 'Nominal PGM'}, 'Location', 'best');
+
+legend([h1, h2, h3, h4],{'Ground Truth', 'Nominal PGM', 'Guided BO with Superior Surrogate', 'Guided BO with Inferior Surrogate'}, 'Location', 'northeast');
 grid on
 xlim(ax1, [0 Tf])
 
