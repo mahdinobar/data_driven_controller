@@ -55,8 +55,16 @@ den = [1, 1.61335];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
-
-
+load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds.mat')
+Kp_nom=0.55;
+Ki_nom=1.5;
+Ctl_nom_1=tf([Kp_nom,Kp_nom*Ki_nom], [1, 0]);
+[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
+GmdB=20*log10(GmUnit)
+J_nominal=-funPS([Kp_nom, Ki_nom], G)
+true_objective = 4.1000;
+ORnom=J_nominal/true_objective
+%%
 %
 % uncomment to estimate stable gain bounds
 % auto tune
@@ -69,15 +77,20 @@ Ki_nominal_1=C_tuned.Ki;
 taw=1/1.61335;
 kp=5.19908/1.61335;
 L=1/500;
-Am=3.0;
-Pm=60*pi/180;
+Am=200;
+Pm=90*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
+true_objective = 4.1000;
+ORnom=J_nominal/true_objective
 %
 % Kp_nominal=0.6119;
 % Ki_nominal=1.6560;
+
+
+
 
 
 Ki_min=1.27554816862556;
@@ -137,9 +150,9 @@ ylabel(ax1, 'Velocity')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % set(gca,'yscale','log')
-figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp','_StepRsps.png');
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.png');
 saveas(gcf,figName)
-figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp','_ORi_StepRsps.fig');
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.fig');
 saveas(gcf,figName)
 
 %%
@@ -209,9 +222,9 @@ end
         if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
             ITAE=1e5;
         end
-
+        w=[0.1, 1, 1, 0.5];
 %         w=[91.35, 0.34, 0.028, 0.0019];
-w=[40.	0.10	0.01	0.0002];
+% w=[40.	0.10	0.01	0.0002];
 % w=[1, 1, 1, 1];
         w=w./sum(w);
         objective=-abs(ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4));

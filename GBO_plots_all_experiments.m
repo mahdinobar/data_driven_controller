@@ -1,24 +1,24 @@
-% % comment for server plots
-% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% comment for server plots
+function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% =========================================================================
-% uncomment for server plots
-function GBO_plots_all_experiments
-close all;
-clc;
-clear;
-idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_37' ...
-    '/'], idName, '/');
-N0=1; %number of initial data
-N_iter=50;
-N_iter=N_iter+N0;
-% todo automatize code
-load(append(dir,'trace_file.mat'),'Trace')
-TraceGBO=Trace;
-clear Trace
-% =========================================================================
+% % =========================================================================
+% % uncomment for server plots
+% function GBO_plots_all_experiments
+% close all;
+% clc;
+% clear;
+% idName= 'results_1';
+% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_48' ...
+%     '/'], idName, '/');
+% N0=1; %number of initial data
+% N_iter=50;
+% N_iter=N_iter+N0;
+% % todo automatize code
+% load(append(dir,'trace_file.mat'),'Trace')
+% TraceGBO=Trace;
+% clear Trace
+% % =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -38,36 +38,33 @@ clear Trace
 % true_objective = 4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
-true_objective=17.8676;
-
+% true_objective=17.8676;
+true_objective=15.800;
 expr=1;
 while expr<min(length(TraceGBO),length(TraceBO))+1
 %     try    
-        JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
-        JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
+    JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
+    JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
 %     catch
-%         expr_tmp=expr-1;
+%         if expr==1
+%             expr_tmp=expr+1;
+%         else
+%             expr_tmp=expr-1;
+%         end
 %         TraceGBO(expr)=TraceGBO(expr_tmp);
 %         TraceBO(expr)=TraceBO(expr_tmp);
 %         continue
 %     end
-k=0;
     for j=1+N0:N_iter
         [minObs_tmp,minObs_Idx_tmp]=nanmin(TraceGBO(expr).values(1:j));
 %         correct or remove outlie solutions because of computational
 %         failure on server
-        if minObs_tmp<true_objective 
+        if minObs_tmp<true_objective
             j
             Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G)
-            if Jcorrect<true_objective
-                TraceGBO(expr).samples(minObs_Idx_tmp,:)
-            end
             TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
-        elseif minObs_tmp>true_objective*10
-            JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr-1).values(1:j));
-            JminObservBO(j-N0,expr)=nanmin(TraceBO(expr-1).values(1:j));
         else
             JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
@@ -116,7 +113,7 @@ set(htext,'Rotation',90);
 end
 grid on
 ylim([1 3])
-xlim([0, 50])
+%xlim([0, 10])
 xticks(xx)
 set(h.out, 'marker', '.');
 xlabel(ax0, 'Iteration')
@@ -144,6 +141,7 @@ h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineW
 legend([h1(1), h2(1), h3, h4],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Guided BO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
 grid on
 ylim(ax1, [1 3])
+%xlim([0, 10])
 
 fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
 fprintf('length(TraceBO)=%d \n',length(TraceBO))
@@ -185,7 +183,7 @@ xlabel(ax1, 'Iteration')
 ylabel(ax1, 'Optimality Ratio')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-set(gca,'yscale','log')
+set(ax1,'yscale','log')
 figName=append(dir, idName,'_ORi_MonteCarlo.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_ORi_MonteCarlo.fig');
@@ -194,18 +192,18 @@ end
 
 
 function [objective, constraints] = ObjFun(X, G)
+
 %     todo move some lines outside with handler@: faster?
 C=tf([X(1), X(1)*X(2)], [1, 0]);
 CL=feedback(C*G, 1);
 
-STPinfo=stepinfo(CL,'RiseTimeLimits',[0.1,0.6]);
-ov=abs(STPinfo.Overshoot);
-st=STPinfo.SettlingTime;
+ov=abs(stepinfo(CL).Overshoot);
+st=stepinfo(CL).SettlingTime;
 
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
-Tr=STPinfo.RiseTime;
+Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
 ITAE = trapz(t, t.*abs(e));
 
 if isnan(ov) || isinf(ov) || ov>1e3
@@ -224,8 +222,10 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
+% w=[0.1, 1, 1, 0.5];
 % w=[91.35, 0.34, 0.028, 0.0019];
-w=[40, 0.1, 0.01, 0.0002];
+w=[40.	0.10	0.01	0.0002];
+
 w=w./sum(w);
 objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 constraints=-1;
