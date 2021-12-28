@@ -1,24 +1,25 @@
-% % comment for server plots
-% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName)
-% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% comment for server plots
+function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName, G2rmse)
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
-% =========================================================================
-% uncomment for server plots
-function GBO_plots_all_experiments
-close all;
-clc;
-clear;
-idName= 'results_1';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
-    '/'], idName, '/');
-N0=1; %number of initial data
-N_iter=50;
-N_iter=N_iter+N0;
-% todo automatize code
-load(append(dir,'trace_file.mat'),'Trace')
-TraceGBO=Trace;
-clear Trace
-% =========================================================================
+
+% % =========================================================================
+% % uncomment for server plots
+% function GBO_plots_all_experiments
+% close all;
+% clc;
+% clear;
+% idName= 'results_1';
+% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
+%     '/'], idName, '/');
+% N0=1; %number of initial data
+% N_iter=50;
+% N_iter=N_iter+N0;
+% % todo automatize code
+% load(append(dir,'trace_file.mat'),'Trace')
+% TraceGBO=Trace;
+% clear Trace
+% % =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -33,6 +34,12 @@ load(append(dir,'trace_file_BO.mat'),'Trace')
 TraceBO=Trace;
 clear Trace
 
+% remove experiments with large rmse and OFF G2
+a=max(G2rmse(2:end,:),[],1)<1;
+TraceGBO=TraceGBO(find(a==1));
+TraceBO=TraceBO(find(a==1));
+
+
 % true_objective DC motor numeric
 % true_objective=3.1672;
 true_objective = 4.1000;
@@ -41,7 +48,7 @@ true_objective = 4.1000;
 % true_objective=17.8676;
 % true_objective=15.800;
 expr=1;
-while expr<min(length(TraceGBO),length(TraceBO))+1
+while expr<min([length(TraceGBO),length(TraceBO), sum(a)])+1
 %     try    
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);

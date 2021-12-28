@@ -6,7 +6,7 @@ tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 idName= 'demo_GBO_0_45';
 sys='DC_motor';
 N0=1; %number of initial data
-N_expr=3;
+N_expr=10;
 
 N_iter=50;
 N_iter=N_iter+N0;
@@ -15,14 +15,15 @@ N_iter=N_iter+N0;
 sampleTf=1.5;
 Nsample=150;
 eps=0.0;
-withSurrogate=false;
-only_visualize=false;
+N_perturbed=2; % number of perturbed plus one not perturbed surrogate
+withSurrogate=true;
+only_visualize=true;
 
 if withSurrogate
     npG2=2;
     N_G2_activated=5; %total number of times G2 is used
-    N_G = 1; %number of consecutive optimization on real plant before surrogate
-    N_extra= N_G2_activated; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
+    N_G = 5; %number of consecutive optimization on real plant before surrogate
+    N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
 end
 
@@ -62,13 +63,15 @@ load(dir_gains)
 if only_visualize
     load(append(dir, 'trace_file.mat'),'Trace')
     
+    load(append(dir, 'G2rmse.mat'),'G2rmse')
+
     experiment=1;
     mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
     maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
     val_tmp=(Trace.values);
     [mv_tmp,mi_tmp] = min(val_tmp);
     ms=Trace(experiment).samples(mi_tmp,:);
-    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName)
+    GBO_plots_all_experiments(Trace, N0, N_iter-N_extra, idName, G2rmse)
     GBO_plots_one_experiment(ms, Trace, experiment, mins,maxes, N0, N_iter-N_extra, N_G, idName, G)
     return
 end
@@ -195,18 +198,17 @@ if withSurrogate
 %     [a,b]=tfdata(G2idtf);
 %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
-    t=0:1/100:3.3;
-    y = step(G,t);
-    y2 = step(G2,t);
 
-    % %     uncomment to check simulation
-    figure(1)
-    step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
-    
+%     % %     uncomment to check simulation
+%     t=0:1/100:3.3;
+%     y = step(G,t);
+%     y2 = step(G2,t);
+%     figure(1)
+%     step(G); hold on; step(G2,'r')
+%     rmse2=sqrt(mean((y-y2).^2))
 %     close
-    figure(2);
-    compare(G2data, G2)
+%     figure(2);
+%     compare(G2data, G2)
 %     close
 end
 
@@ -296,58 +298,58 @@ save(append(dir, 'hyp_latin.mat'), 'hyp_latin')
 % 
 %% We define the function we would like to optimize
 if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G, N_G2_activated);
+    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed);
 else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
 %% plot true J (grid)
-% Let's plot grid of points just to see what we are trying to optimize
-clf;
-Kp_range=Kp_max-Kp_min;
-resol=25;
-Kp_surf_resol=Kp_range/resol;
-Ki_range=Ki_max-Ki_min;
-Ki_surf_resol=Ki_range/resol;
-[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
-j_pt=zeros(size(kp_pt));
-c_pt=zeros(size(kp_pt));
-for i=1:size(kp_pt,1)
-    for j=1:size(kp_pt,2)
-        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
-        j_pt(i,j)=l;
-        c_pt(i,j)=c;
-    end
-end
-j_pt(c_pt>opt.lt_const)=NaN;
-surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-xlabel('Kp')
-ylabel('Ki')
-zlabel('J')
-set(gca,'zscale','log')
-set(gca,'ColorScale','log')
-% ground truth grid search optimum
-[J_gt,I]=min(j_pt,[],'all')
-% hold on;
-% plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
-% Kp_nominal=50.3549;
-% Ki_nominal=1.6134;
-% J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
-% % optimality ratio of nominal gains
-% OR_nominal=J_nominal/J_gt
-% plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
-% 
-% % % uncomment to inspect for finding sampleTf
-% % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
-% % CL=feedback(C*G, 1);
-% % figure()
-% % step(CL)
-% % step(CLU)
-% 
-% % zlim([0,50])
-% % [true_objective, b]=min(j_pt,[],'all');
-% % kp_true=kp_pt(b)
-% % ki_true=ki_pt(b)
-drawnow;
+% % Let's plot grid of points just to see what we are trying to optimize
+% clf;
+% Kp_range=Kp_max-Kp_min;
+% resol=25;
+% Kp_surf_resol=Kp_range/resol;
+% Ki_range=Ki_max-Ki_min;
+% Ki_surf_resol=Ki_range/resol;
+% [kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+% j_pt=zeros(size(kp_pt));
+% c_pt=zeros(size(kp_pt));
+% for i=1:size(kp_pt,1)
+%     for j=1:size(kp_pt,2)
+%         [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
+%         j_pt(i,j)=l;
+%         c_pt(i,j)=c;
+%     end
+% end
+% j_pt(c_pt>opt.lt_const)=NaN;
+% surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
+% xlabel('Kp')
+% ylabel('Ki')
+% zlabel('J')
+% set(gca,'zscale','log')
+% set(gca,'ColorScale','log')
+% % ground truth grid search optimum
+% [J_gt,I]=min(j_pt,[],'all')
+% % hold on;
+% % plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
+% % Kp_nominal=50.3549;
+% % Ki_nominal=1.6134;
+% % J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
+% % % optimality ratio of nominal gains
+% % OR_nominal=J_nominal/J_gt
+% % plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
+% % 
+% % % % uncomment to inspect for finding sampleTf
+% % % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
+% % % CL=feedback(C*G, 1);
+% % % figure()
+% % % step(CL)
+% % % step(CLU)
+% % 
+% % % zlim([0,50])
+% % % [true_objective, b]=min(j_pt,[],'all');
+% % % kp_true=kp_pt(b)
+% % % ki_true=ki_pt(b)
+% drawnow;
 
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
@@ -360,12 +362,17 @@ global N
 global idx
 global G2data
 global N_G2_activated_counter
+global N_pr
+global expr_G2rmse
 
+G2rmse=[];
 expr=1;
 while expr<N_expr+1
+    expr_G2rmse=[];
     fprintf('>>>>>experiment: %d \n', expr);
-    N=[];
+    N=0;
     idx=[];
+    N_pr=0;
     G2_samples=[];
     G2_values=[];
     G2_post_mus=[];
@@ -417,12 +424,14 @@ while expr<N_expr+1
 
         % remove previos data of older surrogate(G2) model, but keep them
         % seperately for plots
-        if withSurrogate==true && N~=1 && idx==0
-            G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-1,:)];
-            G2_values=[G2_values; Trace_tmp.values(end-N_G-1,:)];
-            G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-1,:)];
-            G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-1,:)];
-            idx_G2= [idx_G2;size(Trace_tmp.samples,1)-N_G-1];
+        if withSurrogate==true && N>N_perturbed && idx==0
+            for i=1:1:N_perturbed
+                G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-i,:)];
+                G2_values=[G2_values; Trace_tmp.values(end-N_G-i,:)];
+                G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-i,:)];
+                G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-i,:)];
+                idx_G2= [idx_G2;size(Trace_tmp.samples,1)-N_G-i];
+            end
         end
         opt.resume_trace_data = Trace_tmp;
     end
@@ -487,6 +496,10 @@ while expr<N_expr+1
         end
     end
 expr=expr+1;
+if withSurrogate
+    G2rmse=[G2rmse, expr_G2rmse];
+    save(append(dir, 'G2rmse.mat'),'G2rmse')
+end
 end
 
 %% Print results
@@ -556,18 +569,37 @@ constraints=-1;
 end
 
 
-function [objective] = ObjFun_Guided(X, G, G2, sampleTf, sampleTs, npG2, N_G,N_G2_activated)
+function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed)
 global N
 global idx
 global G2data
 global N_G2_activated_counter
+global N_pr
+global expr_G2rmse
 
-if isempty(N)
-%     initially use G2
-    N=1;
-    objective=ObjFun(X, G2);
-    idx= 0;
-    N_G2_activated_counter=1;
+if N<N_perturbed
+    N=N+1;
+    G2=tfest(G2data, npG2);
+    %     to repeat perturbed
+    if N_pr<N_perturbed-1
+        G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
+        objective=ObjFun(X, G2);
+        N_pr=N_pr+1;
+    else
+        %     initially use G2
+        objective=ObjFun(X, G2);
+        N_G2_activated_counter=1;
+        idx= 0;
+        N_pr=0;
+    end
+    t=0:1/100:3.3;
+    y = step(G,t);
+    y2 = step(G2,t);
+    rmse2=sqrt(mean((y-y2).^2));
+    rmse_thresh=0.2;
+%     if rmse2>rmse_thresh
+        expr_G2rmse=[expr_G2rmse;rmse2];
+%     end
 elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     N = N+1;
 
@@ -575,22 +607,41 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
 %     G2idtf=idtf(G2_tmp);    [a,b]=tfdata(G2idtf);
 %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
+
+% % %     uncomment to check simulation
+%     t=0:1/100:3.3;
+%     y = step(G,t);
+%     y2 = step(G2,t);
+%     figure(1)
+%     step(G); hold on; step(G2,'r')
+%     rmse2=sqrt(mean((y-y2).^2))
+% %     close
+%     figure(2);
+%     compare(G2data, G2)
+% %     close
+
+%     to repeat perturbed
+    if N_pr<N_perturbed-1
+        pert=0;%rand(1,1)/10-0.02;
+        G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
+        objective=ObjFun(X, G2);
+        N_pr=N_pr+1;
+    else
+        objective=ObjFun(X, G2);
+        N_pr=0;
+        idx= 0;
+        N_G2_activated_counter=N_G2_activated_counter+1;
+    end
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
+    rmse2=sqrt(mean((y-y2).^2));
+%     if rmse2>rmse_thresh
+%         expr_G2rmse=0;
+%     end
+    expr_G2rmse=[expr_G2rmse;rmse2];
 
-% %     uncomment to check simulation
-    figure(1)
-    step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
-%     close
-    figure(2);
-    compare(G2data, G2)
-%     close
-
-    objective=ObjFun(X, G2);
-    idx= 0;
-    N_G2_activated_counter=N_G2_activated_counter+1;
+    
 else
     N = N+1;
     %     todo move some lines outside with handler@: faster?
