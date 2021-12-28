@@ -59,7 +59,10 @@ load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/
 Kp_nom=0.55;
 Ki_nom=1.5;
 Ctl_nom_1=tf([Kp_nom,Kp_nom*Ki_nom], [1, 0]);
-[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
+Kp_gt=0.6119;
+Ki_gt=1.6636;
+Ctl_gt=tf([Kp_gt,Kp_gt*Ki_gt], [1, 0]);
+[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_gt*G)
 GmdB=20*log10(GmUnit)
 J_nominal=-funPS([Kp_nom, Ki_nom], G)
 true_objective = 4.1000;
@@ -85,6 +88,7 @@ Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
 true_objective = 4.1000;
 ORnom=J_nominal/true_objective
+return
 %
 % Kp_nominal=0.6119;
 % Ki_nominal=1.6560;
