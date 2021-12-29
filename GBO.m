@@ -15,9 +15,9 @@ N_iter=N_iter+N0;
 sampleTf=1.5;
 Nsample=150;
 eps=0.0;
-N_perturbed=2; % number of perturbed plus one not perturbed surrogate
+N_perturbed=1; % number of perturbed plus one not perturbed surrogate
 withSurrogate=true;
-only_visualize=true;
+only_visualize=false;
 
 if withSurrogate
     npG2=2;
@@ -582,7 +582,8 @@ if N<N_perturbed
     G2=tfest(G2data, npG2);
     %     to repeat perturbed
     if N_pr<N_perturbed-1
-        G2=tf(G2.Numerator, G2.Denominator+G2.Denominator.*[0, 1.05e0, 0].*(rand(1,1)-0.5));
+        pert=rand(1,1)/10-0.02;
+        G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
         objective=ObjFun(X, G2);
         N_pr=N_pr+1;
     else
@@ -622,7 +623,7 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
 
 %     to repeat perturbed
     if N_pr<N_perturbed-1
-        pert=0;%rand(1,1)/10-0.02;
+        pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
         objective=ObjFun(X, G2);
         N_pr=N_pr+1;
