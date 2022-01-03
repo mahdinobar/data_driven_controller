@@ -2,11 +2,15 @@
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data\";
+dir="C:\Users\nobar\Documents\LabVIEW Data\nominal_Data\";
+if not(isfolder(dir))
+    mkdir(dir)
+end
 start_switch=1;
 
 N0=1; %for N0>1 modify
-gains0=[0.0950, 1.3293];
+% gains0=[0.0950, 1.3293]; %initial random 
+gains0=[0.4873, 1.5970]; %nominal for PM 90degree and GM=49db
 Kp=gains0(1);
 Ki=gains0(2);
 
