@@ -88,24 +88,25 @@ opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
 addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main")
 
 % perf_Data is only needed when LVswitch==1
-[ms,mv,Trace_tmp, LVgains] = bayesoptGPML(fun,opt,N0, LVswitch, perf_Data(end,:));
+[ms,mv,Trace_tmp, LVgains] = bayesoptGPML(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)));
 
 %     LVswitch==0 means we need to call the system to get data
 if LVswitch==0
     if idx==N_G
         G2=tfest(G2data, npG2);
         C=tf([LVgains(1), LVgains(1)*LVgains(2)], [1, 0]);
-        CL=((step_high+step_low)/2)*feedback(C*G2, 1);
+        CL=feedback(C*G2, 1);
         ov=abs(stepinfo(CL).Overshoot);
         st=stepinfo(CL).SettlingTime;
         [y,t]=step(CL);
         reference=1;
         e=abs(y-reference);
-        Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
+        Tr=stepinfo(CL, 'RiseTimeLimits',[0.01,0.6]).RiseTime;
         ITAE = trapz(t, t.*abs(e));
         perf_Data=[perf_Data;[ov, Tr, st, ITAE, 0]];
+        save(append(dir, 'perf_Data_tmp'), 'perf_Data')
         LVswitch=1; % means bayesoptGPML will run completely
-        [ms,mv,Trace_tmp, LVgains] = bayesoptGPML(fun,opt,N0, LVswitch, perf_Data(end,:));
+        [ms,mv,Trace_tmp, LVgains] = bayesoptGPML(fun,opt,N0, LVswitch, [ov, Tr, st, ITAE, 0]);
         LVswitch=0;
         idx= 0;
         if counter>1
@@ -117,7 +118,6 @@ if LVswitch==0
             Trace_tmp.post_sigma2s(idx_G2)=[];
             Trace_tmp.times(idx_G2)=[];
         end
-        save(append(dir, 'perf_Data_tmp'), 'perf_Data')
         save(append(dir, 'G2_',num2str(counter)), 'G2')
     else
 
