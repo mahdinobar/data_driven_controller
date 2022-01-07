@@ -1,27 +1,29 @@
 % GBO
-global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
+addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\tfest.m")
+addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\")
 dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data\";
 tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
-idName= 'demo_GBO_0_0';
+idName= 'demo_GBO_1_2';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
     mkdir(dir)
 end
 start_switch=1;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-counter=1;
-LVswitch=0;
-idx=5;
-exp_Data=0;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+stat_value=60;
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% counter=1;
+% LVswitch=0;
+% idx=0;
+% exp_Data=0;
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 N0=1; %for N0>1 modify
 N_iter=50;
-N_iter=N_iter+N0;
-N_G=5;
+N_extra=15;
+N_iter=N_iter+N_extra+N0;
+N_G=1;
 npG2=2;
 sampleTf=1.5;
 sampleTs=0.01;
@@ -36,6 +38,22 @@ Input_mode=2;
 
 gain_angle=0;
 Tn_Angle=0;
+
+%to initialize first the response
+if counter<1
+    gains0=[0.0950, 1.3293]; %initial random
+    Kp=gains0(1);
+    Ki=gains0(2);
+    gain_vel=Kp;
+    Tn_vel=1/Ki;
+    step_low=60;
+    step_high=60;
+    nr_repeats=1;
+    Input_mode=2;
+    start_switch=1;
+    counter=counter+1;
+    return
+end
 
 %% load gain limits
 dir_gains=append('C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds.mat');
@@ -93,6 +111,9 @@ addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_contro
 %     LVswitch==0 means we need to call the system to get data
 if LVswitch==0
     if idx==N_G
+        if counter>1
+            load(append(dir, 'G2data.mat'))
+        end
         G2=tfest(G2data, npG2);
         C=tf([LVgains(1), LVgains(1)*LVgains(2)], [1, 0]);
         CL=feedback(C*G2, 1);
@@ -130,9 +151,10 @@ if LVswitch==0
     end
 elseif LVswitch==1 % means new exp_Data and perf_Data arrived
     sample_idx=exp_Data(:,3)==100;
-    sample_idx=sample_idx(1:Nsample);
     ytmp = exp_Data(sample_idx,3);
     utmp= exp_Data(sample_idx,4);
+    ytmp=ytmp(1:Nsample);
+    utmp=utmp(1:Nsample);
     load(append(dir, 'G2data.mat'))
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     save(append(dir, 'G2data.mat'),'G2data')
@@ -155,8 +177,8 @@ Kp=gains0(1);
 Ki=gains0(2);
 gain_vel=Kp;
 Tn_vel=1/Ki;
-stat_value=0.5;
-Input_mode=0;
+step_low=39;
+Input_mode=2;
 LVswitch=0;
 counter=0;
 return

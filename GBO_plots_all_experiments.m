@@ -1,25 +1,27 @@
-% comment for server plots
-function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName, G2rmse)
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% % comment for server plots
+% function GBO_plots_all_experiments(TraceGBO, N0, N_iter, idName, G2rmse)
+% dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
 
-% % =========================================================================
-% % uncomment for server plots
-% function GBO_plots_all_experiments
-% close all;
-% clc;
-% clear;
-% idName= 'results_1';
-% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21' ...
-%     '/'], idName, '/');
-% N0=1; %number of initial data
-% N_iter=50;
-% N_iter=N_iter+N0;
-% % todo automatize code
-% load(append(dir,'trace_file.mat'),'Trace')
-% TraceGBO=Trace;
-% clear Trace
-% % =========================================================================
+% =========================================================================
+% uncomment for server plots
+function GBO_plots_all_experiments
+close all;
+clc;
+clear;
+tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
+idName= 'demo_GBO_1_11';
+dir=append(tmp_dir,'/', idName, '/');
+idNameBO='demo_BO_1_11';
+dirBO=append(tmp_dir,'/', idNameBO, '/');
+N0=1; %number of initial data
+N_iter=47;
+N_iter=N_iter+N0;
+% todo automatize code
+load(append(dir,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
+clear Trace
+% =========================================================================
 
 %% define plant
 % DC motor at FHNW lab
@@ -30,25 +32,29 @@ Td=2e-3;
 G = tf(num, den, 'InputDelay',Td);
 
 % todo automatize code
-load(append(dir,'trace_file_BO.mat'),'Trace')
+load(append(dirBO,'trace_file.mat'),'Trace')
 TraceBO=Trace;
 clear Trace
 
-% remove experiments with large rmse and OFF G2
-a=max(G2rmse(2:end,:),[],1)<1;
-TraceGBO=TraceGBO(find(a==1));
-TraceBO=TraceBO(find(a==1));
+% % remove experiments with large rmse and OFF G2
+% a=max(G2rmse(2:end,:),[],1)<1;
+% TraceGBO=TraceGBO(find(a==1));
+% TraceBO=TraceBO(find(a==1));
 
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 4.1000;
+% true_objective = 4.1000; % numerical
+% true_objective = 36.0564611360431-1e-3; % experimental on PT21
+% true_objective =29.2949298724532;
+true_objective = 32.9480302780867;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
 % true_objective=15.800;
 expr=1;
-while expr<min([length(TraceGBO),length(TraceBO), sum(a)])+1
+% while expr<min([length(TraceGBO),length(TraceBO), sum(a)])+1
+while expr<2
 %     try    
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
     JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);
@@ -68,7 +74,7 @@ while expr<min([length(TraceGBO),length(TraceBO), sum(a)])+1
         [minObs_tmp,minObs_Idx_tmp]=nanmin(TraceGBO(expr).values(1:j));
 %         correct or remove outlie solutions because of computational
 %         failure on server
-        if minObs_tmp<true_objective
+        if minObs_tmp<true_objective-inf
             j
             Jcorrect = ObjFun(TraceGBO(expr).samples(minObs_Idx_tmp,:), G)
             TraceGBO(expr).values(minObs_Idx_tmp)=Jcorrect;
@@ -91,67 +97,67 @@ meanJminObservGBO=nanmean(JminObservGBO,2);
 meanJminObservBO=nanmean(JminObservBO,2);
 
 %%
-% uncomment to find gains corrosponding to the mean cost per iteration over all experiments
-[~,idxGBO]=min(abs(JminObservGBO-meanJminObservGBO),[],2);
-iteration_number=10;
-Gains_meanJ_GBO=JminObservGBO_samples(iteration_number,idxGBO(iteration_number),:)
-[~,idxBO]=min(abs(JminObservBO-meanJminObservBO),[],2);
-iteration_number=10;
-Gains_meanJ_BO=JminObservBO_samples(iteration_number,idxBO(iteration_number),:)
+% % uncomment to find gains corrosponding to the mean cost per iteration over all experiments
+% [~,idxGBO]=min(abs(JminObservGBO-meanJminObservGBO),[],2);
+% iteration_number=10;
+% Gains_meanJ_GBO=JminObservGBO_samples(iteration_number,idxGBO(iteration_number),:)
+% [~,idxBO]=min(abs(JminObservBO-meanJminObservBO),[],2);
+% iteration_number=10;
+% Gains_meanJ_BO=JminObservBO_samples(iteration_number,idxBO(iteration_number),:)
 
 % WRONG calculation of meanJminObservGBO_samples so not use two lines below
 % meanJminObservGBO_samples=squeeze(nanmean(JminObservGBO_samples,2));
 % meanJminObservBO_samples=squeeze(nanmean(JminObservBO_samples,2));
-%%
+% %% boxplot with p-valus
+% 
+% x=JminObservGBO'./true_objective;
+% y=JminObservBO'./true_objective;
+% fig=figure();
+% fig.Position=[200 0 2000 800];
+% ax0=axes;
+% ax0.FontSize=24;
+% ax0.FontName='Times New Roman';
+% [h,p,ci,stats] = ttest(x,y, 'Tail','left');
+% addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/github_repo/boxplot2/
+% skip=5;
+% xx=3:skip:49;
+% zz=cat(3,x(:,xx),y(:,xx));
+% zz=permute(zz,[2,3,1]);
+% h = boxplot2(zz,xx);
+% cmap = [[1,0,0];[0,0,1]];
+% for ii = 1:2
+%     structfun(@(x) set(x(ii,:), 'color', cmap(ii,:), ...
+%         'markeredgecolor', cmap(ii,:)), h);
+% end
+% set([h.lwhis h.uwhis], 'linestyle', '-');
+% set([h.lwhis h.uwhis, h.box, h.med], 'linewidth', 2);
+% % med=median(zz,3);
+% med=quantile(y(:,xx),[0.25 0.75])';
+% for itext=1:length(xx)
+%     if itext==1
+%         htext=text(xx(itext)-0.05, 1.01, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
+%     else
+%         htext=text(xx(itext)-0.05, med(itext,2)*1.1, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
+% 
+%     end
+% set(htext,'Rotation',90);
+% end
+% grid on
+% ylim([1 3])
+% %xlim([0, 10])
+% xticks(xx)
+% set(h.out, 'marker', '.');
+% xlabel(ax0, 'Iteration')
+% ylabel(ax0, 'Optimality Ratio')
+% % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+% set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% set(gca,'yscale','log')
+% figName=append(dir, idName,'_ORi_boxPval.png');
+% saveas(gcf,figName)
+% figName=append(dir, idName,'_ORi_boxPval.fig');
+% saveas(gcf,figName)
 
-
-x=JminObservGBO'./true_objective;
-y=JminObservBO'./true_objective;
-fig=figure();
-fig.Position=[200 0 2000 800];
-ax0=axes;
-ax0.FontSize=24;
-ax0.FontName='Times New Roman';
-[h,p,ci,stats] = ttest(x,y, 'Tail','left');
-addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/github_repo/boxplot2/
-skip=5;
-xx=3:skip:49;
-zz=cat(3,x(:,xx),y(:,xx));
-zz=permute(zz,[2,3,1]);
-h = boxplot2(zz,xx);
-cmap = [[1,0,0];[0,0,1]];
-for ii = 1:2
-    structfun(@(x) set(x(ii,:), 'color', cmap(ii,:), ...
-        'markeredgecolor', cmap(ii,:)), h);
-end
-set([h.lwhis h.uwhis], 'linestyle', '-');
-set([h.lwhis h.uwhis, h.box, h.med], 'linewidth', 2);
-% med=median(zz,3);
-med=quantile(y(:,xx),[0.25 0.75])';
-for itext=1:length(xx)
-    if itext==1
-        htext=text(xx(itext)-0.05, 1.01, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
-    else
-        htext=text(xx(itext)-0.05, med(itext,2)*1.1, sprintf('p-value=%.1e',p(xx(itext))), 'FontName', 'Times New Roman', 'FontSize', 22);
-
-    end
-set(htext,'Rotation',90);
-end
-grid on
-ylim([1 3])
-%xlim([0, 10])
-xticks(xx)
-set(h.out, 'marker', '.');
-xlabel(ax0, 'Iteration')
-ylabel(ax0, 'Optimality Ratio')
-% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-set(gca,'yscale','log')
-figName=append(dir, idName,'_ORi_boxPval.png');
-saveas(gcf,figName)
-figName=append(dir, idName,'_ORi_boxPval.fig');
-saveas(gcf,figName)
-
+%% plot
 fig=figure();
 fig.Position=[200 0 1600 800];
 ax1=axes;
@@ -166,7 +172,7 @@ h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineW
 
 legend([h1(1), h2(1), h3, h4],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Guided BO: Monte Carlo Mean', 'BO: Monte Carlo Mean'}, 'Location', 'best');
 grid on
-ylim(ax1, [1 3])
+% ylim(ax1, [1 3])
 %xlim([0, 10])
 
 fprintf('length(TraceGBO)=%d \n',length(TraceGBO))

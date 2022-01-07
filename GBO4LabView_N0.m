@@ -1,13 +1,15 @@
+idx=0;
+LV_switch=0;
 % build and save initial dataset
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data\";
+dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_new_3\";
 if not(isfolder(dir))
     mkdir(dir)
 end
 start_switch=1;
-stat_value=80;
+stat_value=60;
 
 N0=1; %for N0>1 modify
 gains0=[0.0950, 1.3293]; %initial random 
@@ -15,26 +17,31 @@ gains0=[0.0950, 1.3293]; %initial random
 Kp=gains0(1);
 Ki=gains0(2);
 
-sampleTf=1.5;
+sampleTf=6;
 sampleTs=0.01;
 Nsample=sampleTf/sampleTs;
 
 step_low=80;
 step_high=100;
-step_time=4;
-nr_repeats=2;
+step_time=6;
+nr_repeats=4;
 control_mode=1;
 Input_mode=2;
 
 gain_angle=0;
 Tn_Angle=0;
 
-if counter==0
-gain_vel=Kp;
-Tn_vel=1/Ki;
-Input_mode=0;
-counter=counter+1;
-return
+if counter<1
+    gains0=[0.0950, 1.3293]; %initial random
+    Kp=gains0(1);
+    Ki=gains0(2);
+    gain_vel=Kp;
+    Tn_vel=1/Ki;
+    step_low=60;
+    step_high=60;
+    Input_mode=2;
+    counter=counter+1;
+    return
 end
 
 if counter==1
