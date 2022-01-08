@@ -12,6 +12,7 @@ N_iter=50;
 N_iter=N_iter+N0;
 % surrogate final time is sufficient(??) to cover settling time of closed
 % loop instead (but more)
+sampleTf_init=2.5;
 sampleTf=1.5;
 Nsample=150;
 eps=0.0;
@@ -182,8 +183,11 @@ for i=1:N_ltn
     J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
 
     CLU=feedback(C, G);
-    ytmp=step(CL,eps:sampleTs:sampleTf);
-    utmp=step(CLU,eps:sampleTs:sampleTf);
+%     ytmp=step(CL,eps:sampleTs:sampleTf);
+%     utmp=step(CLU,eps:sampleTs:sampleTf);
+
+    [ytmp,ttmp]=step(G,eps:sampleTs:sampleTf_init);
+    utmp=ones(size(ttmp));
     %         todo check concept?
     if i==1
         G2data_init = iddata(ytmp,utmp,sampleTs);
@@ -199,17 +203,17 @@ if withSurrogate
 %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
 
-%     % %     uncomment to check simulation
-%     t=0:1/100:3.3;
-%     y = step(G,t);
-%     y2 = step(G2,t);
-%     figure(1)
-%     step(G); hold on; step(G2,'r')
-%     rmse2=sqrt(mean((y-y2).^2))
-%     close
-%     figure(2);
-%     compare(G2data, G2)
-%     close
+    % %     uncomment to check simulation
+    t=0:1/100:3.3;
+    y = step(G,t);
+    y2 = step(G2,t);
+    figure(1)
+    step(G); hold on; step(G2,'r')
+    rmse2=sqrt(mean((y-y2).^2))
+    close
+    figure(2);
+    compare(G2data, G2)
+    close
 end
 
 N_hat=100;
@@ -472,8 +476,10 @@ while expr<N_expr+1
                 CL=feedback(C*G, 1);
                 J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
                 CLU=feedback(C, G);
-                ytmp=step(CL,eps:sampleTs:sampleTf);
-                utmp=step(CLU,eps:sampleTs:sampleTf);
+%                 ytmp=step(CL,eps:sampleTs:sampleTf);
+%                 utmp=step(CLU,eps:sampleTs:sampleTf);
+                [ytmp,ttmp]=step(G,eps:sampleTs:sampleTf_init);
+                utmp=ones(size(ttmp));
                 %         todo check concept?
                 if i==1
                     G2data_init = iddata(ytmp,utmp,sampleTs);
@@ -596,7 +602,7 @@ if N<N_perturbed
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
-    rmse2=sqrt(mean((y-y2).^2));
+    rmse2=sqrt(mean((y-y2).^2))
     rmse_thresh=0.2;
 %     if rmse2>rmse_thresh
         expr_G2rmse=[expr_G2rmse;rmse2];
@@ -610,12 +616,12 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     G2=tfest(G2data, npG2);
 
 % % %     uncomment to check simulation
-%     t=0:1/100:3.3;
-%     y = step(G,t);
-%     y2 = step(G2,t);
+    t=0:1/100:3.3;
+    y = step(G,t);
+    y2 = step(G2,t);
 %     figure(1)
 %     step(G); hold on; step(G2,'r')
-%     rmse2=sqrt(mean((y-y2).^2))
+    rmse2=sqrt(mean((y-y2).^2))
 % %     close
 %     figure(2);
 %     compare(G2data, G2)
@@ -636,7 +642,7 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
-    rmse2=sqrt(mean((y-y2).^2));
+    rmse2=sqrt(mean((y-y2).^2))
 %     if rmse2>rmse_thresh
 %         expr_G2rmse=0;
 %     end
@@ -652,6 +658,8 @@ else
     CLU=feedback(C, G);
     ytmp=step(CL,eps:sampleTs:sampleTf);
     utmp=step(CLU,eps:sampleTs:sampleTf);
+    figure()
+    plot(ytmp)
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 %     first condition to delete the last simulation after being used
     if N_G2_activated_counter==N_G2_activated && idx==5
