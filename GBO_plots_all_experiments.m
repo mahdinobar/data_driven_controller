@@ -281,27 +281,34 @@ ax1.FontName='Times New Roman';
 hold on
 
 load(append(dir, 'exp_Data_37'))
-y_GBO=exp_Data(518:916,:);
-load(append(dirBO, 'exp_Data_34'))
-y_BO=exp_Data(424:842,:);
+y_GBO=exp_Data(518:830,4);
+load(append(dirBO, 'exp_Data_10'))
+y_BO=exp_Data(354:666,4);
 load(append(dirBO, 'exp_Data_9'))
-y_GBO=exp_Data(402:717,:);
+y_nom=exp_Data(402:714,4);
+Tf=3.12;
+time=0:0.01:Tf;
 
 h1=plot(time, y_nom, 'k', 'LineWidth', 3);
+h2=plot(time, y_BO, 'b', 'LineWidth', 3);
+h3=plot(time, y_GBO, 'r', 'LineWidth', 3);
+h4=yline(100,'k--', 'LineWidth', 3);
 
-legend([h1],{'Nominal PGM', 'BO', 'Guided BO'}, 'Location', 'northeast');
+legend([h1, h2, h3, h4],{'Nominal PGM', 'BO', 'Guided BO', 'Reference'}, 'Location', 'southeast');
 grid on
-xlim(ax1, [0 Tf])
+xlim(ax1, [0 1.8])
+ylim(ax1, [80 102])
 
 xlabel(ax1, 'Time')
 ylabel(ax1, 'Velocity')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-% set(gca,'yscale','log')
-% figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.png');
-% saveas(gcf,figName)
-% figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.fig');
-% saveas(gcf,figName)
+set(gca,'yscale','log')
+figName=append(dir, idName,'_experiment_data_response.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_experiment_data_response.fig');
+saveas(gcf,figName)
+
 
 
 end
