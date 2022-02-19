@@ -9,9 +9,7 @@ function GBO_plots_all_experiments
 close all;
 clc;
 clear;
-% idName= 'results_1';
-% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21c2' ...
-%     '/'], idName, '/');
+% idName=z], idName, '/');
 idName= 'demo_GBO_1_11';
 dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Expereiments_BEST_1/BO_Data' ...
     '/'], idName, '/');

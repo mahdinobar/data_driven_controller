@@ -10,7 +10,7 @@ close all;
 clc;
 clear;
 idName= 'results_1';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_19/', idName, '/');
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_21/', idName, '/');
 N_G = 1;
 N_G2_activated=5;
 N0=1; %number of initial data
@@ -24,7 +24,7 @@ load(append(dir,'trace_file_BO.mat'),'Trace')
 TraceBO=Trace;
 clear Trace
 
-dir_gains=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/DC_motor_gain_bounds/KpKi_bounds.mat');
+dir_gains=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds.mat');
 load(dir_gains, 'Kp_min', 'Kp_max', 'Ki_min', 'Ki_max')
 gain_mins=[Kp_min, Ki_min];
 gain_maxes=[Kp_max, Ki_max];
