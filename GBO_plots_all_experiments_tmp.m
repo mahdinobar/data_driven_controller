@@ -61,17 +61,17 @@ for expr=1:min(length(TraceGBO),length(TraceBO))
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 end
 
-load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_30/',idName,'/meanJminObservGBO_infer_minObserved.mat'))
+load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_30/',idName,'/meanJminObservGBO_infer.mat'))
 meanJminObservGBO_infer=meanJminObservGBO;
 
-meanJminObservGBO=nanmean(JminObservGBO,2);
-meanJminObservBO=nanmean(JminObservBO,2);
+% meanJminObservGBO=nanmean(JminObservGBO,2);
+% meanJminObservBO=nanmean(JminObservBO,2);
 
 
 
 JsampleGBO(JsampleGBO>100)=100;
-% meanJminObservGBO=nanmean(JsampleGBO,2);
-% meanJminObservBO=nanmean(JsampleBO,2);
+meanJminObservGBO=nanmean(JsampleGBO,2);
+meanJminObservBO=nanmean(JsampleBO,2);
 % save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_30/',idName,'/meanJminObservGBO_infer.mat'),"meanJminObservGBO")
 
 fig=figure();
@@ -87,12 +87,12 @@ h1=semilogy(ax1, meanJminObservGBO_infer./true_objective, 'Color', [0.9290 0.694
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 3);
 
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 3);
-h5=yline(1.39,  '--k', 'LineWidth', 3);
-legend([h1, h3, h4, h5],{'Guided BO with inferior surrogate','Guided BO with superior surrogate','BO', 'Nominal Controller Threshold'}, 'Location', 'best');
+% h5=yline(1.39,  '--k', 'LineWidth', 3);
+legend([h1, h3, h4],{'Guided BO with inferior surrogate','Guided BO with superior surrogate','BO'}, 'Location', 'best');
 grid on
-ylim(ax1, [1 2])
+ylim(ax1, [1 20])
 xlim(ax1, [1 50])
-yticks([1, 1.2, 1.4, 1.6, 1.8, 2])
+yticks([1, 10, 20])
 
 fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
 fprintf('length(TraceBO)=%d \n',length(TraceBO))
