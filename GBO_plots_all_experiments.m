@@ -173,10 +173,12 @@ h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineW
 
 h5=yline(50.81,'k--', 'LineWidth', 3);
 
-legend([h3, h4, h5],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Nominal Controller'}, 'Location', 'northeast');
+legend([h3, h4, h5],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-% ylim(ax1, [1 3])
+ylim([26.4 200])
 xlim([1, 50])
+xticks([1, 5:5:50])
+yticks([26.4, 50.8, 100, 150, 200])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
@@ -286,19 +288,21 @@ load(append(dirBO, 'exp_Data_9'))
 y_nom=exp_Data(402:714,4);
 Tf=3.12;
 time=0:0.01:Tf;
+r=20*2*3.14*50/4/512; %pulse to rad/sec
+h1=plot(time, y_nom.*r, 'k', 'LineWidth', 3);
+h2=plot(time, y_BO.*r, 'b', 'LineWidth', 3);
+h3=plot(time, y_GBO.*r, 'r', 'LineWidth', 3);
+h4=yline(100.*r,'k--', 'LineWidth', 3);
 
-h1=plot(time, y_nom, 'k', 'LineWidth', 3);
-h2=plot(time, y_BO, 'b', 'LineWidth', 3);
-h3=plot(time, y_GBO, 'r', 'LineWidth', 3);
-h4=yline(100,'k--', 'LineWidth', 3);
-
-legend([h1, h2, h3, h4],{'Nominal PGM', 'BO', 'Guided BO', 'Reference'}, 'Location', 'southeast');
+legend([h1, h2, h3, h4],{'Nominal PGM', 'BO', 'Guided BO', 'Reference Input'}, 'Location', 'southeast');
 grid on
 xlim(ax1, [0 1.8])
-ylim(ax1, [80 102])
+ylim(ax1, [79.5 102].*r)
+yticks([245, 270, 290, 306])
 
-xlabel(ax1, 'Time')
-ylabel(ax1, 'Velocity')
+
+xlabel(ax1, 'Time(s)')
+ylabel(ax1, 'Speed(rad/s)')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 set(gca,'yscale','log')
