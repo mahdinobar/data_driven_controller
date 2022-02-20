@@ -59,10 +59,7 @@ load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/
 Kp_nom=0.55;
 Ki_nom=1.5;
 Ctl_nom_1=tf([Kp_nom,Kp_nom*Ki_nom], [1, 0]);
-Kp_gt=0.6119;
-Ki_gt=1.6636;
-Ctl_gt=tf([Kp_gt,Kp_gt*Ki_gt], [1, 0]);
-[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_gt*G)
+[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
 GmdB=20*log10(GmUnit)
 J_nominal=-funPS([Kp_nom, Ki_nom], G)
 true_objective = 4.1000;
@@ -88,7 +85,6 @@ Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
 true_objective = 4.1000;
 ORnom=J_nominal/true_objective
-return
 %
 % Kp_nominal=0.6119;
 % Ki_nominal=1.6560;
@@ -159,19 +155,20 @@ y_GBO_best = lsim(CL_GBO_best, u_ref, time, x0, 'zoh');
 y_GBO_worst = lsim(CL_GBO_worst, u_ref, time, x0, 'zoh');
 y_BO = lsim(CL_BO, u_ref, time, x0, 'zoh');
 
-h1=plot(time, y_gt, 'g', 'LineWidth', 3);
-h2=plot(time, y_nom, 'k', 'LineWidth', 3);
-h3=plot(time, y_GBO_best, 'r', 'LineWidth', 3);
-h4=plot(time, y_GBO_worst, 	'Color', '#EDB120', 'LineWidth', 3);
+h1=plot(time, 245.31+(306.64-245.31)*y_gt, 'g', 'LineWidth', 3);
+h2=plot(time, 245.31+(306.64-245.31)*y_nom, 'k', 'LineWidth', 3);
+h3=plot(time, 245.31+(306.64-245.31)*y_GBO_best, 'r', 'LineWidth', 3);
+h4=plot(time, 245.31+(306.64-245.31)*y_GBO_worst, 	'Color', 'b', 'LineWidth', 3);
 % h5=plot(time, y_BO, 'b', 'LineWidth', 3);
+h5=stairs([0,Tf/2,Tf], [306,245,245],'--k', 'LineWidth', 3);
 
 
-legend([h1, h2, h3, h4],{'Ground Truth', 'Nominal PGM', 'Guided BO with Superior Surrogate', 'Guided BO with Inferior Surrogate'}, 'Location', 'northeast');
+legend([h1, h2, h3, h4, h5],{'Ground Truth', 'Nominal PGM', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
 grid on
 xlim(ax1, [0 Tf])
-
-xlabel(ax1, 'Time')
-ylabel(ax1, 'Velocity')
+yticks([245, 306])
+xlabel(ax1, 'Time (s)')
+ylabel(ax1, 'Speed (rad/s)')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % set(gca,'yscale','log')
