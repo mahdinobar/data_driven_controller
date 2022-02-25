@@ -10,27 +10,71 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_1_11';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Expereiments_BEST_1/BO_Data' ...
+idName= 'demo_GBO_2_4';
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
     '/'], idName, '/');
-idNameBO= 'demo_BO_1_11';
-dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Expereiments_BEST_1/BO_Data' ...
+idNameBO= 'demo_BO_2_4';
+dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
+
+
+for expr=1:10
+    idName= 'demo_GBO_2_';
+    dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+        '/'], idName, num2str(expr), '/');
+    idNameBO= 'demo_BO_2_';
+    dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+        '/'], idNameBO, num2str(expr), '/');
+
+    load(append(dir,'trace_file.mat'),'Trace')
+    if expr>4
+        Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
+        Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
+    end
+    Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+    Trace.values(Trace.values<16.53)=16.53;
+    TraceGBO(expr)=Trace;
+    delete Trace
+
+    load(append(dirBO,'trace_file.mat'),'Trace')
+    Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+    Trace.values(Trace.values<16.53)=16.53;
+    TraceBO(expr)=Trace;
+    delete Trace
+
+end
+
+
 % todo automatize code
-load(append(dir,'trace_file.mat'),'Trace')
-TraceGBO=Trace;
-TraceGBO.values(49)=[];
-TraceGBO.samples(49, :)=[];
-TraceGBO.post_mus(49)=[];
-TraceGBO.post_sigma2s(49)=[];
-clear Trace
-% todo automatize code
-load(append(dirBO,'trace_file.mat'),'Trace')
-TraceBO=Trace;
-clear Trace
+% load(append(dir,'trace_file.mat'),'Trace')
+% Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
+% Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
+
+
+% TraceGBO.values(49)=[];
+% TraceGBO.samples(49, :)=[];
+% TraceGBO.post_mus(49)=[];
+% TraceGBO.post_sigma2s(49)=[];
+
+% Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+% Trace.values(Trace.values<16.53)=16.53;
+% TraceGBO=Trace;
+% 
+% % save(append(dir,'trace_file_modified.mat'),'Trace')
+% % clear Trace
+% % todo automatize code
+% load(append(dirBO,'trace_file.mat'),'Trace')
+% 
+% 
+% Trace.values=Trace.values*16.53/min(Trace.values);
+% Trace.values(Trace.values<16.53)=16.53;
+% save(append(dirBO,'trace_file_modified.mat'),'Trace')
+
+% TraceBO=Trace;
+% clear Trace
 % load(append(dir, 'G2rmse.mat'),'G2rmse')
 % =========================================================================
 
@@ -166,19 +210,19 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-% h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
-% h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
-h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 4);
-h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 4);
+h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
+h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 
 h5=yline(50.81,'k--', 'LineWidth', 3);
 
-legend([h3, h4, h5],{'Guided BO: Minimum Observed Evaluation', 'BO: Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
+legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-ylim([26.4 200])
+% ylim([16.53 200])
 xlim([1, 50])
 xticks([1, 5:5:50])
-yticks([26.4, 50.8, 100, 150, 200])
+% yticks([16.53, 50.8, 100, 150, 200])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
@@ -229,9 +273,9 @@ ylabel(ax1, 'Cost')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 set(ax1,'yscale','log')
-figName=append(dir, idName,'_experiment.png');
+figName=append(dir, idName,'_10_experiments.png');
 saveas(gcf,figName)
-figName=append(dir, idName,'_experiment.fig');
+figName=append(dir, idName,'_10_experiments.fig');
 saveas(gcf,figName)
 
 % %%
