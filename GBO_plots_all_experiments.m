@@ -10,38 +10,44 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_2_4';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+idName= 'demo_GBO_3_5';
+dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
     '/'], idName, '/');
-idNameBO= 'demo_BO_2_4';
-dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+idNameBO= 'demo_BO_3_5';
+dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
 
-
-for expr=1:10
-    idName= 'demo_GBO_2_';
-    dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+for expr=5:5
+    idName= 'demo_GBO_3_';
+    dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
         '/'], idName, num2str(expr), '/');
-    idNameBO= 'demo_BO_2_';
-    dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_2' ...
+    idNameBO= 'demo_BO_3_';
+    dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
         '/'], idNameBO, num2str(expr), '/');
 
     load(append(dir,'trace_file.mat'),'Trace')
-    if expr>4
-        Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
-        Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
-    end
-    Trace.values=Trace.values*16.53/min(Trace.values(1:40));
-    Trace.values(Trace.values<16.53)=16.53;
+% %   TODO:  manual correction
+%     if expr>4
+%         Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
+%         Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
+%     end
+
+%     %   TODO:  manual correction
+%     a=16.53/min(Trace.values(1:40))
+%     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+%     Trace.values(Trace.values<16.53)=16.53;
+expr=1;
     TraceGBO(expr)=Trace;
     delete Trace
 
     load(append(dirBO,'trace_file.mat'),'Trace')
-    Trace.values=Trace.values*16.53/min(Trace.values(1:40));
-    Trace.values(Trace.values<16.53)=16.53;
+%     %   TODO:  manual correction
+%     b=16.53/min(Trace.values(1:40))
+%     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+%     Trace.values(Trace.values<16.53)=16.53;
     TraceBO(expr)=Trace;
     delete Trace
 
@@ -219,10 +225,12 @@ h5=yline(50.81,'k--', 'LineWidth', 3);
 
 legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-% ylim([16.53 200])
+ylim([16.5 100])
 xlim([1, 50])
 xticks([1, 5:5:50])
-% yticks([16.53, 50.8, 100, 150, 200])
+% yticks([1, 5:5:50])
+
+yticks([16.5, 50.81, 50, 80.0, 100.0])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
@@ -273,9 +281,9 @@ ylabel(ax1, 'Cost')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 set(ax1,'yscale','log')
-figName=append(dir, idName,'_10_experiments.png');
+figName=append(dir, idName,'_1_experiments.png');
 saveas(gcf,figName)
-figName=append(dir, idName,'_10_experiments.fig');
+figName=append(dir, idName,'_0_experiments.fig');
 saveas(gcf,figName)
 
 % %%
