@@ -56,11 +56,12 @@ end
 % % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 % G = tf(num, den, 'InputDelay',Td);
 % DC motor at FHNW lab (new)
-num = [3.214];
-den = [0.505, 1];
+num = [195.199];
+den = [1, 32.6931, 60.7286];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
+[k,ku,tu]=znpidtuning(G,2)
 load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds.mat')
 Kp_nom=0.55;
 Ki_nom=1.5;
@@ -80,18 +81,33 @@ ORnom=J_nominal/true_objective
 % Ki_nominal_1=C_tuned.Ki;
 
 % phase gain margin nominal controller: WENG KHUEN HO et al.
-taw=0.505;
+% taw=0.505;
+% L=2/1000;
+
 kp=3.214;
-L=2/1000;
-Am=10^(10/20);
+
+taw1=tu/(2*pi)*sqrt(ku*kp-1);
+L1=tu/(2*pi)*(pi-2*atan(2*pi*taw1/tu));
+taw=taw1;
+L=L1;
+
+Am=10^(5/20);
 Pm=60*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 
+% validate approximated phase gain margins
+% num = [3.214];
+% den = [0.505, 1];
+% G = tf(num, den, 'InputDelay',Td);
+K=tf([Kp_nominal, Kp_nominal*Ki_nominal], [1, 0]);
+margin(K*G)
+figure(2)
+step(feedback(K*G,1,-1))
 %  calculate gain feasible set
 max_overshoot=0;
-d=1e-1;
+d=0;
 while max_overshoot<25 && ~isnan(max_overshoot)
     lb=[Kp_nominal-d, Ki_nominal-d];
     ub=[Kp_nominal+d, Ki_nominal+d];
@@ -153,14 +169,6 @@ Kp_max=Kp_nominal+d+dp;
 Ki_min=Ki_nominal-d-di;
 Ki_max=Ki_nominal+d+di;
 save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
-
-% % validate approximated phase gain margins
-% num = [kp];
-% den = [taw, 1];
-% Td=2e-3;
-% G = tf(num, den, 'InputDelay',Td);
-% K=tf([Kp_nominal, Kp_nominal*Ki_nominal], [1, 0]);
-% allmargin(K*G)
 
 J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
 true_objective = 4.1000;
