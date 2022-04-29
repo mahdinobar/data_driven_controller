@@ -41,8 +41,12 @@ end
 % G = d2c(tf(num,den, ts));
 
 % DC motor at FHNW lab
-num = [5.19908];
-den = [1, 1.61335];
+% num = [5.19908];
+% den = [1, 1.61335];
+% Td=2e-3;
+% DC motor at FHNW lab (new)
+num = [3.214];
+den = [0.505, 1];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
@@ -53,7 +57,7 @@ G = tf(num, den, 'InputDelay',Td);
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_new.mat');
 end
 load(dir_gains)
 % Kp_min=Kp_min-15;
@@ -307,53 +311,53 @@ else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
 %% plot true J (grid)
-% % Let's plot grid of points just to see what we are trying to optimize
-% clf;
-% Kp_range=Kp_max-Kp_min;
-% resol=25;
-% Kp_surf_resol=Kp_range/resol;
-% Ki_range=Ki_max-Ki_min;
-% Ki_surf_resol=Ki_range/resol;
-% [kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
-% j_pt=zeros(size(kp_pt));
-% c_pt=zeros(size(kp_pt));
-% for i=1:size(kp_pt,1)
-%     for j=1:size(kp_pt,2)
-%         [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
-%         j_pt(i,j)=l;
-%         c_pt(i,j)=c;
-%     end
-% end
-% j_pt(c_pt>opt.lt_const)=NaN;
-% surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-% xlabel('Kp')
-% ylabel('Ki')
-% zlabel('J')
-% set(gca,'zscale','log')
-% set(gca,'ColorScale','log')
-% % ground truth grid search optimum
-% [J_gt,I]=min(j_pt,[],'all')
-% % hold on;
-% % plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
-% % Kp_nominal=50.3549;
-% % Ki_nominal=1.6134;
-% % J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
-% % % optimality ratio of nominal gains
-% % OR_nominal=J_nominal/J_gt
-% % plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
-% % 
-% % % % uncomment to inspect for finding sampleTf
-% % % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
-% % % CL=feedback(C*G, 1);
-% % % figure()
-% % % step(CL)
-% % % step(CLU)
-% % 
-% % % zlim([0,50])
-% % % [true_objective, b]=min(j_pt,[],'all');
-% % % kp_true=kp_pt(b)
-% % % ki_true=ki_pt(b)
-% drawnow;
+% Let's plot grid of points just to see what we are trying to optimize
+clf;
+Kp_range=Kp_max-Kp_min;
+resol=25;
+Kp_surf_resol=Kp_range/resol;
+Ki_range=Ki_max-Ki_min;
+Ki_surf_resol=Ki_range/resol;
+[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+j_pt=zeros(size(kp_pt));
+c_pt=zeros(size(kp_pt));
+for i=1:size(kp_pt,1)
+    for j=1:size(kp_pt,2)
+        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
+        j_pt(i,j)=l;
+        c_pt(i,j)=c;
+    end
+end
+j_pt(c_pt>opt.lt_const)=NaN;
+surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
+xlabel('Kp')
+ylabel('Ki')
+zlabel('J')
+set(gca,'zscale','log')
+set(gca,'ColorScale','log')
+% ground truth grid search optimum
+[J_gt,I]=min(j_pt,[],'all')
+hold on;
+plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
+Kp_nominal=38.78;
+Ki_nominal=11.36;
+J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
+% optimality ratio of nominal gains
+OR_nominal=J_nominal/J_gt
+plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
+% 
+% % % uncomment to inspect for finding sampleTf
+% % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
+% % CL=feedback(C*G, 1);
+% % figure()
+% % step(CL)
+% % step(CLU)
+% 
+% % zlim([0,50])
+% % [true_objective, b]=min(j_pt,[],'all');
+% % kp_true=kp_pt(b)
+% % ki_true=ki_pt(b)
+drawnow;
 
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
@@ -565,12 +569,12 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[0.1, 1, 1, 0.5];
+w=[0.71, 0.07, 0.07, 0.14];
 % w=[91.35, 0.34, 0.028, 0.0019];
 % w=[40.	0.10	0.01	0.0002];
 
 w=w./sum(w);
-objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
+objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
 constraints=-1;
 end
 

@@ -49,9 +49,15 @@ end
 % ts=1;
 % G = d2c(tf(num,den, ts));
 
-% DC motor at FHNW lab
-num = [5.19908];
-den = [1, 1.61335];
+% % DC motor at FHNW lab
+% num = [5.19908];
+% den = [1, 1.61335];
+% Td=2e-3;
+% % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
+% G = tf(num, den, 'InputDelay',Td);
+% DC motor at FHNW lab (new)
+num = [3.214];
+den = [0.505, 1];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
@@ -66,12 +72,12 @@ true_objective = 4.1000;
 ORnom=J_nominal/true_objective
 %%
 %
-% uncomment to estimate stable gain bounds
-% auto tune
-[C_tuned,info] = pidtune(G,'PI');
-% Kd_nominal=C_tuned.Kd;
-Kp_nominal_1=C_tuned.Kp;
-Ki_nominal_1=C_tuned.Ki;
+% % uncomment to estimate stable gain bounds
+% % auto tune
+% [C_tuned,info] = pidtune(G,'PI');
+% % Kd_nominal=C_tuned.Kd;
+% Kp_nominal_1=C_tuned.Kp;
+% Ki_nominal_1=C_tuned.Ki;
 
 % phase gain margin nominal controller: WENG KHUEN HO et al.
 taw=0.505;
@@ -98,10 +104,10 @@ while max_overshoot<25 && ~isnan(max_overshoot)
     max_overshoot=stepinfo(CLtmp).Overshoot
     d = d*1.5;
 end
-d=d/2;
+d=d/2.5;
 max_overshoot=0;
-dp=1e-2;
-while max_overshoot<50 && ~isnan(max_overshoot)
+dp=1e-1;
+while max_overshoot<25 && ~isnan(max_overshoot)
     lb=[Kp_nominal-d-dp, Ki_nominal-d];
     ub=[Kp_nominal+d+dp, Ki_nominal+d];
     funOV_handle = @(x)funOv(x, G);
@@ -124,11 +130,11 @@ end
         end
     end
 
-dp=dp/1.5;
+dp=dp/2;
 
 max_overshoot=0;
-di=1e-2;
-while max_overshoot<50 && ~isnan(max_overshoot)
+di=1e-1;
+while max_overshoot<25 && ~isnan(max_overshoot)
     lb=[Kp_nominal-d-dp, Ki_nominal-d-di];
     ub=[Kp_nominal+d+dp, Ki_nominal+d+di];
     funOV_handle = @(x)funOv(x, G);
@@ -140,13 +146,13 @@ while max_overshoot<50 && ~isnan(max_overshoot)
     max_overshoot=stepinfo(CLtmp).Overshoot
     di = di*1.5;
 end
-di=di/1.5;
+di=di/2;
 
 Kp_min=Kp_nominal-d-dp;
 Kp_max=Kp_nominal+d+dp;
 Ki_min=Ki_nominal-d-di;
 Ki_max=Ki_nominal+d+di;
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKiKd_bounds_new.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
 
 % % validate approximated phase gain margins
 % num = [kp];
