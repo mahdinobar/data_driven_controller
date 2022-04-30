@@ -62,7 +62,10 @@ end
 load(dir_gains)
 % Kp_min=Kp_min-15;
 % Kp_max=Kp_max+10;
-% Ki_min=0.1;
+% Ki_min=3;
+% Kp_min=0.02;
+% Kp_max=Kp_max+1;
+% save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
 
 %% only_visualize
 if only_visualize
@@ -339,11 +342,15 @@ set(gca,'ColorScale','log')
 [J_gt,I]=min(j_pt,[],'all')
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
-Kp_nominal=38.78;
-Ki_nominal=11.36;
-J_nominal=ObjFun([Kp_nominal, Ki_nominal],G);
+Kp_nominal=0.3579;
+Ki_nominal=4.7955;
+J_nominal=ObjFun([Kp_nominal, Ki_nominal],G)
+J_nominal2=ObjFun([0.28, 4.4],G)
+
 % optimality ratio of nominal gains
 OR_nominal=J_nominal/J_gt
+OR_nominal2=J_nominal2/J_gt
+
 plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
 % 
 % % % uncomment to inspect for finding sampleTf
@@ -569,7 +576,7 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[4,2,2,0.5];
+w=[2, 1, 1, 0.5];
 % w=[91.35, 0.34, 0.028, 0.0019];
 % w=[40.	0.10	0.01	0.0002];
 

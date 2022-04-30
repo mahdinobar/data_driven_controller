@@ -88,11 +88,13 @@ kp=3.214;
 
 taw1=tu/(2*pi)*sqrt(ku*kp-1);
 L1=tu/(2*pi)*(pi-2*atan(2*pi*taw1/tu));
-taw=taw1;
-L=L1;
+t1=1.24*taw1+L1;
+t2=3.40*taw1+L1;
+taw=0.67*(t2-t1);
+L=1.3*t1-0.29*t2;
 
-Am=10^(5/20);
-Pm=60*pi/180;
+Am=10^(10/20);
+Pm=75*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
@@ -102,13 +104,14 @@ Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 % den = [0.505, 1];
 % G = tf(num, den, 'InputDelay',Td);
 K=tf([Kp_nominal, Kp_nominal*Ki_nominal], [1, 0]);
+allmargin(K*G)
 margin(K*G)
-figure(2)
-step(feedback(K*G,1,-1))
+% figure(2)
+% step(feedback(K*G,1,-1))
 %  calculate gain feasible set
 max_overshoot=0;
-d=0;
-while max_overshoot<25 && ~isnan(max_overshoot)
+d=1e-1;
+while max_overshoot<50 && ~isnan(max_overshoot)
     lb=[Kp_nominal-d, Ki_nominal-d];
     ub=[Kp_nominal+d, Ki_nominal+d];
     funPS_handle = @(x)funOv(x, G);
@@ -120,12 +123,29 @@ while max_overshoot<25 && ~isnan(max_overshoot)
     max_overshoot=stepinfo(CLtmp).Overshoot
     d = d*1.5;
 end
-d=d/2.5;
+d=d/1.5;
+
+max_overshoot=0;
+di=1e-1;
+while max_overshoot<100 && ~isnan(max_overshoot)
+    lb=[Kp_nominal-d, Ki_nominal-d-di];
+    ub=[Kp_nominal+d, Ki_nominal+d+di];
+    funOV_handle = @(x)funOv(x, G);
+    x = particleswarm(funOV_handle,2,lb,ub);
+
+    Ctmp=tf([x(1), x(1)*x(2)], [1, 0]);
+    CLtmp=feedback(Ctmp*G, 1);
+    di
+    max_overshoot=stepinfo(CLtmp).Overshoot
+    di = di*1.1;
+end
+di=di/1.1;
+
 max_overshoot=0;
 dp=1e-1;
-while max_overshoot<25 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-d-dp, Ki_nominal-d];
-    ub=[Kp_nominal+d+dp, Ki_nominal+d];
+while max_overshoot<75 && ~isnan(max_overshoot)
+    lb=[Kp_nominal-d-dp, Ki_nominal-d-di];
+    ub=[Kp_nominal+d+dp, Ki_nominal+d+di];
     funOV_handle = @(x)funOv(x, G);
     x = particleswarm(funOV_handle,2,lb,ub);
 
@@ -133,7 +153,7 @@ while max_overshoot<25 && ~isnan(max_overshoot)
     CLtmp=feedback(Ctmp*G, 1);
     dp
     max_overshoot=stepinfo(CLtmp).Overshoot
-    dp = dp*1.5;
+    dp = dp*1.1;
 end
     function [objective] = funOv(x, G)
 %             todo move some lines outside with handler@: faster?
@@ -146,23 +166,7 @@ end
         end
     end
 
-dp=dp/2;
-
-max_overshoot=0;
-di=1e-1;
-while max_overshoot<25 && ~isnan(max_overshoot)
-    lb=[Kp_nominal-d-dp, Ki_nominal-d-di];
-    ub=[Kp_nominal+d+dp, Ki_nominal+d+di];
-    funOV_handle = @(x)funOv(x, G);
-    x = particleswarm(funOV_handle,2,lb,ub);
-
-    Ctmp=tf([x(1), x(1)*x(2)], [1, 0]);
-    CLtmp=feedback(Ctmp*G, 1);
-    di
-    max_overshoot=stepinfo(CLtmp).Overshoot
-    di = di*1.5;
-end
-di=di/2;
+dp=dp/1.1;
 
 Kp_min=Kp_nominal-d-dp;
 Kp_max=Kp_nominal+d+dp;
