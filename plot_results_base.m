@@ -11,7 +11,7 @@ np2=2;
 withPerturbed=false;
 num_perturbed_model=4;
 
-idName= 'demo_GBO_0_2';
+idName= 'demo_GBO_new_0';
 dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 
 tmp=[];

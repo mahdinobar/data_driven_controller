@@ -20,15 +20,15 @@ N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
 
-for expr=5:5
-    idName= 'demo_GBO_3_';
-    dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-        '/'], idName, num2str(expr), '/');
-    idNameBO= 'demo_BO_3_';
-    dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-        '/'], idNameBO, num2str(expr), '/');
-
-    load(append(dir,'trace_file.mat'),'Trace')
+for expr=1:1
+%     idName= 'demo_GBO_3_';
+%     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+%         '/'], idName, num2str(expr), '/');
+%     idNameBO= 'demo_BO_3_';
+%     dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+%         '/'], idNameBO, num2str(expr), '/');
+%     load(append(dir,'trace_file.mat'),'Trace')
+      load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_new_0/trace_file.mat','Trace')
 % %   TODO:  manual correction
 %     if expr>4
 %         Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
@@ -39,16 +39,21 @@ for expr=5:5
 %     a=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-expr=1;
-    TraceGBO(expr)=Trace;
+
+%     TraceGBO(expr)=Trace;    
+    TraceGBO=Trace;
+
     delete Trace
 
-    load(append(dirBO,'trace_file.mat'),'Trace')
+%     load(append(dirBO,'trace_file.mat'),'Trace')
+      load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_new_0/trace_file_BO.mat','Trace')
+
 %     %   TODO:  manual correction
 %     b=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-    TraceBO(expr)=Trace;
+%     TraceBO(expr)=Trace;
+    TraceBO=Trace;
     delete Trace
 
 end
@@ -230,7 +235,7 @@ xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
 
-yticks([16.5, 50.81, 50, 80.0, 100.0])
+% yticks([16.5, 50, 50.81, 80.0, 100.0])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
@@ -400,7 +405,7 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 
-w=[0.1, 1, 1, 0.5];
+w=[2, 1, 1, 0.5];
 % w=[91.35, 0.34, 0.028, 0.0019];
 % w=[40.	0.10	0.01	0.0002];
 
