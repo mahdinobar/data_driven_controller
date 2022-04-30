@@ -3,10 +3,10 @@ function GBO
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 % hyper-params
-idName= 'demo_GBO_new_0';
+idName= 'demo_GBO_new_0_2';
 sys='DC_motor';
 N0=1; %number of initial data
-N_expr=3;
+N_expr=2;
 
 N_iter=50;
 N_iter=N_iter+N0;

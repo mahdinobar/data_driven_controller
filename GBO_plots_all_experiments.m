@@ -105,7 +105,7 @@ end
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 1;%4.1000;
+true_objective = 1.0148;%4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
@@ -150,7 +150,7 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 expr=expr+1;
 end
-meanJminObservGBO=nanmean(JminObservGBO,2);
+meanJminObservGBO=nanmean(JminObservGBO(:,1:9),2);
 meanJminObservBO=nanmean(JminObservBO,2);
 
 % %%
@@ -221,16 +221,16 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
+h1=semilogy(ax1, JminObservGBO(:,1:9)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObservBO(:,1:9)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 
-h5=yline(50.81,'k--', 'LineWidth', 3);
+h5=yline(2.78,'k--', 'LineWidth', 3);
 
 legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-ylim([16.5 100])
+ylim([0.95 10])
 xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
