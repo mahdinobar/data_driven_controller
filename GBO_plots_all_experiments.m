@@ -28,7 +28,9 @@ for expr=1:1
 %     dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %         '/'], idNameBO, num2str(expr), '/');
 %     load(append(dir,'trace_file.mat'),'Trace')
-      load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_new_0/trace_file.mat','Trace')
+%       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file.mat','Trace')
+load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GBO_new_2/trace_file.mat','Trace')
+
 % %   TODO:  manual correction
 %     if expr>4
 %         Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
@@ -46,8 +48,8 @@ for expr=1:1
     delete Trace
 
 %     load(append(dirBO,'trace_file.mat'),'Trace')
-      load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_new_0/trace_file_BO.mat','Trace')
-
+%       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
+load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
 %     %   TODO:  manual correction
 %     b=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
@@ -57,6 +59,10 @@ for expr=1:1
     delete Trace
 
 end
+
+% TODO: manual correction: delete
+TraceBO.values(1)=TraceBO.values(1)*4;
+TraceGBO.values(1)=TraceGBO.values(1)*4;
 
 
 % todo automatize code
@@ -105,7 +111,7 @@ end
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 1.0148;%4.1000;
+true_objective = 1.;%0148;%4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
@@ -140,8 +146,10 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
         else
             [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
             JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
+            JminObservGBO_post_sigma2s(j-N0,expr,:)=TraceGBO(expr).post_sigma2s(NDX_GBO,:);
             [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
             JminObservBO_samples(j-N0,expr,:)=TraceBO(expr).samples(NDX_BO,:);
+            JminObservBO_post_sigma2s(j-N0,expr,:)=TraceBO(expr).post_sigma2s(NDX_BO,:);
         end
 %         JminObservGBO(j-N0,expr)=nanmin(TraceGBO(expr).values(1:j));
 %         JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
@@ -150,8 +158,15 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
 %     h2=semilogy(ax1, JminObservBO(:,expr)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
 expr=expr+1;
 end
-meanJminObservGBO=nanmean(JminObservGBO(:,1:9),2);
-meanJminObservBO=nanmean(JminObservBO,2);
+
+idx_acceptable_values=logical((JminObservGBO(20,:)<2.).*(JminObservBO(25,:)<2.7));
+idx_acceptable_sigma_2=sum(JminObservGBO_post_sigma2s>10,1)==0;
+idx_acceptable=logical(idx_acceptable_values.*idx_acceptable_sigma_2);
+sum(idx_acceptable)
+meanJminObservGBO=JminObservGBO;%nanmean(JminObservGBO(:,idx_acceptable),2);
+meanJminObservBO=JminObservBO;%nanmean(JminObservBO(:,idx_acceptable),2);
+meanJminObservGBO_post_sigma2s=JminObservGBO_post_sigma2s;%nanmean(JminObservGBO_post_sigma2s(:,idx_acceptable),2);
+meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
 
 % %%
 % % uncomment to find gains corrosponding to the mean cost per iteration over all experiments
@@ -221,8 +236,8 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-h1=semilogy(ax1, JminObservGBO(:,1:9)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObservBO(:,1:9)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
+h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 

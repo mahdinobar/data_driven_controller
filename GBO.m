@@ -40,24 +40,27 @@ end
 % ts=1;
 % G = d2c(tf(num,den, ts));
 
-% DC motor at FHNW lab
+% % DC motor at FHNW lab
 % num = [5.19908];
 % den = [1, 1.61335];
 % Td=2e-3;
-% DC motor at FHNW lab (new)
-num = [195.199];
-den = [1, 32.6931, 60.7286];
+% % DC motor at FHNW lab (new) speed sensor pole at 0.003
+% num = [195.199];
+% den = [1, 32.6931, 60.7286];
+% % speed sensor pole 9.918e-5
+num = [9.54434];
+den = [1, 4.14479, 4.19941];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
 
 %% load gain limits
-    if sys=="ball_screw"
+if sys=="ball_screw"
     dir_gains=append(tmp_dir,'/', 'ball_screw_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="robot_arm"
     dir_gains=append(tmp_dir,'/', 'robot_arm_gain_bounds', '/', 'KpKiKd_bounds.mat');
 elseif sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_new.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_new_2.mat');
 end
 load(dir_gains)
 % Kp_min=Kp_min-15;
@@ -86,6 +89,7 @@ end
 % create initial dataset
 tmp=[];
 
+% todo
 % set random seed
 rng('default')
 rng(123)
@@ -99,12 +103,19 @@ Kp = (Kp_max-Kp_min).*RAND + Kp_min;
 Ki = (Ki_max-Ki_min).*RAND + Ki_min;
 InitobjectiveData = zeros(N0,1);
 % todo pay attention how you choose sampleTf?
-sampleTf=0.5;
+sampleTf=1.5;
 sampleTs=sampleTf/(Nsample-1);
 global G2data
 for i=1:N0
+% %     for min settling time in feasible region
+%     Kp(i)=0.5863
+%     Ki(i)=1.1617
+% %     for max settling time in feasible region
+%     Kp(i)=0.1073
+%     Ki(i)=0.8707
     C=tf([Kp(i), Kp(i)*Ki(i)], [1, 0]);
     CL=feedback(C*G, 1);
+%     stepinfo(CL).SettlingTime
     InitobjectiveData(i) = ObjFun([Kp(i), Ki(i)], G);
     while isnan(InitobjectiveData(i)) || InitobjectiveData(i)>1000
         RAND(i)=rand(1,1);
@@ -154,159 +165,159 @@ opt.save_trace = 0;
 opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 
-%% find optimum GP hyperparameters (and initial data of G2 for first experiment)
-% priors
-opt.meanfunc={@meanConst};
-opt.covfunc={@covMaternard, 5};
-% liklihood
-likfunc={@likGauss};
-% inference method
-infer=@infExact;
-
-% sample from latin (denoted as ltn) hypercube
-N_ltn=N0;
-RAND_ltn_all=zeros(N0,N_expr);
-
-if withSurrogate==true
-    load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
-    RAND_ltn=RAND_ltn_all(:,1);
-else
-    RAND_ltn = sort(lhsdesign(N_ltn,1));
-    RAND_ltn_all(:,1)=RAND_ltn;
-    save(append(dir,'RAND_ltn_all.mat'))
-end
-
-Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
-Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
-J_ltn = zeros(N_ltn,1);
-
-% final simulation sampling time
-sampleTs=sampleTf/(Nsample-1);
-global G2data
-
-for i=1:N_ltn
-    C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
-    CL=feedback(C*G, 1);
-    J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
-
-    CLU=feedback(C, G);
-%     ytmp=step(CL,eps:sampleTs:sampleTf);
-%     utmp=step(CLU,eps:sampleTs:sampleTf);
-
-    [ytmp,ttmp]=step(G,eps:sampleTs:sampleTf_init);
-    utmp=ones(size(ttmp));
-    %         todo check concept?
-    if i==1
-        G2data_init = iddata(ytmp,utmp,sampleTs);
-    else
-        G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
-    end
-end
-G2data=G2data_init;
-if withSurrogate
-%     G2_tmp=n4sid(G2data,npG2);
-%     G2idtf=idtf(G2_tmp);
-%     [a,b]=tfdata(G2idtf);
-%     G2=tf(a,b);
-    G2=tfest(G2data, npG2);
-
-    % %     uncomment to check simulation
-    t=0:1/100:3.3;
-    y = step(G,t);
-    y2 = step(G2,t);
-    figure(1)
-    step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
-    close
-    figure(2);
-    compare(G2data, G2)
-    close
-end
-
-N_hat=100;
-RAND_hat = linspace(0,1,N_hat);
-RAND_hat = RAND_hat(:);
-Kp_hat = (Kp_max-Kp_min).*RAND_hat + Kp_min;
-Ki_hat = (Ki_max-Ki_min).*RAND_hat + Ki_min;
-J_hat = zeros(N_hat,1);
-for i=1:N_hat
-    C=tf([Kp_hat(i), Kp_hat(i)*Ki_hat(i)], [1, 0]);
-    CL=feedback(C*G, 1);
-    J_hat(i) = ObjFun([Kp_hat(i), Ki_hat(i)], G);
-end
-
-% train data for GP
-X_ltn=[Kp_ltn, Ki_ltn];
-y_ltn=J_ltn;
-
-% test data x_hats for GP and ground truth y_hats
-x_hats=[Kp_hat, Ki_hat];
-y_hats=J_hat;
-
-meanfunc = opt.meanfunc;
-covfunc = opt.covfunc;
-if isfield(opt,'num_mean_hypers')
-    n_mh = opt.num_mean_hypers;
-else
-    n_mh = num_hypers(meanfunc{1},opt);
-end
-if isfield(opt,'num_cov_hypers')
-    n_ch = opt.num_cov_hypers;
-else
-    n_ch = num_hypers(covfunc{1},opt);
-end
-hyp_latin = [];
-hyp_latin.mean = zeros(n_mh,1);
-hyp_latin.cov = zeros(n_ch,1);
-hyp_latin.lik = log(0.1);
-% calculate GP mean/cov/lik hyperparameters
-hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X_ltn,y_ltn);
-
-%     x_hats are test inputs given to gp to predict
-[mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X_ltn,y_ltn,x_hats);
-save(append(dir, 'hyp_latin.mat'), 'hyp_latin')
-
-% %% plot latin tuning GP hyperparams
-% fig=figure();
-% fig.Position=[0 0 1600 1200];
-% subplot(2,1,1)
-% grid on
-% hold on
-% plot(X_ltn(:,1),y_ltn, 'r', 'LineWidth',3)
-% plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
-% plot(x_hats(:,1),mu,'k', 'LineWidth',3)
-% plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
-% plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
-% % title(append('mean = ', func2str(opt.meanfunc{1}), ': ' ...
-% %     , num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}) ...
-% %     , ' : ', num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', ...
-% %     func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
-% title(append('mean = ', func2str(opt.meanfunc{1}), ' & cov = ', ...
-%     func2str(opt.covfunc{1}), ' & lik = ', func2str(likfunc{1})))
-% xlabel('Kp')
-% ylabel('cost')
-% legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-% xlim([Kp_min, Kp_max])
-% ylim([0, max(y_hats)+10])
-% subplot(2, 1, 2)
-% grid on
-% hold on
-% plot(X_ltn(:,2),y_ltn, 'r', 'LineWidth',3)
-% plot(x_hats(:,2),y_hats,'g', 'LineWidth',1)
-% plot(x_hats(:,2),mu,'k', 'LineWidth',3)
-% plot(x_hats(:,2),mu+sigma2/2,'--k', 'LineWidth',1)
-% plot(x_hats(:,2),mu-sigma2/2,'--k', 'LineWidth',1)
-% legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-% xlabel('Ki')
-% ylabel('cost')
-% legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
-% xlim([Ki_min, Ki_max])
-% ylim([0, max(y_hats)+10])
-% figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
-% saveas(gcf,figName)
-% pause(1.5);
-% close;
+% %% find optimum GP hyperparameters (and initial data of G2 for first experiment)
+% % priors
+% opt.meanfunc={@meanConst};
+% opt.covfunc={@covMaternard, 5};
+% % liklihood
+% likfunc={@likGauss};
+% % inference method
+% infer=@infExact;
 % 
+% % sample from latin (denoted as ltn) hypercube
+% N_ltn=N0;
+% RAND_ltn_all=zeros(N0,N_expr);
+% 
+% if withSurrogate==true
+%     load(append(dir,'RAND_ltn_all.mat'), 'RAND_ltn_all')
+%     RAND_ltn=RAND_ltn_all(:,1);
+% else
+%     RAND_ltn = sort(lhsdesign(N_ltn,1));
+%     RAND_ltn_all(:,1)=RAND_ltn;
+%     save(append(dir,'RAND_ltn_all.mat'))
+% end
+% 
+% Kp_ltn = (Kp_max-Kp_min).*RAND_ltn + Kp_min;
+% Ki_ltn = (Ki_max-Ki_min).*RAND_ltn + Ki_min;
+% J_ltn = zeros(N_ltn,1);
+% 
+% % final simulation sampling time
+% sampleTs=sampleTf/(Nsample-1);
+% global G2data
+% 
+% for i=1:N_ltn
+%     C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
+%     CL=feedback(C*G, 1);
+%     J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+% 
+%     CLU=feedback(C, G);
+% %     ytmp=step(CL,eps:sampleTs:sampleTf);
+% %     utmp=step(CLU,eps:sampleTs:sampleTf);
+% 
+%     [ytmp,ttmp]=step(G,eps:sampleTs:sampleTf_init);
+%     utmp=ones(size(ttmp));
+%     %         todo check concept?
+%     if i==1
+%         G2data_init = iddata(ytmp,utmp,sampleTs);
+%     else
+%         G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
+%     end
+% end
+% G2data=G2data_init;
+% if withSurrogate
+% %     G2_tmp=n4sid(G2data,npG2);
+% %     G2idtf=idtf(G2_tmp);
+% %     [a,b]=tfdata(G2idtf);
+% %     G2=tf(a,b);
+%     G2=tfest(G2data, npG2);
+% 
+%     % %     uncomment to check simulation
+%     t=0:1/100:3.3;
+%     y = step(G,t);
+%     y2 = step(G2,t);
+%     figure(1)
+%     step(G); hold on; step(G2,'r')
+%     rmse2=sqrt(mean((y-y2).^2))
+%     close
+%     figure(2);
+%     compare(G2data, G2)
+%     close
+% end
+% 
+% N_hat=100;
+% RAND_hat = linspace(0,1,N_hat);
+% RAND_hat = RAND_hat(:);
+% Kp_hat = (Kp_max-Kp_min).*RAND_hat + Kp_min;
+% Ki_hat = (Ki_max-Ki_min).*RAND_hat + Ki_min;
+% J_hat = zeros(N_hat,1);
+% for i=1:N_hat
+%     C=tf([Kp_hat(i), Kp_hat(i)*Ki_hat(i)], [1, 0]);
+%     CL=feedback(C*G, 1);
+%     J_hat(i) = ObjFun([Kp_hat(i), Ki_hat(i)], G);
+% end
+% 
+% % train data for GP
+% X_ltn=[Kp_ltn, Ki_ltn];
+% y_ltn=J_ltn;
+% 
+% % test data x_hats for GP and ground truth y_hats
+% x_hats=[Kp_hat, Ki_hat];
+% y_hats=J_hat;
+% 
+% meanfunc = opt.meanfunc;
+% covfunc = opt.covfunc;
+% if isfield(opt,'num_mean_hypers')
+%     n_mh = opt.num_mean_hypers;
+% else
+%     n_mh = num_hypers(meanfunc{1},opt);
+% end
+% if isfield(opt,'num_cov_hypers')
+%     n_ch = opt.num_cov_hypers;
+% else
+%     n_ch = num_hypers(covfunc{1},opt);
+% end
+% hyp_latin = [];
+% hyp_latin.mean = zeros(n_mh,1);
+% hyp_latin.cov = zeros(n_ch,1);
+% hyp_latin.lik = log(0.1);
+% % calculate GP mean/cov/lik hyperparameters
+% hyp_latin = minimize(hyp_latin,@gp,-100,@infExact,meanfunc,covfunc,likfunc,X_ltn,y_ltn);
+% 
+% %     x_hats are test inputs given to gp to predict
+% [mu,sigma2] = gp(hyp_latin,infer,meanfunc,covfunc,likfunc,X_ltn,y_ltn,x_hats);
+% save(append(dir, 'hyp_latin.mat'), 'hyp_latin')
+% 
+% % %% plot latin tuning GP hyperparams
+% % fig=figure();
+% % fig.Position=[0 0 1600 1200];
+% % subplot(2,1,1)
+% % grid on
+% % hold on
+% % plot(X_ltn(:,1),y_ltn, 'r', 'LineWidth',3)
+% % plot(x_hats(:,1),y_hats,'g', 'LineWidth',1)
+% % plot(x_hats(:,1),mu,'k', 'LineWidth',3)
+% % plot(x_hats(:,1),mu+sigma2/2,'--k', 'LineWidth',1)
+% % plot(x_hats(:,1),mu-sigma2/2,'--k', 'LineWidth',1)
+% % % title(append('mean = ', func2str(opt.meanfunc{1}), ': ' ...
+% % %     , num2str(hyp_latin.mean,'%05.3f'), ' & cov = ', func2str(opt.covfunc{1}) ...
+% % %     , ' : ', num2str(hyp_latin.cov', '%05.3f'), ' & lik = ', ...
+% % %     func2str(likfunc{1}), ' : ', num2str(hyp_latin.lik,'%05.3f')))
+% % title(append('mean = ', func2str(opt.meanfunc{1}), ' & cov = ', ...
+% %     func2str(opt.covfunc{1}), ' & lik = ', func2str(likfunc{1})))
+% % xlabel('Kp')
+% % ylabel('cost')
+% % legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+% % xlim([Kp_min, Kp_max])
+% % ylim([0, max(y_hats)+10])
+% % subplot(2, 1, 2)
+% % grid on
+% % hold on
+% % plot(X_ltn(:,2),y_ltn, 'r', 'LineWidth',3)
+% % plot(x_hats(:,2),y_hats,'g', 'LineWidth',1)
+% % plot(x_hats(:,2),mu,'k', 'LineWidth',3)
+% % plot(x_hats(:,2),mu+sigma2/2,'--k', 'LineWidth',1)
+% % plot(x_hats(:,2),mu-sigma2/2,'--k', 'LineWidth',1)
+% % legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+% % xlabel('Ki')
+% % ylabel('cost')
+% % legend('training samples', 'test data', 'posterior mean', 'posterior confidence bound')
+% % xlim([Ki_min, Ki_max])
+% % ylim([0, max(y_hats)+10])
+% % figName=append(dir, idName,'_GP_hypr_tune_matern5.png');
+% % saveas(gcf,figName)
+% % pause(1.5);
+% % close;
+% % 
 %% We define the function we would like to optimize
 if withSurrogate==true
     fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed);
@@ -314,57 +325,57 @@ else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
 %% plot true J (grid)
-% % Let's plot grid of points just to see what we are trying to optimize
-% clf;
-% Kp_range=Kp_max-Kp_min;
-% resol=25;
-% Kp_surf_resol=Kp_range/resol;
-% Ki_range=Ki_max-Ki_min;
-% Ki_surf_resol=Ki_range/resol;
-% [kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
-% j_pt=zeros(size(kp_pt));
-% c_pt=zeros(size(kp_pt));
-% for i=1:size(kp_pt,1)
-%     for j=1:size(kp_pt,2)
-%         [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
-%         j_pt(i,j)=l;
-%         c_pt(i,j)=c;
-%     end
-% end
-% j_pt(c_pt>opt.lt_const)=NaN;
-% surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-% xlabel('Kp')
-% ylabel('Ki')
-% zlabel('J')
-% set(gca,'zscale','log')
-% set(gca,'ColorScale','log')
-% % ground truth grid search optimum
-% [J_gt,I]=min(j_pt,[],'all')
-% hold on;
-% plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
-% Kp_nominal=0.3579;
-% Ki_nominal=4.7955;
-% J_nominal=ObjFun([Kp_nominal, Ki_nominal],G)
-% J_nominal2=ObjFun([0.28, 4.4],G)
+% Let's plot grid of points just to see what we are trying to optimize
+clf;
+Kp_range=Kp_max-Kp_min;
+resol=25;
+Kp_surf_resol=Kp_range/resol;
+Ki_range=Ki_max-Ki_min;
+Ki_surf_resol=Ki_range/resol;
+[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+j_pt=zeros(size(kp_pt));
+c_pt=zeros(size(kp_pt));
+for i=1:size(kp_pt,1)
+    for j=1:size(kp_pt,2)
+        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
+        j_pt(i,j)=l;
+        c_pt(i,j)=c;
+    end
+end
+j_pt(c_pt>opt.lt_const)=NaN;
+surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
+xlabel('Kp')
+ylabel('Ki')
+zlabel('J')
+set(gca,'zscale','log')
+set(gca,'ColorScale','log')
+% ground truth grid search optimum
+[J_gt,I]=min(j_pt,[],'all')
+hold on;
+plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
+Kp_nominal=0.49;
+Ki_nominal=1.477;
+J_nominal=ObjFun([Kp_nominal, Ki_nominal],G)
+J_nominal2=ObjFun([0.28, 4.4],G)
+
+% optimality ratio of nominal gains
+OR_nominal=J_nominal/J_gt
+OR_nominal2=J_nominal2/J_gt
+
+plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
 % 
-% % optimality ratio of nominal gains
-% OR_nominal=J_nominal/J_gt
-% OR_nominal2=J_nominal2/J_gt
+% % % uncomment to inspect for finding sampleTf
+% % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
+% % CL=feedback(C*G, 1);
+% % figure()
+% % step(CL)
+% % step(CLU)
 % 
-% plot3([Kp_nominal Kp_nominal],[Ki_nominal Ki_nominal],[max(j_pt(:)) min(j_pt(:))],'k-','LineWidth',3);
-% % 
-% % % % uncomment to inspect for finding sampleTf
-% % % C=tf([Kp_max, Kp_max*Ki_max], [1, 0]);
-% % % CL=feedback(C*G, 1);
-% % % figure()
-% % % step(CL)
-% % % step(CLU)
-% % 
-% % % zlim([0,50])
-% % % [true_objective, b]=min(j_pt,[],'all');
-% % % kp_true=kp_pt(b)
-% % % ki_true=ki_pt(b)
-% % drawnow;
+% % zlim([0,50])
+% % [true_objective, b]=min(j_pt,[],'all');
+% % kp_true=kp_pt(b)
+% % ki_true=ki_pt(b)
+% drawnow;
 
 %% Start the optimization
 fprintf('Optimizing hyperparamters of function "samplef.m" ...\n');
@@ -582,6 +593,7 @@ w=[2, 1, 1, 0.5];
 
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
+objective=st;
 constraints=-1;
 end
 

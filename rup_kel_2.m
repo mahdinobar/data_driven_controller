@@ -56,21 +56,25 @@ end
 % % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 % G = tf(num, den, 'InputDelay',Td);
 % DC motor at FHNW lab (new)
-num = [195.199];
-den = [1, 32.6931, 60.7286];
+% speed sensor pole 0.003
+% num = [195.199];
+% den = [1, 32.6931, 60.7286];
+% speed sensor pole 9.918e-5
+num = [9.54434];
+den = [1, 4.14479, 4.19941];
 Td=2e-3;
 % MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
 G = tf(num, den, 'InputDelay',Td);
 [k,ku,tu]=znpidtuning(G,2)
 load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds.mat')
-Kp_nom=0.55;
-Ki_nom=1.5;
-Ctl_nom_1=tf([Kp_nom,Kp_nom*Ki_nom], [1, 0]);
-[GmUnit,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
-GmdB=20*log10(GmUnit)
-J_nominal=-funPS([Kp_nom, Ki_nom], G)
-true_objective = 4.1000;
-ORnom=J_nominal/true_objective
+% Kp_nom=0.55;
+% Ki_nom=1.5;
+% Ctl_nom_1=tf([Kp_nom,Kp_nom*Ki_nom], [1, 0]);
+% [GmUnit,Pm,Wcg,Wcp] = margin(Ctl_nom_1*G)
+% GmdB=20*log10(GmUnit)
+% J_nominal=-funPS([Kp_nom, Ki_nom], G)
+% true_objective = 4.1000;
+% ORnom=J_nominal/true_objective
 %%
 %
 % % uncomment to estimate stable gain bounds
@@ -84,7 +88,12 @@ ORnom=J_nominal/true_objective
 % taw=0.505;
 % L=2/1000;
 
-kp=3.214;
+% % speed sensor pole 0.003
+% kp=3.214;
+
+% speed sensor pole 9.918e-5
+kp=9.54434/(1.76351*2.38129);
+
 
 taw1=tu/(2*pi)*sqrt(ku*kp-1);
 L1=tu/(2*pi)*(pi-2*atan(2*pi*taw1/tu));
@@ -94,7 +103,7 @@ taw=0.67*(t2-t1);
 L=1.3*t1-0.29*t2;
 
 Am=10^(10/20);
-Pm=75*pi/180;
+Pm=60*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
@@ -106,6 +115,8 @@ Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 K=tf([Kp_nominal, Kp_nominal*Ki_nominal], [1, 0]);
 allmargin(K*G)
 margin(K*G)
+figure(2)
+step(feedback(K,G,-1))
 % figure(2)
 % step(feedback(K*G,1,-1))
 %  calculate gain feasible set
@@ -172,7 +183,7 @@ Kp_min=Kp_nominal-d-dp;
 Kp_max=Kp_nominal+d+dp;
 Ki_min=Ki_nominal-d-di;
 Ki_max=Ki_nominal+d+di;
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new_2.mat','Kp_min','Ki_min','Kp_max', 'Ki_max')
 
 J_nominal=-funPS([Kp_nominal, Ki_nominal], G)
 true_objective = 4.1000;
