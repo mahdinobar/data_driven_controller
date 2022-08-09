@@ -203,7 +203,7 @@ opt.resume_trace=true;
 %     CLU=feedback(C, G);
 % %     ytmp=step(CL,eps:sampleTs:sampleTf);
 % %     utmp=step(CLU,eps:sampleTs:sampleTf);
-% 
+% %   todo correct?!
 %     [ytmp,ttmp]=step(G,eps:sampleTs:sampleTf_init);
 %     utmp=ones(size(ttmp));
 %     %         todo check concept?

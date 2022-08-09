@@ -1,4 +1,7 @@
 function [minsample,minvalue,botrace] = bayesoptGPML(F,opt, N0)
+% ms - Best parameter setting found
+% mv - best function value for that setting L(ms)
+% Trace  - Trace of all settings tried, their function values, and constraint values.
 warning('off')
 % Check options for minimum level of validity
 check_opts(opt);
