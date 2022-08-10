@@ -4,7 +4,7 @@ function GBO_v2
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_new_0_2';
+idName= 'demo_GBO_v2_0';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -48,6 +48,7 @@ load(dir_gains)
 
 %% build initial dataset (N0)
 if initRant=="latin"
+    % latin hypercube samples
     if withSurrogate==true
         load(append(dir,'RAND_ltn_all.mat'), 'RAND_all_expr')
     else
@@ -85,7 +86,7 @@ opt.resume_trace=true;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed);
+    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed, sampleTinit);
 else
     fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
@@ -113,8 +114,10 @@ ylabel('Ki')
 zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
+
+%% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
-[J_gt,I]=min(j_pt,[],'all')
+[J_gt,I]=min(j_pt,[],'all');
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
@@ -150,7 +153,6 @@ for expr=1:1:N_expr
                 CLU=feedback(C, G);
                 ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
                 utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
-                % todo check concept?
                 if i==1
                     G2data = iddata(ytmp,utmp,sampleTs);
                 else
@@ -159,23 +161,20 @@ for expr=1:1:N_expr
             end
         end
     end
-
-    % set initial dataset with latin hypercube samples
-    % train data for GP
+    % set initial dataset
     X_ltn=[Kp_ltn, Ki_ltn];
     y_ltn=J_ltn;
     botrace.samples=X_ltn;
     botrace.values=y_ltn;
     % todo need to correct time?
-    botrace.times=RAND_ltn';
+    botrace.times=RAND';
     opt.resume_trace_data = botrace;
     clear botrace
     idx_G2=[];
     for itr=N0+1:N_iter
+        % todo check concept of max_iters?
         opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
         [ms,mv,Trace_tmp] = bayesoptGPML(fun,opt,N0);
-        % remove previos data of older surrogate(G2) model, but keep them
-        % seperately for plots
         if withSurrogate==true && N>N_perturbed && idx==0
             for i=1:1:N_perturbed
                 G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-i,:)];
@@ -187,12 +186,12 @@ for expr=1:1:N_expr
         end
         opt.resume_trace_data = Trace_tmp;
     end
-
+    % keep surrogate model data seperately for plots
     Trace_tmp.G2_samples=G2_samples;
     Trace_tmp.G2_values=G2_values;
     Trace_tmp.G2_post_mus=G2_post_mus;
     Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
-
+    % remove previos data of older surrogate(G2) model
     Trace_tmp.samples(idx_G2,:)=[];
     Trace_tmp.values(idx_G2)=[];
     Trace_tmp.post_mus(idx_G2)=[];
@@ -200,27 +199,20 @@ for expr=1:1:N_expr
     Trace_tmp.times(idx_G2)=[];
     Trace(expr)=Trace_tmp;
     delete Trace_tmp
-
     if withSurrogate==true
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
-        G2rmse=[G2rmse, expr_G2rmse];
+        % check identification 
+        G2rmse=[G2rmse, expr_G2rmse]
         save(append(dir, 'G2rmse.mat'),'G2rmse')
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
     end
 end
 
-%% Print results
-fprintf('******************************************************\n');
-fprintf('Best controller gains:      Kp=%2.4f, Ki=%2.4f\n',ms(1),ms(2));
-fprintf('Associated cost: J([Kp,Ki])=%2.4f\n',mv);
-fprintf('******************************************************\n');
-
 %% Draw optimium
 hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
-plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',2);
 
 if withSurrogate
     figName=append(dir, idName,'_SurfGrid_GBO_Solution.png');
@@ -273,7 +265,7 @@ constraints=-1;
 end
 
 
-function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed)
+function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed, sampleTinit)
 global N
 global idx
 global G2data
@@ -284,14 +276,14 @@ global expr_G2rmse
 if N<N_perturbed
     N=N+1;
     G2=tfest(G2data, npG2);
-    %     to repeat perturbed
+    % to repeat perturbed
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
         objective=ObjFun(X, G2);
         N_pr=N_pr+1;
     else
-        %     initially use G2
+        % initially use G2
         objective=ObjFun(X, G2);
         N_G2_activated_counter=1;
         idx= 0;
@@ -300,7 +292,7 @@ if N<N_perturbed
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
-    rmse2=sqrt(mean((y-y2).^2))
+    rmse2=sqrt(mean((y-y2).^2));
     rmse_thresh=0.2;
     %     if rmse2>rmse_thresh
     expr_G2rmse=[expr_G2rmse;rmse2];
@@ -313,19 +305,19 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
 
-    % % %     uncomment to check simulation
+    % uncomment to check identification 
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
     %     figure(1)
     %     step(G); hold on; step(G2,'r')
-    rmse2=sqrt(mean((y-y2).^2))
+    rmse2=sqrt(mean((y-y2).^2));
     % %     close
     %     figure(2);
     %     compare(G2data, G2)
     % %     close
 
-    %     to repeat perturbed
+    % to repeat perturbed
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
@@ -337,10 +329,11 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
     end
+    % uncomment to check identification
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
-    rmse2=sqrt(mean((y-y2).^2))
+    rmse2=sqrt(mean((y-y2).^2));
     %     if rmse2>rmse_thresh
     %         expr_G2rmse=0;
     %     end
