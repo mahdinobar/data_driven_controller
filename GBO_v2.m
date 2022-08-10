@@ -13,6 +13,7 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
+objective_noise=false;
 N0=1; %number of initial data
 N_expr=2;
 N_iter=50;
@@ -21,6 +22,7 @@ Nsample=150;
 sampleTf=1.5; %based on the min and max settling time equal to 1.3 and 19 seconds inside the feasible set "KpKi_bounds_new_2.mat" we choose 1.5 for DC motor plant with speed sensor pole 9.918e-5
 sampleTs=sampleTf/(Nsample-1);
 sampleTinit=0.0;
+lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
 N_perturbed=1; % number of perturbed plus one not perturbed surrogate
 if withSurrogate
@@ -62,6 +64,37 @@ if initRant=="latin"
     end
 end
 
+%% plot true J (grid)
+clf;
+Kp_range=Kp_max-Kp_min;
+resol=25;
+Kp_surf_resol=Kp_range/resol;
+Ki_range=Ki_max-Ki_min;
+Ki_surf_resol=Ki_range/resol;
+[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+j_pt=zeros(size(kp_pt));
+c_pt=zeros(size(kp_pt));
+for i=1:size(kp_pt,1)
+    for j=1:size(kp_pt,2)
+        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G, false);
+        j_pt(i,j)=l;
+        c_pt(i,j)=c;
+    end
+end
+j_pt(c_pt>lt_const)=NaN;
+surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
+xlabel('Kp')
+ylabel('Ki')
+zlabel('J')
+set(gca,'zscale','log')
+set(gca,'ColorScale','log')
+
+%% plot optimum (ground truth by grid search)
+% ground truth grid search optimum
+[J_gt,I]=min(j_pt,[],'all');
+hold on;
+plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
+
 %% Setup the Gaussian Process (GP) Library
 addpath ./gpml/
 startup;
@@ -72,7 +105,7 @@ opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should 
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
 opt.grid_size = 20000;
 %opt.parallel_jobs = 3; % Run 3 jobs in parallel using the approach in (Snoek et al., 2012). Increases overhead of BO, so probably not needed for this simple function.
-opt.lt_const = 0.0;
+opt.lt_const = lt_const;
 %opt.optimize_ei = 1; % Uncomment this to optimize EI/EIC at each candidate
 %rather than optimize over a discrete grid. This will be slow but requires
 %less grid size.
@@ -86,40 +119,10 @@ opt.resume_trace=true;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed, sampleTinit);
+    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed, sampleTinit, objective_noise);
 else
-    fun = @(X) ObjFun(X, G); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
+    fun = @(X) ObjFun(X, G, objective_noise); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
-%% plot true J (grid)
-clf;
-Kp_range=Kp_max-Kp_min;
-resol=25;
-Kp_surf_resol=Kp_range/resol;
-Ki_range=Ki_max-Ki_min;
-Ki_surf_resol=Ki_range/resol;
-[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
-j_pt=zeros(size(kp_pt));
-c_pt=zeros(size(kp_pt));
-for i=1:size(kp_pt,1)
-    for j=1:size(kp_pt,2)
-        [l,c]=ObjFun([kp_pt(i,j),ki_pt(i,j)],G);
-        j_pt(i,j)=l;
-        c_pt(i,j)=c;
-    end
-end
-j_pt(c_pt>opt.lt_const)=NaN;
-surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-xlabel('Kp')
-ylabel('Ki')
-zlabel('J')
-set(gca,'zscale','log')
-set(gca,'ColorScale','log')
-
-%% plot optimum (ground truth by grid search)
-% ground truth grid search optimum
-[J_gt,I]=min(j_pt,[],'all');
-hold on;
-plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
 %% Start the optimization
 global N
@@ -140,6 +143,7 @@ for expr=1:1:N_expr
     G2_values=[];
     G2_post_mus=[];
     G2_post_sigma2s=[];
+    % create initial dataset per experiment
     if expr<N_expr
         RAND=RAND_all_expr(:,expr);
         Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
@@ -148,7 +152,7 @@ for expr=1:1:N_expr
         for i=1:N0
             C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
             CL=feedback(C*G, 1);
-            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G);
+            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G, objective_noise);
             if withSurrogate==true
                 CLU=feedback(C, G);
                 ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
@@ -223,15 +227,12 @@ saveas(gcf,figName)
 
 end
 
-function [objective, constraints] = ObjFun(X, G)
-
-%     todo move some lines outside with handler@: faster?
+function [objective, constraints] = ObjFun(X, G, objective_noise)
+% todo move some lines outside with handler@: faster?
 C=tf([X(1), X(1)*X(2)], [1, 0]);
 CL=feedback(C*G, 1);
-
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
-
 [y,t]=step(CL);
 reference=1;
 e=abs(y-reference);
@@ -253,26 +254,29 @@ end
 if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
-
-w=[2, 1, 1, 0.5];
-% w=[91.35, 0.34, 0.028, 0.0019];
-% w=[40.	0.10	0.01	0.0002];
-
-w=w./sum(w);
-objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
-objective=st;
-constraints=-1;
+w=[2, 1, 1, 0.5]; 
+w=w./sum(w); 
+objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4); 
+if objective_noise==true
+    noise = (objective*2/100)*randn(1,1);  % gives you 1000 samples
+    objective=objective+noise;
+end
+constraints=-1; 
+% if isnan(ov) || isinf(ov) || ov>1e3 ...
+%         || isnan(st) || isinf(st) || st>1e3 ...
+%         || isnan(Tr) || isinf(Tr) || Tr>1e3 ...
+%         || isnan(ITAE) || isinf(ITAE) || ITAE>1e3
+%     objective=1e3;
+% end
 end
 
-
-function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed, sampleTinit)
+function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed, sampleTinit, objective_noise)
 global N
 global idx
 global G2data
 global N_G2_activated_counter
 global N_pr
 global expr_G2rmse
-
 if N<N_perturbed
     N=N+1;
     G2=tfest(G2data, npG2);
@@ -280,51 +284,45 @@ if N<N_perturbed
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
-        objective=ObjFun(X, G2);
+        objective=ObjFun(X, G2, false);
         N_pr=N_pr+1;
     else
         % initially use G2
-        objective=ObjFun(X, G2);
+        objective=ObjFun(X, G2, false);
         N_G2_activated_counter=1;
         idx= 0;
         N_pr=0;
     end
-    t=0:1/100:3.3;
+    % uncomment to check identification
+    t=0:1/100:1.5;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
-    rmse_thresh=0.2;
-    %     if rmse2>rmse_thresh
     expr_G2rmse=[expr_G2rmse;rmse2];
-    %     end
 elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     N = N+1;
-
     %     G2_tmp=n4sid(G2data,npG2);
-    %     G2idtf=idtf(G2_tmp);    [a,b]=tfdata(G2idtf);
+    %     G2idtf=idtf(G2_tmp);    
+    %     [a,b]=tfdata(G2idtf);
     %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
-
     % uncomment to check identification 
+    %     figure(1)
+    %     step(G); hold on; step(G2,'r')
+    %     compare(G2data, G2)
     t=0:1/100:3.3;
     y = step(G,t);
     y2 = step(G2,t);
-    %     figure(1)
-    %     step(G); hold on; step(G2,'r')
     rmse2=sqrt(mean((y-y2).^2));
-    % %     close
-    %     figure(2);
-    %     compare(G2data, G2)
-    % %     close
-
+    expr_G2rmse=[expr_G2rmse;rmse2];
     % to repeat perturbed
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
-        objective=ObjFun(X, G2);
+        objective=ObjFun(X, G2, false);
         N_pr=N_pr+1;
     else
-        objective=ObjFun(X, G2);
+        objective=ObjFun(X, G2, false);
         N_pr=0;
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
@@ -334,25 +332,18 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
-    %     if rmse2>rmse_thresh
-    %         expr_G2rmse=0;
-    %     end
     expr_G2rmse=[expr_G2rmse;rmse2];
-
-
 else
     N = N+1;
     %     todo move some lines outside with handler@: faster?
-    objective=ObjFun(X, G);
+    objective=ObjFun(X, G, objective_noise);
     C=tf([X(1),X(1)*X(2)], [1, 0]);
     CL=feedback(C*G, 1);
     CLU=feedback(C, G);
     ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
     utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
-    %     figure()
-    %     plot(ytmp)
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    %     first condition to delete the last simulation after being used
+    % first condition to delete the last simulation after being used
     if N_G2_activated_counter==N_G2_activated && idx==5
         N_G2_activated_counter=N_G2_activated_counter+1;
         idx=0;
