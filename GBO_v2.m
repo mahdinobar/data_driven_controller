@@ -15,7 +15,7 @@ end
 withSurrogate=true;
 objective_noise=true;
 N0=1; %number of initial data
-N_expr=2;
+N_expr=5;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -310,7 +310,7 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     %     figure(1)
     %     step(G); hold on; step(G2,'r')
     %     compare(G2data, G2)
-    t=0:1/100:3.3;
+    t=0:1/100:1.5;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
@@ -328,7 +328,7 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
         N_G2_activated_counter=N_G2_activated_counter+1;
     end
     % uncomment to check identification
-    t=0:1/100:3.3;
+    t=0:1/100:1.5;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));

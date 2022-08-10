@@ -10,17 +10,18 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_3_5';
-dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-    '/'], idName, '/');
-idNameBO= 'demo_BO_3_5';
-dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-    '/'], idNameBO, '/');
+idName= 'demo_GBO_v2_0';
+dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+%     '/'], idName, '/');
+% idNameBO= 'demo_BO_3_5';
+% dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+%     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
-
-for expr=1:1
+for expr=1:5
 %     idName= 'demo_GBO_3_';
 %     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %         '/'], idName, num2str(expr), '/');
@@ -29,7 +30,7 @@ for expr=1:1
 %         '/'], idNameBO, num2str(expr), '/');
 %     load(append(dir,'trace_file.mat'),'Trace')
 %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file.mat','Trace')
-load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GBO_new_2/trace_file.mat','Trace')
+% load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GBO_new_2/trace_file.mat','Trace')
 
 % %   TODO:  manual correction
 %     if expr>4
@@ -41,28 +42,29 @@ load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GB
 %     a=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
+    load(append(dirBO,'trace_file.mat'),'Trace')
 
-%     TraceGBO(expr)=Trace;    
-    TraceGBO=Trace;
+    TraceGBO(expr)=Trace(expr);    
+%     TraceGBO=Trace;
 
     delete Trace
 
-%     load(append(dirBO,'trace_file.mat'),'Trace')
+    load(append(dirBO,'trace_file_BO.mat'),'Trace')
 %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
-load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
+% load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
 %     %   TODO:  manual correction
 %     b=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-%     TraceBO(expr)=Trace;
-    TraceBO=Trace;
+    TraceBO(expr)=Trace(expr);    
+%     TraceBO=Trace;
     delete Trace
 
 end
 
-% TODO: manual correction: delete
-TraceBO.values(1)=TraceBO.values(1)*4;
-TraceGBO.values(1)=TraceGBO.values(1)*4;
+% % TODO: manual correction: delete
+% TraceBO.values(1)=TraceBO.values(1)*4;
+% TraceGBO.values(1)=TraceGBO.values(1)*4;
 
 
 % todo automatize code
@@ -159,14 +161,16 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
 expr=expr+1;
 end
 
-idx_acceptable_values=logical((JminObservGBO(20,:)<2.).*(JminObservBO(25,:)<2.7));
-idx_acceptable_sigma_2=sum(JminObservGBO_post_sigma2s>10,1)==0;
-idx_acceptable=logical(idx_acceptable_values.*idx_acceptable_sigma_2);
-sum(idx_acceptable)
-meanJminObservGBO=JminObservGBO;%nanmean(JminObservGBO(:,idx_acceptable),2);
-meanJminObservBO=JminObservBO;%nanmean(JminObservBO(:,idx_acceptable),2);
-meanJminObservGBO_post_sigma2s=JminObservGBO_post_sigma2s;%nanmean(JminObservGBO_post_sigma2s(:,idx_acceptable),2);
-meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
+% idx_acceptable_values=logical((JminObservGBO(20,:)<2.).*(JminObservBO(25,:)<2.7));
+% idx_acceptable_sigma_2=sum(JminObservGBO_post_sigma2s>10,1)==0;
+% idx_acceptable=logical(idx_acceptable_values.*idx_acceptable_sigma_2);
+% sum(idx_acceptable)
+% meanJminObservGBO=JminObservGBO;%nanmean(JminObservGBO(:,idx_acceptable),2);
+% meanJminObservBO=JminObservBO;%nanmean(JminObservBO(:,idx_acceptable),2);
+% meanJminObservGBO_post_sigma2s=JminObservGBO_post_sigma2s;%nanmean(JminObservGBO_post_sigma2s(:,idx_acceptable),2);
+% meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
+meanJminObservGBO=nanmean(JminObservGBO(:,:),2);
+meanJminObservBO=nanmean(JminObservBO(:,:),2);
 
 % %%
 % % uncomment to find gains corrosponding to the mean cost per iteration over all experiments
@@ -245,7 +249,7 @@ h5=yline(2.78,'k--', 'LineWidth', 3);
 
 legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-ylim([0.95 10])
+% ylim([0.95 10])
 xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
@@ -260,171 +264,171 @@ grid minor
 % h9=errorbar(x, y, err, '-s','MarkerSize',10,'MarkerEdgeColor','red','MarkerFaceColor','red', 'LineStyle','none');
 
 
-fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
-fprintf('length(TraceBO)=%d \n',length(TraceBO))
-thr=1.4;
-[~,idx]=max(meanJminObservGBO./true_objective<thr);
-fprintf('idx_GBO=%d \n',idx)
-[~,idx]=max(meanJminObservBO./true_objective<thr);
-fprintf('idx_BO=%d \n',idx)
-
-
-% plot(p, '--p', 'LineWidth', 5)
-% plot(ci(1,:)+meanJminObservBO', '--k', 'LineWidth', 5)
-% plot(ax1, 1.2.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
-% plot(ax1, 1.4.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
-
-% addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Violinplot-Matlab-master/
-% fig=figure();
-% boxplot(x, 'PlotStyle','compact', 'OutlierSize', 2)
-% vs = violinplot(x,0.5:49.5);
-
-
-
-
-% group = [    .8:49.8;
-%          1.2:50.2];
-% 
-% boxplot(x,.8:49.8, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','r')
-% hold on
-% boxplot(y,1.2:50.2, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','b')
-% boxplot(x-y, 'PlotStyle','compact', 'OutlierSize', 2)
-% ylim([1 3])
-% set(gca,'yscale','log')
-
-% boxplot([x,y], 'Notch','on', 'Labels',{1:50,1:50}, 'PlotStyle','compact', 'OutlierSize', 2)
-% ylim([1 3])
-% set(gca,'yscale','log')
-
-xlabel(ax1, 'Iteration')
-ylabel(ax1, 'Cost')
-% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-set(ax1,'yscale','log')
-figName=append(dir, idName,'_1_experiments.png');
-saveas(gcf,figName)
-figName=append(dir, idName,'_0_experiments.fig');
-saveas(gcf,figName)
-
-% %%
-% fig=figure();
-% fig.Position=[200 0 1600 800];
-% ax1=axes;
-% ax1.FontSize=24;
-% ax1.FontName='Times New Roman';
-% hold on
-% % h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
-% % h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
-% % h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
-% x=(1:50);
-% h1=bar(x,[meanJminObservGBO,meanJminObservBO]);
-% % h2=bar(x2,meanJminObservBO, 'FaceColor', [0, 0, 1]);
+% fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
+% fprintf('length(TraceBO)=%d \n',length(TraceBO))
+% thr=1.4;
+% [~,idx]=max(meanJminObservGBO./true_objective<thr);
+% fprintf('idx_GBO=%d \n',idx)
+% [~,idx]=max(meanJminObservBO./true_objective<thr);
+% fprintf('idx_BO=%d \n',idx)
 % 
 % 
-% % h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
+% % plot(p, '--p', 'LineWidth', 5)
+% % plot(ci(1,:)+meanJminObservBO', '--k', 'LineWidth', 5)
+% % plot(ax1, 1.2.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
+% % plot(ax1, 1.4.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
 % 
-% legend([h1, h2],{'BO: Minimum Observedr Evaluation', 'BO: Minimum Observed Evaluation'}, 'Location', 'best');
-% grid on
-% % ylim(ax1, [1 3])
-% %xlim([0, 10])
+% % addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Violinplot-Matlab-master/
+% % fig=figure();
+% % boxplot(x, 'PlotStyle','compact', 'OutlierSize', 2)
+% % vs = violinplot(x,0.5:49.5);
+% 
+% 
+% 
+% 
+% % group = [    .8:49.8;
+% %          1.2:50.2];
+% % 
+% % boxplot(x,.8:49.8, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','r')
+% % hold on
+% % boxplot(y,1.2:50.2, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','b')
+% % boxplot(x-y, 'PlotStyle','compact', 'OutlierSize', 2)
+% % ylim([1 3])
+% % set(gca,'yscale','log')
+% 
+% % boxplot([x,y], 'Notch','on', 'Labels',{1:50,1:50}, 'PlotStyle','compact', 'OutlierSize', 2)
+% % ylim([1 3])
+% % set(gca,'yscale','log')
 % 
 % xlabel(ax1, 'Iteration')
 % ylabel(ax1, 'Cost')
 % % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
 % set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % set(ax1,'yscale','log')
-% figName=append(dir, idName,'_bars.png');
+% figName=append(dir, idName,'_1_experiments.png');
 % saveas(gcf,figName)
-% figName=append(dir, idName,'_bars.fig');
+% figName=append(dir, idName,'_0_experiments.fig');
 % saveas(gcf,figName)
-
-%% plot step response per various benchmark tunings
-% DC motor at FHNW lab
-num = [5.19908];
-den = [1, 1.61335];
-Td=2e-3;
-G = tf(num, den, 'InputDelay',Td);
-
-fig=figure();
-fig.Position=[200 0 1600 800];
-ax1=axes;
-ax1.FontSize=24;
-ax1.FontName='Times New Roman';
-hold on
-
-load(append(dir, 'exp_Data_37'))
-y_GBO=exp_Data(518:830,4);
-load(append(dirBO, 'exp_Data_10'))
-y_BO=exp_Data(354:666,4);
-load(append(dirBO, 'exp_Data_9'))
-y_nom=exp_Data(402:714,4);
-Tf=3.12;
-time=0:0.01:Tf;
-r=20*2*3.14*50/4/512; %pulse to rad/sec
-h1=plot(time, y_nom.*r, 'k', 'LineWidth', 3);
-h2=plot(time, y_BO.*r, 'b', 'LineWidth', 3);
-h3=plot(time, y_GBO.*r, 'r', 'LineWidth', 3);
-h4=yline(100.*r,'k--', 'LineWidth', 3);
-
-legend([h1, h2, h3, h4],{'Nominal PGM', 'BO', 'Guided BO', 'Reference Input'}, 'Location', 'southeast');
-grid on
-xlim(ax1, [0 1.8])
-ylim(ax1, [79.5 102].*r)
-yticks([245, 270, 290, 306])
-
-
-xlabel(ax1, 'Time(s)')
-ylabel(ax1, 'Speed(rad/s)')
-% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-set(gca,'yscale','log')
-figName=append(dir, idName,'_experiment_data_response.png');
-saveas(gcf,figName)
-figName=append(dir, idName,'_experiment_data_response.fig');
-saveas(gcf,figName)
-
-
-
-end
-
-
-
-function [objective, constraints] = ObjFun(X, G)
-
-%     todo move some lines outside with handler@: faster?
-C=tf([X(1), X(1)*X(2)], [1, 0]);
-CL=feedback(C*G, 1);
-
-ov=abs(stepinfo(CL).Overshoot);
-st=stepinfo(CL).SettlingTime;
-
-[y,t]=step(CL);
-reference=1;
-e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
-ITAE = trapz(t, t.*abs(e));
-
-if isnan(ov) || isinf(ov) || ov>1e3
-    ov=1e3;
-end
-
-if isnan(st) || isinf(st) || st>1e5
-    st=1e5;
-end
-
-if isnan(Tr) || isinf(Tr) || Tr>1e5
-    Tr=1e5;
-end
-
-if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-    ITAE=1e5;
-end
-
-w=[2, 1, 1, 0.5];
-% w=[91.35, 0.34, 0.028, 0.0019];
-% w=[40.	0.10	0.01	0.0002];
-
-w=w./sum(w);
-objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
-constraints=-1;
-end
+% 
+% % %%
+% % fig=figure();
+% % fig.Position=[200 0 1600 800];
+% % ax1=axes;
+% % ax1.FontSize=24;
+% % ax1.FontName='Times New Roman';
+% % hold on
+% % % h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', .5);
+% % % h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', .5);
+% % % h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+% % x=(1:50);
+% % h1=bar(x,[meanJminObservGBO,meanJminObservBO]);
+% % % h2=bar(x2,meanJminObservBO, 'FaceColor', [0, 0, 1]);
+% % 
+% % 
+% % % h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
+% % 
+% % legend([h1, h2],{'BO: Minimum Observedr Evaluation', 'BO: Minimum Observed Evaluation'}, 'Location', 'best');
+% % grid on
+% % % ylim(ax1, [1 3])
+% % %xlim([0, 10])
+% % 
+% % xlabel(ax1, 'Iteration')
+% % ylabel(ax1, 'Cost')
+% % % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+% % set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% % set(ax1,'yscale','log')
+% % figName=append(dir, idName,'_bars.png');
+% % saveas(gcf,figName)
+% % figName=append(dir, idName,'_bars.fig');
+% % saveas(gcf,figName)
+% 
+% %% plot step response per various benchmark tunings
+% % DC motor at FHNW lab
+% num = [5.19908];
+% den = [1, 1.61335];
+% Td=2e-3;
+% G = tf(num, den, 'InputDelay',Td);
+% 
+% fig=figure();
+% fig.Position=[200 0 1600 800];
+% ax1=axes;
+% ax1.FontSize=24;
+% ax1.FontName='Times New Roman';
+% hold on
+% 
+% load(append(dir, 'exp_Data_37'))
+% y_GBO=exp_Data(518:830,4);
+% load(append(dirBO, 'exp_Data_10'))
+% y_BO=exp_Data(354:666,4);
+% load(append(dirBO, 'exp_Data_9'))
+% y_nom=exp_Data(402:714,4);
+% Tf=3.12;
+% time=0:0.01:Tf;
+% r=20*2*3.14*50/4/512; %pulse to rad/sec
+% h1=plot(time, y_nom.*r, 'k', 'LineWidth', 3);
+% h2=plot(time, y_BO.*r, 'b', 'LineWidth', 3);
+% h3=plot(time, y_GBO.*r, 'r', 'LineWidth', 3);
+% h4=yline(100.*r,'k--', 'LineWidth', 3);
+% 
+% legend([h1, h2, h3, h4],{'Nominal PGM', 'BO', 'Guided BO', 'Reference Input'}, 'Location', 'southeast');
+% grid on
+% xlim(ax1, [0 1.8])
+% ylim(ax1, [79.5 102].*r)
+% yticks([245, 270, 290, 306])
+% 
+% 
+% xlabel(ax1, 'Time(s)')
+% ylabel(ax1, 'Speed(rad/s)')
+% % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+% set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% set(gca,'yscale','log')
+% figName=append(dir, idName,'_experiment_data_response.png');
+% saveas(gcf,figName)
+% figName=append(dir, idName,'_experiment_data_response.fig');
+% saveas(gcf,figName)
+% 
+% 
+% 
+% end
+% 
+% 
+% 
+% function [objective, constraints] = ObjFun(X, G)
+% 
+% %     todo move some lines outside with handler@: faster?
+% C=tf([X(1), X(1)*X(2)], [1, 0]);
+% CL=feedback(C*G, 1);
+% 
+% ov=abs(stepinfo(CL).Overshoot);
+% st=stepinfo(CL).SettlingTime;
+% 
+% [y,t]=step(CL);
+% reference=1;
+% e=abs(y-reference);
+% Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
+% ITAE = trapz(t, t.*abs(e));
+% 
+% if isnan(ov) || isinf(ov) || ov>1e3
+%     ov=1e3;
+% end
+% 
+% if isnan(st) || isinf(st) || st>1e5
+%     st=1e5;
+% end
+% 
+% if isnan(Tr) || isinf(Tr) || Tr>1e5
+%     Tr=1e5;
+% end
+% 
+% if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+%     ITAE=1e5;
+% end
+% 
+% w=[2, 1, 1, 0.5];
+% % w=[91.35, 0.34, 0.028, 0.0019];
+% % w=[40.	0.10	0.01	0.0002];
+% 
+% w=w./sum(w);
+% objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
+% constraints=-1;
+% end
