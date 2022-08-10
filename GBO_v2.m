@@ -13,7 +13,7 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
-objective_noise=false;
+objective_noise=true;
 N0=1; %number of initial data
 N_expr=2;
 N_iter=50;
