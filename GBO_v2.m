@@ -4,7 +4,7 @@ function GBO_v2
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v2_0';
+idName= 'demo_GBO_v2_0_2';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -13,7 +13,7 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
-objective_noise=true;
+objective_noise=false;
 N0=1; %number of initial data
 N_expr=5;
 N_iter=50;
@@ -176,6 +176,7 @@ for expr=1:1:N_expr
     clear botrace
     idx_G2=[];
     for itr=N0+1:N_iter
+        fprintf('>>>>>iteration: %d \n', itr);
         % todo check concept of max_iters?
         opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
         [ms,mv,Trace_tmp] = bayesoptGPML(fun,opt,N0);
@@ -238,7 +239,7 @@ reference=1;
 e=abs(y-reference);
 Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
 ITAE = trapz(t, t.*abs(e));
-
+[ov, st, Tr, ITAE]
 if isnan(ov) || isinf(ov) || ov>1e3
     ov=1e3;
 end
@@ -255,6 +256,7 @@ if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
     ITAE=1e5;
 end
 w=[2, 1, 1, 0.5]; 
+% w=[1, 0.12, 1, 0.5]; 
 w=w./sum(w); 
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4); 
 if objective_noise==true
@@ -284,17 +286,22 @@ if N<N_perturbed
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
+        fprintf('!!!!!!!!!!!!!!G2 is used!');
         objective=ObjFun(X, G2, false);
         N_pr=N_pr+1;
     else
+        fprintf('!!!!!!!!!!!!!!G2 is used!');
         % initially use G2
         objective=ObjFun(X, G2, false);
         N_G2_activated_counter=1;
         idx= 0;
         N_pr=0;
     end
-    % uncomment to check identification
-    t=0:1/100:1.5;
+%     % uncomment to check identification
+%     figure(2)
+%     step(G); hold on; step(G2,'r')
+%     %compare(G2data, G2)
+    t=0:3/100:3;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
@@ -306,11 +313,11 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     %     [a,b]=tfdata(G2idtf);
     %     G2=tf(a,b);
     G2=tfest(G2data, npG2);
-    % uncomment to check identification 
-    %     figure(1)
-    %     step(G); hold on; step(G2,'r')
-    %     compare(G2data, G2)
-    t=0:1/100:1.5;
+%     % uncomment to check identification 
+%     figure(2)
+%     step(G); hold on; step(G2,'r')
+%     %compare(G2data, G2)
+    t=0:3/100:3;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
@@ -319,16 +326,21 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     if N_pr<N_perturbed-1
         pert=rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
+        fprintf('!!!!!!!!!!!!!!G2 is used!');
         objective=ObjFun(X, G2, false);
         N_pr=N_pr+1;
     else
+        fprintf('!!!!!!!!!!!!!!G2 is used!');
         objective=ObjFun(X, G2, false);
         N_pr=0;
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
     end
-    % uncomment to check identification
-    t=0:1/100:1.5;
+%     % uncomment to check identification
+%     figure(2)
+%     step(G); hold on; step(G2,'r')
+%     %compare(G2data, G2)
+    t=0:3/100:3;
     y = step(G,t);
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
