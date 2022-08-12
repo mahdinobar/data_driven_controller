@@ -52,6 +52,7 @@ load(dir_gains)
 if initRant=="latin"
     % latin hypercube samples
     if withSurrogate==true
+        % load same samples used for BO
         load(append(dir,'RAND_ltn_all.mat'), 'RAND_all_expr')
     else
         % sample from latin (denoted as ltn) hypercube

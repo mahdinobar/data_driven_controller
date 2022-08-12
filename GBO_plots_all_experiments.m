@@ -11,7 +11,6 @@ clc;
 clear;
 % idName=z], idName, '/');
 idName= 'demo_GBO_v2_0_2';
-dir=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
@@ -258,6 +257,12 @@ xticks([1, 5:5:50])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
+
+figName=append(dirBO,'_experiments.png');
+saveas(gcf,figName)
+figName=append(dirBO,'_experiments.fig');
+saveas(gcf,figName)
+
 % x=1:50;
 % y=TraceGBO.post_mus(2:end);
 % err=TraceGBO.post_sigma2s(2:end);
