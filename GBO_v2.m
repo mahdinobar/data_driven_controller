@@ -4,7 +4,7 @@ function GBO_v2
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v2_0_2_2';
+idName= 'demo_GBO_v2_0_5';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -15,11 +15,11 @@ end
 withSurrogate=true;
 objective_noise=true;
 N0=1; %number of initial data
-N_expr=5;
+N_expr=3;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
-sampleTf=1.5; %based on the min and max settling time equal to 1.3 and 19 seconds inside the feasible set "KpKi_bounds_new_2.mat" we choose 1.5 for DC motor plant with speed sensor pole 9.918e-5
+sampleTf=2.5; %based on the min and max settling time equal to 1.3 and 19 seconds inside the feasible set "KpKi_bounds_new_2.mat" we choose 1.5 for DC motor plant with speed sensor pole 9.918e-5
 sampleTs=sampleTf/(Nsample-1);
 sampleTinit=0.0;
 lt_const=0.0;
@@ -27,7 +27,7 @@ initRant="latin"; %build initial set randomnly witith latin hypercubes
 N_perturbed=1; % number of perturbed plus one not perturbed surrogate
 if withSurrogate
     npG2=2;
-    N_G2_activated=5; %total number of times G2 is used
+    N_G2_activated=10; %total number of times G2 is used
     N_G = 5; %number of consecutive optimization on real plant before surrogate
     N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
@@ -148,30 +148,28 @@ for expr=1:1:N_expr
     G2_post_mus=[];
     G2_post_sigma2s=[];
     % create initial dataset per experiment
-    if expr<N_expr
-        RAND=RAND_all_expr(:,expr);
-        Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
-        Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
-        J_ltn = zeros(N0,1);
-        for i=1:N0
-            C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
-            CL=feedback(C*G, 1);
-            J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G, objective_noise);
-            if withSurrogate==true
-                CLU=feedback(C, G);
-                ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
-                utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
-                if objective_noise==true
-                    noise_y = (mean(ytmp)*2/100)*randn(length(ytmp),1);
-                    noise_u = (mean(utmp)*2/100)*randn(length(utmp),1);
-                    ytmp=ytmp+noise_y;
-                    utmp=utmp+noise_u;
-                end
-                if i==1
-                    G2data = iddata(ytmp,utmp,sampleTs);
-                else
-                    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-                end
+    RAND=RAND_all_expr(:,expr);
+    Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
+    Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
+    J_ltn = zeros(N0,1);
+    for i=1:N0
+        C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
+        CL=feedback(C*G, 1);
+        J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G, objective_noise);
+        if withSurrogate==true
+            CLU=feedback(C, G);
+            ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
+            utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
+            if objective_noise==true
+                noise_y = (mean(ytmp)*5/100)*randn(length(ytmp),1);
+                noise_u = (mean(utmp)*5/100)*randn(length(utmp),1);
+                ytmp=ytmp+noise_y;
+                utmp=utmp+noise_u;
+            end
+            if i==1
+                G2data = iddata(ytmp,utmp,sampleTs);
+            else
+                G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
             end
         end
     end
@@ -275,7 +273,7 @@ w=w_importance./w_mean_grid;
 w=w./sum(w); 
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4); 
 if objective_noise==true
-    noise = (objective*2/100)*randn(1,1);  % gives you 1000 samples
+    noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
     objective=objective+noise;
 end
 constraints=-1; 
@@ -369,8 +367,8 @@ else
     ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
     utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
     if objective_noise==true
-        noise_y = (mean(ytmp)*2/100)*randn(length(ytmp),1);  
-        noise_u = (mean(utmp)*2/100)*randn(length(utmp),1);
+        noise_y = (mean(ytmp)*5/100)*randn(length(ytmp),1);
+        noise_u = (mean(utmp)*5/100)*randn(length(utmp),1);
         ytmp=ytmp+noise_y;
         utmp=utmp+noise_u;
     end

@@ -609,11 +609,16 @@ end
 
 function ei = compute_ei(best,mu,sigma2)
 sigmas = sqrt(sigma2);
-beta=1; % increasing beta increases the exploration of EI
+beta=0; % increasing beta increases the exploration of EI
 u = (best + beta - mu) ./ sigmas;
 ucdf = normcdf(u);
 updf = normpdf(u);
 ei = sigmas .* (u .* ucdf + updf);
+
+function UCB = compute_UCB(mu,sigma2)
+sigmas = sqrt(sigma2);
+beta=1; % increasing beta increases the exploration of EI
+UCB = mu + beta.*sigmas;
 
 function UCB = compute_UCB(mu,sigma2)
 sigmas = sqrt(sigma2);

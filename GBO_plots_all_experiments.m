@@ -10,8 +10,10 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_v2_0_2_2';
+idName= 'demo_GBO_v2_0_5';
 dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_56/results_1/');
+
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
 % idNameBO= 'demo_BO_3_5';
@@ -20,7 +22,7 @@ dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
-for expr=1:5
+for expr=1:3
 %     idName= 'demo_GBO_3_';
 %     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %         '/'], idName, num2str(expr), '/');
@@ -112,7 +114,7 @@ end
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 1.;%0148;%4.1000;
+true_objective = 0.5449;%0148;%4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
@@ -247,7 +249,7 @@ legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average 
 % h5=yline(2.78,'k--', 'LineWidth', 3);
 % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-% ylim([0.95 10])
+ylim([1 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
