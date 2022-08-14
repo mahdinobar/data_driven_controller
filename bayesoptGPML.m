@@ -132,7 +132,7 @@ for i = i_start:opt.max_iters-2,
         % Pick first candidate
         [mu_obj,sigma2_obj] = get_posterior(samples,values,hyper_grid,opt,N0);
 
-        if ~DO_CBO,
+        if ~DO_CBO
             best = min(values);
             ei = compute_ei(best,mu_obj,sigma2_obj);
         else
@@ -141,7 +141,7 @@ for i = i_start:opt.max_iters-2,
             if isempty(best), best = max(values)+999; end
             ei = compute_ei(best,mu_obj,sigma2_obj);
             prFeas = ones(length(ei),1);
-            for k = 1:length(opt.lt_const),
+            for k = 1:length(opt.lt_const)
                 [mu_con,sigma2_con] = get_posterior(samples,con_values(:,k),hyper_grid,opt,N0);
                 prFeas = prFeas.*normcdf(repmat(opt.lt_const(k),length(mu_con),1),mu_con,sqrt(sigma2_con));
             end
@@ -609,11 +609,16 @@ end
 
 function ei = compute_ei(best,mu,sigma2)
 sigmas = sqrt(sigma2);
-u = (best - mu) ./ sigmas;
+beta=1; % increasing beta increases the exploration of EI
+u = (best + beta - mu) ./ sigmas;
 ucdf = normcdf(u);
 updf = normpdf(u);
 ei = sigmas .* (u .* ucdf + updf);
 
+function UCB = compute_UCB(mu,sigma2)
+sigmas = sqrt(sigma2);
+beta=1; % increasing beta increases the exploration of UCB
+UCB = mu + beta.*sigmas;
 
 % Returns the derivative of covSEard w.r.t. a single candidate z
 function [k] = covSEard_grad(hyp,x,z)
@@ -626,7 +631,7 @@ sq_der = (diag(-2./(ell.^2))*(bsxfun(@minus,x,z))')';
 k = -0.5*bsxfun(@times,k,sq_der);
 
 function upt = unscale_point(x,mins,maxes)
-if size(x,1) == 1,
+if size(x,1) == 1
     upt = x .* (maxes - mins) + mins;
 else
     upt = bsxfun(@plus,bsxfun(@times,x,(maxes-mins)),mins);

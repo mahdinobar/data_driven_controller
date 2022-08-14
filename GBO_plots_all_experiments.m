@@ -10,7 +10,7 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_v2_0_2';
+idName= 'demo_GBO_v2_0_2_2';
 dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
@@ -243,10 +243,9 @@ h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .7], 'Li
 h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
-
-h5=yline(2.78,'k--', 'LineWidth', 3);
-
-legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
+legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
+% h5=yline(2.78,'k--', 'LineWidth', 3);
+% legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
 % ylim([0.95 10])
 xlim([1, 50])
