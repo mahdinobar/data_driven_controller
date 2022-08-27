@@ -10,9 +10,9 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_v2_0_5';
-dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
-% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_56/results_1/');
+% idName= 'demo_GBO_v2_0_6';
+% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_58/results_1/');
 
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
@@ -22,7 +22,7 @@ dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/
 N0=1; %number of initial data
 N_iter=50;
 N_iter=N_iter+N0;
-for expr=1:3
+for expr=1:100
 %     idName= 'demo_GBO_3_';
 %     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %         '/'], idName, num2str(expr), '/');

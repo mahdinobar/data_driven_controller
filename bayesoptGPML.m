@@ -353,6 +353,7 @@ end
 %         given posterior mu and sigma on grid_set points, compute EI taken
 %         best sample (at the sampled point(among N0 data or taken by acquisition function) with minimum value(cost))
 ei = compute_ei(best,mu,sigma2);
+% ei = compute_UCB(mu,sigma2);
 
 hyps = {};
 ys = {};
@@ -614,11 +615,6 @@ u = (best + beta - mu) ./ sigmas;
 ucdf = normcdf(u);
 updf = normpdf(u);
 ei = sigmas .* (u .* ucdf + updf);
-
-function UCB = compute_UCB(mu,sigma2)
-sigmas = sqrt(sigma2);
-beta=1; % increasing beta increases the exploration of EI
-UCB = mu + beta.*sigmas;
 
 function UCB = compute_UCB(mu,sigma2)
 sigmas = sqrt(sigma2);

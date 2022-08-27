@@ -4,7 +4,7 @@ function GBO_v2
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v2_0_5';
+idName= 'demo_GBO_v2_0_6';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -27,7 +27,7 @@ initRant="latin"; %build initial set randomnly witith latin hypercubes
 N_perturbed=1; % number of perturbed plus one not perturbed surrogate
 if withSurrogate
     npG2=2;
-    N_G2_activated=10; %total number of times G2 is used
+    N_G2_activated=5; %total number of times G2 is used
     N_G = 5; %number of consecutive optimization on real plant before surrogate
     N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
     N_iter=N_iter+N_extra;
