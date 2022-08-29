@@ -1,5 +1,5 @@
 function [minsample,minvalue,botrace] = bayesoptGPML(F,opt, N0)
-% ms - Best parameter setting found
+% ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
 warning('off')
@@ -443,6 +443,7 @@ hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 %     hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 % end
 %     x_hats are test inputs given to gp to predict
+% (gp function provides mus and sigma2s of the fitted GP to X, y data evaluated at x_hats)
 [mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
 
 function zstar = optimize_ei(z,X,y,best,hyp,opt)
@@ -618,7 +619,7 @@ ei = sigmas .* (u .* ucdf + updf);
 
 function UCB = compute_UCB(mu,sigma2)
 sigmas = sqrt(sigma2);
-beta=1; % increasing beta increases the exploration of UCB
+beta=10; % increasing beta increases the exploration of UCB
 UCB = mu + beta.*sigmas;
 
 % Returns the derivative of covSEard w.r.t. a single candidate z

@@ -1,10 +1,10 @@
 % GPML toolbox based implementation
-% version 2
-function GBO_v2
+% version 3
+function GBO_v3
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v2_0_14';
+idName= 'demo_GBO_v2_0_15';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -13,9 +13,9 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
-objective_noise=true;
+objective_noise=false;
 N0=1; %number of initial data
-N_expr=3;
+N_expr=2;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -135,6 +135,7 @@ global G2data
 global N_G2_activated_counter
 global N_pr
 global expr_G2rmse
+global idx_G2
 G2rmse=[];
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
@@ -183,22 +184,18 @@ for expr=1:1:N_expr
     opt.resume_trace_data = botrace;
     clear botrace
     idx_G2=[];
-    for itr=N0+1:N_iter
-        fprintf('>>iteration: %d \n', itr);
+%     for itr=N0+1:N_iter
+%         fprintf('>>iteration: %d \n', itr);
         % todo check concept of max_iters?
-        opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
+        opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
         [ms,mv,Trace_tmp] = bayesoptGPML(fun,opt,N0); 
-        if withSurrogate==true && N>N_perturbed && idx==0
-            for i=1:1:N_perturbed 
-                G2_samples=[G2_samples; Trace_tmp.samples(end-N_G-i,:)];
-                G2_values=[G2_values; Trace_tmp.values(end-N_G-i,:)];
-                G2_post_mus=[G2_post_mus; Trace_tmp.post_mus(end-N_G-i,:)];
-                G2_post_sigma2s=[G2_post_sigma2s; Trace_tmp.post_sigma2s(end-N_G-i,:)];
-                idx_G2= [idx_G2;size(Trace_tmp.samples,1)-N_G-i];
-            end
-        end
-        opt.resume_trace_data = Trace_tmp;
-    end
+
+%         opt.resume_trace_data = Trace_tmp;
+%     end
+    G2_samples=Trace_tmp.samples(idx_G2,:);
+    G2_values=Trace_tmp.values(idx_G2);
+    G2_post_mus=Trace_tmp.post_mus(idx_G2);
+    G2_post_sigma2s=Trace_tmp.post_sigma2s(idx_G2);
     % keep surrogate model data seperately for plots
     Trace_tmp.G2_samples=G2_samples;
     Trace_tmp.G2_values=G2_values;
@@ -292,6 +289,7 @@ global G2data
 global N_G2_activated_counter
 global N_pr
 global expr_G2rmse
+global idx_G2
 if N<N_perturbed
     N=N+1;
     G2=tfest(G2data, npG2);
@@ -381,7 +379,14 @@ else
         idx= idx +1;
     end
 end
+if N>N_perturbed && idx==0
+    for i=1:1:N_perturbed
+
+        idx_G2= [idx_G2;N+1-N_G-i];
+    end
 end
+end
+
 
 function nh = num_hypers(func,opt)
 str = func(1);
