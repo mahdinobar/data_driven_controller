@@ -10,9 +10,10 @@ close all;
 clc;
 clear;
 % idName=z], idName, '/');
-idName= 'demo_GBO_v2_0_12';
-dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
-% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_58/results_1/');
+% idName= 'demo_GBO_v2_0_16';
+% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
+dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/');
+dirBO63=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_63/results_1/');
 
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
@@ -21,7 +22,7 @@ dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=3;
+N_expr=100;
 N_iter=N_iter+N0;
 for expr=1:N_expr
 %     idName= 'demo_GBO_3_';
@@ -45,12 +46,13 @@ for expr=1:N_expr
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
     load(append(dirBO,'trace_file.mat'),'Trace')
-
     TraceGBO(expr)=Trace(expr);    
 %     TraceGBO=Trace;
-
     delete Trace
-
+    load(append(dirBO63,'trace_file.mat'),'Trace')
+    TraceGBO63(expr)=Trace(expr);    
+%     TraceGBO=Trace;
+    delete Trace
     load(append(dirBO,'trace_file_BO.mat'),'Trace')
 %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
 % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
@@ -124,6 +126,7 @@ expr=1;
 while expr<min([length(TraceGBO),length(TraceBO)])+1
 %     try    
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
+    JminObservGBO63(:,expr)=TraceGBO63(expr).values(N0+1:N_iter);
     JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     JminObservBO_samples(:,expr,:)=TraceBO(expr).samples(N0+1:N_iter,:);
@@ -149,6 +152,7 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
         else
             [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
+            [JminObservGBO63(j-N0,expr), NDX_GBO]=nanmin(TraceGBO63(expr).values(1:j));
             JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
             JminObservGBO_post_sigma2s(j-N0,expr,:)=TraceGBO(expr).post_sigma2s(NDX_GBO,:);
             [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
@@ -173,6 +177,8 @@ end
 % meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
 meanJminObservGBO=nanmean(JminObservGBO(:,:),2);
 meanJminObservBO=nanmean(JminObservBO(:,:),2);
+meanJminObservGBO63=nanmean(JminObservGBO63(:,:),2);
+
 
 % %%
 % % uncomment to find gains corrosponding to the mean cost per iteration over all experiments
@@ -242,11 +248,14 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
+h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
-legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
+h5=semilogy(ax1, JminObservGBO63/true_objective, ':', 'Color', [0, 1, 0, .5], 'LineWidth', 1.5);
+h6=semilogy(ax1, meanJminObservGBO63./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 5);
+legend([h3, h6, h4],{'Guided BO: experiment 69', 'Guided BO: experiment 63', 'BO'}, 'Location', 'northeast');
+% legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
 % h5=yline(2.78,'k--', 'LineWidth', 3);
 % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
