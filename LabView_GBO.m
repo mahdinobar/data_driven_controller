@@ -23,7 +23,8 @@ N0=1; %for N0>1 modify
 N_iter=50;
 N_extra=10;
 N_iter=N_iter+N_extra+N0;
-N_G=5;%N_G=5!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+N_G=1;%N_G=5 number of iteration we use real plant before switching to surrogate G2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+N_G2_activated=15;
 npG2=2;
 
 sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -116,7 +117,7 @@ addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_contro
 
 %     LVswitch==0 means we need to call the system to get data
 if LVswitch==0
-    if idx==N_G
+    if idx==N_G && N_G2_activated_counter<N_G2_activated
         if counter>1
             load(append(dir, 'G2data.mat'))
         end
@@ -136,6 +137,7 @@ if LVswitch==0
         [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, [ov, Tr, st, ITAE, 0], hyper_grid);
         LVswitch=0;
         idx= 0;
+        N_G2_activated_counter=N_G2_activated_counter+1;
         if counter>1
             % remove previous G2
             idx_G2= size(Trace_tmp.samples,1)-N_G-1;
