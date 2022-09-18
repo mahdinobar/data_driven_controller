@@ -1,10 +1,11 @@
+%  build initial N0 dataset
 idx=0;
 LV_switch=0;
 % build and save initial dataset
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_new_1\";
+dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -19,13 +20,16 @@ gains0=[0.5, 1.47]; %initial random
 Kp=gains0(1);
 Ki=gains0(2);
 
-sampleTf=6;
-sampleTs=0.01;
-Nsample=sampleTf/sampleTs;
+% sampleTf=6;
+% sampleTs=0.01;
+% Nsample=sampleTf/sampleTs;
+sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Nsample=150;
+sampleTs=sampleTf/(Nsample-1);
 
 step_low=80;
 step_high=120;
-step_time=6;
+step_time=5;
 nr_repeats=4; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;

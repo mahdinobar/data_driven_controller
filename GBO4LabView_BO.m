@@ -3,7 +3,7 @@ idx=0;
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_0\";
+dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
 tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
 idName= 'demo_BO_0';
 dir=append(tmp_dir,'/', idName, '/');
@@ -21,7 +21,7 @@ N_iter=N_iter+N0;
 
 step_low=80;
 step_high=120;
-step_time=4;
+step_time=5;
 nr_repeats=2;
 control_mode=1;
 Input_mode=2;
