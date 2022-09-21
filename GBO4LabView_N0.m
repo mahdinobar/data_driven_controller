@@ -5,7 +5,7 @@ LV_switch=0;
 % build and save initial dataset
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
+addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 dir=append("C:\Users\nobar\Documents\LabVIEW Data\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
