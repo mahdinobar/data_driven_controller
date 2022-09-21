@@ -12,7 +12,7 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-withSurrogate=true;
+withSurrogate=false;
 objective_noise=true;
 N0=1; %number of initial data
 N_expr=2;
@@ -43,9 +43,8 @@ Td=2e-3;
 G = tf(num, den, 'InputDelay',Td);
 
 %% load gain limits (feasible set)
-if sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_new_2.mat');
-end
+dir_gains=append('C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+
 load(dir_gains)
 
 %% build initial dataset (N0)
@@ -95,7 +94,7 @@ set(gca,'ColorScale','log')
 
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
-[J_gt,I]=min(j_pt,[],'all');
+[J_gt,I]=min(j_pt,[],'all')
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
@@ -259,7 +258,7 @@ end
 % data_tmp=[data_tmp;[ov, st, Tr, ITAE]];
 % w=[2, 1, 1, 0.5];
 % w=[1, 0.12, 1, 0.5];
-w_mean_grid=[10.5360, 3.8150, 0.6119, 1.1596];
+w_mean_grid=[0.2097, 2.6459, 0.4352, 30.9839];%[10.5360, 3.8150, 0.6119, 1.1596];
 w_importance=[2, 1, 1, 1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);

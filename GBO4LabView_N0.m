@@ -1,3 +1,4 @@
+
 %  build initial N0 dataset
 idx=0;
 LV_switch=0;
@@ -5,7 +6,7 @@ LV_switch=0;
 global G2data
 addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
+dir=append("C:\Users\nobar\Documents\LabVIEW Data\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -14,7 +15,7 @@ stat_value=60;
 
 N0=1; %for N0>1 modify
 % gains0=[0.5, 1.47]; %initial random 
-gains0=[0.5349, 1.0692]; %initial random 
+% gains0=[0.5349, 1.0692]; %initial random 
 % gains0=[0.3349, 1.5692]; %initial random 
 % gains0=[0.4873, 1.5970]; %nominal for PM 90degree and GM=49db
 Kp=gains0(1);
@@ -38,9 +39,9 @@ gain_angle=0;
 Tn_Angle=0;
 
 if counter<1
-    gains0=[0.5, 1.47]; %initial random
-    Kp=gains0(1);
-    Ki=gains0(2);
+    gains0_init=[0.5, 1.47]; %initial random
+    Kp=gains0_init(1);
+    Ki=gains0_init(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
     step_low=40;
@@ -77,4 +78,9 @@ if counter==N0+1
     save(append(dir, 'exp_Data'), 'exp_Data');
 end
 counter=counter+1;
+if counter>N0+1
+    expr=expr+1;
+    counter=0;
+    gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
+end
 return
