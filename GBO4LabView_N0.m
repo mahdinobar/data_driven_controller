@@ -13,19 +13,19 @@ start_switch=1;
 stat_value=60;
 
 N0=1; %for N0>1 modify
-gains0=[0.5, 1.47]; %initial random 
-% gains0=[0.5349, 4.0692]; %initial random 
+% gains0=[0.5, 1.47]; %initial random 
+gains0=[0.5349, 1.0692]; %initial random 
 % gains0=[0.3349, 1.5692]; %initial random 
 % gains0=[0.4873, 1.5970]; %nominal for PM 90degree and GM=49db
 Kp=gains0(1);
 Ki=gains0(2);
 
-% sampleTf=6;
-% sampleTs=0.01;
-% Nsample=sampleTf/sampleTs;
-sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Nsample=150;
-sampleTs=sampleTf/(Nsample-1);
+sampleTf=2.5;
+sampleTs=0.01;
+Nsample=sampleTf/sampleTs;
+% sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% Nsample=150;
+% sampleTs=sampleTf/(Nsample-1);
 
 step_low=80;
 step_high=120;

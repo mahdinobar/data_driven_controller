@@ -5,7 +5,7 @@ addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\tfest.m")
 addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\")
 dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
 tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
-idName= 'demo_GBO_new_1';
+idName= 'demo_GBO_1';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
     mkdir(dir)
@@ -28,10 +28,10 @@ N_G2_activated=15;
 npG2=2;
 
 sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% sampleTs=0.01;
-% Nsample=sampleTf/sampleTs;
-Nsample=150;
-sampleTs=sampleTf/(Nsample-1);
+sampleTs=0.01;
+Nsample=sampleTf/sampleTs;
+% Nsample=150;
+% sampleTs=sampleTf/(Nsample-1);
 
 step_low=80;
 step_high=120;

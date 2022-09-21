@@ -5,7 +5,7 @@ addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
 dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
 tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
-idName= 'demo_BO_0';
+idName= 'demo_BO_1';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
     mkdir(dir)
@@ -78,7 +78,7 @@ if counter<1
     counter=counter+1;
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
-    hyper_grid_pruned = sobol(1:opt.grid_size,:);
+    hyper_grid = sobol(1:opt.grid_size,:);
     return
 end
 

@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace, hyper_grid] = bayesoptGPML(F,opt, N0, LVswitch, perf_Data, hyper_grid)
+function [minsample,minvalue,botrace, LVgains, hyper_grid] = bayesoptGPML(F,opt, N0, LVswitch, perf_Data, hyper_grid)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
