@@ -1,12 +1,13 @@
-
+hyper_grid_pruned=zeros(2,2);
+N_G2_activated_counter=0;
 %  build initial N0 dataset
 idx=0;
 LV_switch=0;
 % build and save initial dataset
 global G2data
-addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
+addpath("C:\mahdi\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
-dir=append("C:\Users\nobar\Documents\LabVIEW Data\N0_Data_",string(expr),"\");
+dir=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
 end
