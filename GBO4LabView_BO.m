@@ -1,12 +1,12 @@
 idx=0;
+N_G2_activated_counter=0;
 % BO
 global G2data
-addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
-tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
-idName= 'demo_BO_1';
-dir=append(tmp_dir,'/', idName, '/');
+addpath("C:\mahdi\LabVIEW Data\functions")
+addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
+dir0=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
+tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
+dir=append(tmp_dir,'\demo_BO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -30,7 +30,7 @@ gain_angle=0;
 Tn_Angle=0;
 
 %% load gain limits
-dir_gains=append('C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
 
 %% We define the function we would like to optimize
@@ -41,7 +41,7 @@ else
 end
 
 %% Setup the Gaussian Process (GP) Library
-addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
+addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
 startup;
 % Setting parameters for Bayesian Global Optimization
 opt.hyp = -1; % Set hyperparameters using MLE.
@@ -64,10 +64,10 @@ infer=@infExact;
 
 %% to initialize first the response
 if counter<1
-    gains0=[0.5, 1.47]; %initial random
+    gains0_init=[0.5, 1.47]; %initial random
     % gains0=[0.4873, 1.5970]; %nominal for PM 90degree and GM=49db
-    Kp=gains0(1);
-    Ki=gains0(2);
+    Kp=gains0_init(1);
+    Ki=gains0_init(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
     step_low=40;
@@ -78,7 +78,7 @@ if counter<1
     counter=counter+1;
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
-    hyper_grid = sobol(1:opt.grid_size,:);
+    hyper_grid_pruned = sobol(1:opt.grid_size,:);
     return
 end
 
@@ -99,7 +99,7 @@ elseif counter>1
 end
 
 opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main")
+addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main")
 [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, perf_Data, hyper_grid);
 if counter==1 && LVswitch==1
     save(append(dir, 'test_trace_file.mat'),'Trace_tmp')
@@ -107,8 +107,8 @@ if counter==1 && LVswitch==1
 end
 %     LVswitch==0 means we need to call the system to get data
 if LVswitch==0
-    Kp=0.5;%LVgains(1);
-    Ki=1.47;%LVgains(2);
+    Kp=LVgains(1);
+    Ki=LVgains(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
     LVswitch=LVswitch+1;
@@ -121,6 +121,13 @@ save(append(dir, 'trace_file.mat'),'Trace')
 save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
 save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
 counter=counter+1;
+
+N_iterations=2;
+if counter>N0+N_iterations
+    expr=expr+1;
+    counter=0;
+    LVswitch=0;
+end
 
 return
 
