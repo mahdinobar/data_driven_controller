@@ -23,7 +23,7 @@ Kp=gains0(1);
 Ki=gains0(2);
 
 sampleTf=2.5;
-sampleTs=0.01;
+sampleTs=0.02;
 Nsample=sampleTf/sampleTs;
 % sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % Nsample=150;
@@ -82,6 +82,11 @@ counter=counter+1;
 if counter>N0+1
     expr=expr+1;
     counter=0;
+    dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+    load(dir_gains)
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
 end
 return
+%%%%%%%%%%%%%%%%%%%%%
+mkdir("C:\mahdi\LabVIEW Data\TEST000\")
+%%%%%%%%%%%%%%%%%%%%%
