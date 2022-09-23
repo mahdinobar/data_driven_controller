@@ -1,12 +1,11 @@
 % GBO
-addpath("C:\Users\nobar\Documents\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\@iddata\iddata.m
-addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\tfest.m")
-addpath("C:\Program Files\MATLAB\R2021b\toolbox\ident\ident\")
-dir0="C:\Users\nobar\Documents\LabVIEW Data\N0_Data_1\";
-tmp_dir="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\";
-idName= 'demo_GBO_1';
-dir=append(tmp_dir,'/', idName, '/');
+addpath("C:\mahdi\LabVIEW Data\functions")
+addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
+addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
+addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
+dir0=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
+tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
+dir=append(tmp_dir,'\demo_GBO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -44,14 +43,14 @@ gain_angle=0;
 Tn_Angle=0;
 
 %% load gain limits
-dir_gains=append('C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
 
 %% We define the function we would like to optimize
 fun = @(perf_Data) ObjFun(perf_Data); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 
 %% Setup the Gaussian Process (GP) Library
-addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
+addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
 startup;
 % Setting parameters for Bayesian Global Optimization
 opt.hyp = -1; % Set hyperparameters using MLE.
@@ -74,9 +73,9 @@ infer=@infExact;
 
 %% to initialize first the response
 if counter<1
-    gains0=[0.5, 1.47]; %initial random
-    Kp=gains0(1);
-    Ki=gains0(2);
+    gains0_init=[0.5, 1.47]; %initial random
+    Kp=gains0_init(1);
+    Ki=gains0_init(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
     step_low=40;
@@ -110,7 +109,7 @@ elseif counter>1
 end
 
 opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-addpath("C:\Users\nobar\Documents\data_driven_controller-main\data_driven_controller-main")
+addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main")
 
 % perf_Data is only needed when LVswitch==1
 [ms,mv,Trace_tmp, LVgains,hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)),hyper_grid);
@@ -177,12 +176,20 @@ save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
 save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
 counter=counter+1;
 
+N_iterations=2;
+if counter>N0+N_iterations
+    expr=expr+1;
+    counter=0;
+    LVswitch=0;
+    N_G2_activated_counter=0;
+    idx=N_G;
+end
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-gains0=[0.0950, 3.3293];
-Kp=gains0(1);
-Ki=gains0(2);
+gains0_init=[0.0950, 3.3293];
+Kp=gains0_init(1);
+Ki=gains0_init(2);
 gain_vel=Kp;
 Tn_vel=1/Ki;
 step_low=39;
