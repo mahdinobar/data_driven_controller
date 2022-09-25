@@ -176,7 +176,7 @@ save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
 save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
 counter=counter+1;
 
-N_iterations=2;
+N_iterations=65;
 if counter>N0+N_iterations
     expr=expr+1;
     counter=0;

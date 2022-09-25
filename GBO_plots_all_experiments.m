@@ -3,21 +3,24 @@ close all;
 clc;
 clear;
 
-dirBO="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\demo_BO_1\";
-dirGBO="C:\Users\nobar\Documents\LabVIEW Data\BO_Data\demo_GBO_1\";
+dirBO="C:\mahdi\LabVIEW Data\BO_Data\demo_BO_1\";
+dirGBO="C:\mahdi\LabVIEW Data\BO_Data\demo_GBO_1\";
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=1;
+N_expr=11;
 N_iter=N_iter+N0;
 for expr=1:N_expr
-
+    tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
+    dirGBO=append(tmp_dir,'\demo_GBO_', string(expr), '\');
     load(append(dirGBO,'trace_file.mat'),'Trace')
-    TraceGBO(expr)=Trace(expr);    
+    TraceGBO(expr)=Trace(1);    
     delete Trace
-
+    
+    tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
+    dirBO=append(tmp_dir,'\demo_BO_', string(expr), '\');
     load(append(dirBO,'trace_file.mat'),'Trace')
-    TraceBO(expr)=Trace(expr);    
+    TraceBO(expr)=Trace(1);    
     delete Trace
 
 end
