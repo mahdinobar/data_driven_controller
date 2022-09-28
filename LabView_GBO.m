@@ -41,7 +41,9 @@ Input_mode=2;
 
 gain_angle=0;
 Tn_Angle=0;
-
+% %%%%%%%%%%%%%%%%%%%%%
+% mkdir(append("C:\mahdi\LabVIEW Data\TEST000_", string(expr)));
+% %%%%%%%%%%%%%%%%%%%%%
 %% load gain limits
 dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
@@ -139,12 +141,9 @@ if LVswitch==0
         N_G2_activated_counter=N_G2_activated_counter+1;
         if counter>1
             % remove previous G2
-            idx_G2= size(Trace_tmp.samples,1)-N_G-1;
-            Trace_tmp.samples(idx_G2,:)=[];
-            Trace_tmp.values(idx_G2)=[];
-            Trace_tmp.post_mus(idx_G2)=[];
-            Trace_tmp.post_sigma2s(idx_G2)=[];
-            Trace_tmp.times(idx_G2)=[];
+            idx_G2_last= size(Trace_tmp.samples,1)-N_G-1;
+            idx_G2=[idx_G2;idx_G2_last];
+            save(append(dir, 'idx_G2_test_',num2str(counter),num2str(expr)),'idx_G2')
         end
         save(append(dir, 'G2_',num2str(counter)), 'G2')
     else
@@ -172,18 +171,29 @@ end
 
 Trace(1)=Trace_tmp;
 save(append(dir, 'trace_file.mat'),'Trace')
-save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
-save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
+save(append(dir, 'perf_Data_',num2str(counter),num2str(expr)), 'perf_Data')
+save(append(dir, 'exp_Data_',num2str(counter),num2str(expr)), 'exp_Data')
 counter=counter+1;
 
-N_iterations=65;
+N_iterations=3;
 if counter>N0+N_iterations
     expr=expr+1;
     counter=0;
     LVswitch=0;
     N_G2_activated_counter=0;
     idx=N_G;
+    
+    idx_G2=idx_G2(2:end);
+    Trace_tmp.samples(idx_G2,:)=[];
+    Trace_tmp.values(idx_G2)=[];
+    Trace_tmp.post_mus(idx_G2)=[];
+    Trace_tmp.post_sigma2s(idx_G2)=[];
+    Trace_tmp.times(idx_G2)=[];
+    Trace(1)=Trace_tmp;
+    save(append(dir, 'trace_file_removed.mat'),'Trace')
+    save(append(dir, 'idx_G2.mat'),'idx_G2')
 end
+
 return
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

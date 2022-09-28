@@ -23,7 +23,7 @@ Kp=gains0(1);
 Ki=gains0(2);
 
 sampleTf=2.5;
-sampleTs=0.02;
+sampleTs=0.01;
 Nsample=sampleTf/sampleTs;
 % sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % Nsample=150;
