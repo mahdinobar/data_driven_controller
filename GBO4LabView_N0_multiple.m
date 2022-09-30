@@ -115,7 +115,6 @@ counter=counter+1;
 if counter>N0+1
     expr=expr+1;
     counter=0;
-    gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
 end
 return
 %%%%%%%%%%%%%%%%%%%%%
