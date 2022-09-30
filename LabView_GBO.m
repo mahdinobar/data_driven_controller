@@ -1,4 +1,5 @@
 % GBO
+idx_G2=idx_G2;
 addpath("C:\mahdi\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
