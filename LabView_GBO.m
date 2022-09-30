@@ -190,7 +190,7 @@ if counter>N0+N_iterations
     Trace_tmp.post_sigma2s(idx_G2)=[];
     Trace_tmp.times(idx_G2)=[];
     Trace(1)=Trace_tmp;
-    save(append(dir, 'trace_file_removed.mat'),'Trace')
+    save(append(dir, 'trace_file_removed_2.mat'),'Trace')
     save(append(dir, 'idx_G2.mat'),'idx_G2')
 end
 
