@@ -12,8 +12,9 @@ clear;
 % idName=z], idName, '/');
 % idName= 'demo_GBO_v2_0_16';
 % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
-dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/');
-dirBO63=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_63/results_1/');
+% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/');
+% dirBO63=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_63/results_1/');
+
 
 % dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idName, '/');
@@ -22,9 +23,10 @@ dirBO63=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=100;
+N_expr=27;
 N_iter=N_iter+N0;
 for expr=1:N_expr
+
 %     idName= 'demo_GBO_3_';
 %     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %         '/'], idName, num2str(expr), '/');
@@ -45,26 +47,30 @@ for expr=1:N_expr
 %     a=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
+    tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
+    dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
+    dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
+
+    load(append(dirGBO,'trace_file.mat'),'Trace')
+    TraceGBO(expr)=Trace(1);    
+%     TraceGBO=Trace;
+    delete Trace
     load(append(dirBO,'trace_file.mat'),'Trace')
-    TraceGBO(expr)=Trace(expr);    
-%     TraceGBO=Trace;
-    delete Trace
-    load(append(dirBO63,'trace_file.mat'),'Trace')
-    TraceGBO63(expr)=Trace(expr);    
-%     TraceGBO=Trace;
-    delete Trace
-    load(append(dirBO,'trace_file_BO.mat'),'Trace')
 %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
 % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
 %     %   TODO:  manual correction
 %     b=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-    TraceBO(expr)=Trace(expr);    
+    TraceBO(expr)=Trace(1);    
 %     TraceBO=Trace;
     delete Trace
 
 end
+
+%  todo remove experiment 12 because of failure
+TraceBO(12)=[];
+TraceGBO(12)=[];
 
 % % TODO: manual correction: delete
 % TraceBO.values(1)=TraceBO.values(1)*4;
@@ -117,7 +123,7 @@ end
 
 % true_objective DC motor numeric
 % true_objective=3.1672;
-true_objective = 0.5449;%0148;%4.1000;
+true_objective = 1; %0.5449;%0148;%4.1000;
 % ms_true=[0.6119, 1.6642];
 % true_objective=65.9974;
 % true_objective=17.8676;
@@ -126,7 +132,6 @@ expr=1;
 while expr<min([length(TraceGBO),length(TraceBO)])+1
 %     try    
     JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
-    JminObservGBO63(:,expr)=TraceGBO63(expr).values(N0+1:N_iter);
     JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);
     JminObservBO(:,expr)=TraceBO(expr).values(N0+1:N_iter);
     JminObservBO_samples(:,expr,:)=TraceBO(expr).samples(N0+1:N_iter,:);
@@ -152,7 +157,6 @@ while expr<min([length(TraceGBO),length(TraceBO)])+1
             JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
         else
             [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
-            [JminObservGBO63(j-N0,expr), NDX_GBO]=nanmin(TraceGBO63(expr).values(1:j));
             JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
             JminObservGBO_post_sigma2s(j-N0,expr,:)=TraceGBO(expr).post_sigma2s(NDX_GBO,:);
             [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
@@ -177,7 +181,6 @@ end
 % meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
 meanJminObservGBO=nanmean(JminObservGBO(:,:),2);
 meanJminObservBO=nanmean(JminObservBO(:,:),2);
-meanJminObservGBO63=nanmean(JminObservGBO63(:,:),2);
 
 
 % %%
@@ -248,18 +251,18 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
-h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
-h5=semilogy(ax1, JminObservGBO63/true_objective, ':', 'Color', [0, 1, 0, .5], 'LineWidth', 1.5);
-h6=semilogy(ax1, meanJminObservGBO63./true_objective, 'Color', [0, 1, 0, 1], 'LineWidth', 5);
-legend([h3, h6, h4],{'Guided BO: experiment 69', 'Guided BO: experiment 63', 'BO'}, 'Location', 'northeast');
+h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5); 
+h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5); 
+h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
+h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5); 
+legend([h3, h4],{'Guided BO', 'BO'}, 'Location', 'northeast'); 
+xlabel(ax1, 'Iteration on real plant')
+ylabel(ax1, 'Minimum observed objective')
 % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
 % h5=yline(2.78,'k--', 'LineWidth', 3);
 % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-ylim([1 3])
+% ylim([1 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
