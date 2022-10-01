@@ -118,8 +118,8 @@ elseif LVswitch==1
 end
 Trace(1)=Trace_tmp;
 save(append(dir, 'trace_file.mat'),'Trace')
-save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
-save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
+save(append(dir, 'perf_Data_',num2str(counter),'_',num2str(expr)), 'perf_Data')
+save(append(dir, 'exp_Data_',num2str(counter),'_',num2str(expr)), 'exp_Data')
 counter=counter+1;
 
 N_iterations=50;
