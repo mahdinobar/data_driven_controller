@@ -1,5 +1,4 @@
 % GBO
-idx_G2=idx_G2;
 addpath("C:\mahdi\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
@@ -24,7 +23,7 @@ N_iter=50;
 N_extra=10;
 N_iter=N_iter+N_extra+N0;
 N_G=1;%N_G=5 number of iteration we use real plant before switching to surrogate G2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-N_G2_activated=15;
+N_G2_activated=30;
 npG2=2;
 
 sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -134,19 +133,23 @@ if LVswitch==0
         Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
         ITAE = trapz(t, t.*abs(e));
         perf_Data=[perf_Data;[ov, Tr, st, ITAE, 0]];
-        save(append(dir, 'perf_Data_tmp'), 'perf_Data')
         LVswitch=1; % means bayesoptGPML will run completely
         [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, [ov, Tr, st, ITAE, 0], hyper_grid);
         LVswitch=0;
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
-        if counter>1
-            % remove previous G2
-            idx_G2_last= size(Trace_tmp.samples,1)-N_G-1;
+        if counter==1
+            idx_G2=size(Trace_tmp.samples,1);
+            save(append(dir, 'idx_G2.mat'),'idx_G2')
+        elseif counter>1
+            % get idx of G2
+            load(append(dir, 'idx_G2.mat'))
+            idx_G2_last= size(Trace_tmp.samples,1);
             idx_G2=[idx_G2;idx_G2_last];
-            save(append(dir, 'idx_G2_test_',num2str(counter),num2str(expr)),'idx_G2')
+            save(append(dir, 'idx_G2_test_',num2str(counter),'_',num2str(expr)),'idx_G2')
+            save(append(dir, 'idx_G2.mat'),'idx_G2')
         end
-        save(append(dir, 'G2_',num2str(counter)), 'G2')
+        save(append(dir, 'G2_',num2str(counter),'_',num2str(expr)), 'G2')
     else
 
         Kp=LVgains(1);
@@ -157,7 +160,7 @@ if LVswitch==0
         return
     end
 elseif LVswitch==1 % means new exp_Data and perf_Data arrived
-    sample_idx=exp_Data(:,3)==120; %pay attention!!!!!!!!!!!!!!!!!!!!!!!!!!
+    sample_idx=exp_Data(:,3)==step_high; %pay attention!!!!!!!!!!!!!!!!!!!!!!!!!!
     ytmp = exp_Data(sample_idx,3);
     utmp= exp_Data(sample_idx,4);
     ytmp=ytmp(1:Nsample);
@@ -166,7 +169,6 @@ elseif LVswitch==1 % means new exp_Data and perf_Data arrived
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     save(append(dir, 'G2data.mat'),'G2data')
     idx= idx +1; % idx counts number of real system after last G2
-
     LVswitch=0;
 end
 
@@ -176,15 +178,14 @@ save(append(dir, 'perf_Data_',num2str(counter),num2str(expr)), 'perf_Data')
 save(append(dir, 'exp_Data_',num2str(counter),num2str(expr)), 'exp_Data')
 counter=counter+1;
 
-N_iterations=3;
-if counter>N0+N_iterations
+N_iterations=50; %number of iteration on real plant
+if counter>N0+N_iterations+N_G2_activated-1
     expr=expr+1;
     counter=0;
     LVswitch=0;
     N_G2_activated_counter=0;
     idx=N_G;
     
-    idx_G2=idx_G2(2:end);
     Trace_tmp.samples(idx_G2,:)=[];
     Trace_tmp.values(idx_G2)=[];
     Trace_tmp.post_mus(idx_G2)=[];
