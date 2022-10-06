@@ -37,7 +37,7 @@ hold on;
 % according to experiment 71 and J_optimum~0.68 (instead of J_grid_optimum=0.545 due to noise existance)
 S1=[2,5,7,9,11,15,20];
 conv_iter_1=[19,15,14,10,13,16,20];
-conv_iter_2=[20, 20, 22, 13, 15, 15, 20];
+conv_iter_2=[15, 20, 22, 13, 15, 15, 20];
 conv_iter_3=[20, 15, 25, 21, 29, 18, 16];
 h1=plot(ax2, S1, conv_iter_1,'--o', 'LineWidth', 2);
 h2=plot(ax2, S1, conv_iter_2,'--o', 'LineWidth', 2);
