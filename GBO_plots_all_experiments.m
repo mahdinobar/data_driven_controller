@@ -23,7 +23,7 @@ clear;
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=27;
+N_expr=100;
 N_iter=N_iter+N0;
 for expr=1:N_expr
 
@@ -47,30 +47,32 @@ for expr=1:N_expr
 %     a=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-    tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
-    dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
-    dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
+%     tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
+%     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
+%     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_71_20_3/results_1/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_71_15_1/results_1/";
 
     load(append(dirGBO,'trace_file.mat'),'Trace')
-    TraceGBO(expr)=Trace(1);    
+    TraceGBO(expr)=Trace(expr);    
 %     TraceGBO=Trace;
     delete Trace
-    load(append(dirBO,'trace_file.mat'),'Trace')
+    load(append(dirBO,'trace_file_BO.mat'),'Trace')
 %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
 % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
 %     %   TODO:  manual correction
 %     b=16.53/min(Trace.values(1:40))
 %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
 %     Trace.values(Trace.values<16.53)=16.53;
-    TraceBO(expr)=Trace(1);    
+    TraceBO(expr)=Trace(expr);    
 %     TraceBO=Trace;
     delete Trace
 
 end
 
-%  todo remove experiment 12 because of failure
-TraceBO(12)=[];
-TraceGBO(12)=[];
+% %  todo remove experiment 12 because of failure
+% TraceBO(12)=[];
+% TraceGBO(12)=[];
 
 % % TODO: manual correction: delete
 % TraceBO.values(1)=TraceBO.values(1)*4;
@@ -262,9 +264,14 @@ ylabel(ax1, 'Minimum observed objective')
 % h5=yline(2.78,'k--', 'LineWidth', 3);
 % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
 grid on
-% ylim([1 3])
+ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
+
+
+convergence_iteration=find(meanJminObservGBO<0.68,1)
+convergence_iteration_BO=find(meanJminObservBO<0.68,1)
+
 % yticks([1, 5:5:50])
 
 % yticks([16.5, 50, 50.81, 80.0, 100.0])

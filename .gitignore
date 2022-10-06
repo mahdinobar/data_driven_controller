@@ -1,0 +1,5 @@
+server_data/
+*.asv
+gpml/
+gpml_orig/
+tmp/

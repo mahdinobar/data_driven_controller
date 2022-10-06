@@ -4,7 +4,7 @@ function GBO_v3
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v2_0_17';
+idName= 'demo_GBO_v3_0_1';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -13,7 +13,7 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
-objective_noise=true;
+objective_noise=false;
 N0=1; %number of initial data
 N_expr=2;
 N_iter=50;
@@ -24,12 +24,14 @@ sampleTs=sampleTf/(Nsample-1);
 sampleTinit=0.0;
 lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
-N_perturbed=1; % number of perturbed plus one not perturbed surrogate
 if withSurrogate
     npG2=2;
-    N_G2_activated=15; %total number of times G2 is used
-    N_G = 1; %number of consecutive optimization on real plant before surrogate
-    N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, N_G=2 use N_extra=27)
+    R=3; 
+    S1=5;
+    S2 = 3; %number of consecutive optimization on real plant before surrogate
+    N_G2_activated=ceil(R/S2); %total number of times switched to G2 series
+    N_perturbed=S1; % number of perturbed plus one not perturbed surrogate
+    N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, S2=2 use N_extra=27)
     N_iter=N_iter+N_extra;
 end
 
@@ -123,7 +125,7 @@ opt.resume_trace=true;
 
 %% We define the function we would like to optimize
 if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed, sampleTinit, objective_noise);
+    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, S2, N_G2_activated, N_perturbed, sampleTinit, objective_noise);
 else
     fun = @(X) ObjFun(X, G, objective_noise); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
@@ -277,7 +279,7 @@ constraints=-1;
 % end
 end
 
-function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G,N_G2_activated, N_perturbed, sampleTinit, objective_noise)
+function [objective] = ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, S2,N_G2_activated, N_perturbed, sampleTinit, objective_noise)
 global N
 global idx
 global G2data
@@ -291,7 +293,7 @@ if N<N_perturbed
     G2=tfest(G2data, npG2);
     % to repeat perturbed
     if N_pr<N_perturbed-1
-        pert=rand(1,1)/10-0.02;
+        pert=0;%rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
         fprintf('!!!G2 is used! \n');
         objective=ObjFun(X, G2, false);
@@ -313,7 +315,7 @@ if N<N_perturbed
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
     expr_G2rmse=[expr_G2rmse;rmse2];
-elseif idx==N_G && N_G2_activated_counter<N_G2_activated
+elseif idx==S2 && N_G2_activated_counter<N_G2_activated
     N = N+1;
     %     G2_tmp=n4sid(G2data,npG2);
     %     G2idtf=idtf(G2_tmp);
@@ -331,7 +333,7 @@ elseif idx==N_G && N_G2_activated_counter<N_G2_activated
     expr_G2rmse=[expr_G2rmse;rmse2];
     % to repeat perturbed
     if N_pr<N_perturbed-1
-        pert=rand(1,1)/10-0.02;
+        pert=0;%rand(1,1)/10-0.02;
         G2=tf(G2.Numerator, G2.Denominator.*[1, 1+pert, 1]);
         fprintf('!!!G2 is used! \n');
         objective=ObjFun(X, G2, false);
@@ -377,7 +379,7 @@ else
 end
 if N>N_perturbed && idx==0
     for i=1:1:N_perturbed
-        idx_G2= [idx_G2;N+1-N_G-i];
+        idx_G2= [idx_G2;N+1-S2-i];
     end
 end
 end
