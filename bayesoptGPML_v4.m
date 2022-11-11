@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML(Obj,opt, N0)
+function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, onlyBO, S1)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -123,11 +123,15 @@ else
     incomplete = logical(ones(size(hyper_grid,1),1));
 end
 % Main BO loop
+AQ_vals=[];
 i_start = length(values) - 2 + 1;
-for i = i_start:opt.max_iters-2,
+i=i_start;
+N_G2=0;
+while i <opt.max_iters-2+1,
     hidx = -1;
     if PAR_JOBS <= 1,
         [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
+        AQ_vals=[AQ_vals;aq_val];
     else
         % Pick first candidate
         [mu_obj,sigma2_obj] = get_posterior(samples,values,hyper_grid,opt,N0);
@@ -234,10 +238,24 @@ for i = i_start:opt.max_iters-2,
 
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
-    if ~DO_CBO,
-        if PAR_JOBS <= 1,
-            tic;
-            value = Obj(hyper_cand);
+    if ~DO_CBO, 
+        if PAR_JOBS <= 1, 
+            tic; 
+            if onlyBO 
+                fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+                eta=0.3;
+                if aq_val>max(AQ_vals)*eta
+                    surrogate=true;
+                    if N_G2==0
+                        opt.max_iters=opt.max_iters+S1;
+                    end
+                else
+                    surrogate=false;
+                end
+                [value,N_G2] = Obj(hyper_cand, surrogate);
+            else
+                [value] = Obj(hyper_cand);
+            end
             times(end+1) = toc;
             samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
             values(end+1,1) = value;
@@ -321,6 +339,7 @@ for i = i_start:opt.max_iters-2,
     if opt.save_trace
         save(opt.trace_file,'botrace');
     end
+i=i+1;
 end
 
 % Get minvalue and minsample
