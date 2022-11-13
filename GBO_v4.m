@@ -12,7 +12,7 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-isGBO=false;
+isGBO=true;
 objective_noise=false;
 N0=1; %number of initial data
 N_expr=100;
@@ -307,7 +307,7 @@ elseif surrogate==false
     end
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
-fprintf('N= %d \n', N);
+% fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
 end
 

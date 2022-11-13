@@ -245,8 +245,8 @@ while i <opt.max_iters-2+1,
             if isGBO
                 eta1=5;
                 eta2=0.2;
-                fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
-                fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+%                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
+%                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
                 if surrogate==false && post_sigma2(hidx)>eta1
                     %                 if aq_val>max(AQ_vals)*eta
                     surrogate=true; %switch to use surrogate G2 for objective
