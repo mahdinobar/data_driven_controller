@@ -4,7 +4,7 @@ function GBO_v4
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_2';
+idName= 'demo_GBO_v4_0_4';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -12,10 +12,10 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-onlyBO=true;
+isGBO=false;
 objective_noise=false;
 N0=1; %number of initial data
-N_expr=3;
+N_expr=100;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -24,7 +24,7 @@ sampleTs=sampleTf/(Nsample-1);
 sampleTinit=0.0;
 lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
-% uncomment for onlyBO
+% uncomment for isGBO
 npG2=2;
 R=3;
 S1=5;
@@ -49,7 +49,7 @@ load(dir_gains)
 %% build initial dataset (N0)
 if initRant=="latin"
     % latin hypercube samples
-    if onlyBO
+    if isGBO
         % load same samples used for BO
         load(append(dir,'RAND_ltn_all.mat'), 'RAND_all_expr')
     else
@@ -120,7 +120,7 @@ opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 
 %% We define the function we would like to optimize
-if onlyBO==true
+if isGBO==true
     fun = @(X, surrogate)ObjFun_Guided_v4(X, surrogate, G, sampleTf, sampleTs, npG2, S2, N_G2_activated, S1, sampleTinit, objective_noise);
 else
     fun = @(X) ObjFun(X, G, objective_noise); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
@@ -154,7 +154,7 @@ for expr=1:1:N_expr
         C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
         CL=feedback(C*G, 1);
         J_ltn(i) = ObjFun([Kp_ltn(i), Ki_ltn(i)], G, objective_noise);
-        if onlyBO==true
+        if isGBO==true
             CLU=feedback(C, G);
             ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
             utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
@@ -183,7 +183,7 @@ for expr=1:1:N_expr
     idx_G2=[];
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
-    [ms,mv,Trace_tmp] = bayesoptGPML_v4(fun,opt,N0, onlyBO, S1);
+    [ms,mv,Trace_tmp] = bayesoptGPML_v4(fun,opt,N0, isGBO, S1);
     G2_samples=Trace_tmp.samples(idx_G2,:);
     G2_values=Trace_tmp.values(idx_G2);
     G2_post_mus=Trace_tmp.post_mus(idx_G2);
@@ -201,7 +201,7 @@ for expr=1:1:N_expr
     Trace_tmp.times(idx_G2)=[];
     Trace(expr)=Trace_tmp;
     delete Trace_tmp
-    if onlyBO==true
+    if isGBO==true
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
@@ -214,7 +214,7 @@ end
 hold on;
 plot3([ms(1) ms(1)],[ms(2) ms(2)],[max(j_pt(:)) min(j_pt(:))],'r-','LineWidth',2);
 
-if onlyBO
+if isGBO
     figName=append(dir, idName,'_SurfGrid_GBO_Solution.png');
 else
     figName=append(dir, idName,'_SurfGrid_BO_Solution.png');
@@ -280,38 +280,9 @@ global N_G2_activated_counter
 global N_G2
 global expr_G2rmse
 global idx_G2
-fprintf('N= %d \n', N);
-fprintf('N_G2= %d \n', N_G2);
 
 N=N+1;
-if N_G2==0
-    if surrogate==true
-        G2=tfest(G2data, npG2);
-        objective=ObjFun(X, G2, false);
-        t=0:3/100:3;
-        y = step(G,t);
-        y2 = step(G2,t);
-        rmse2=sqrt(mean((y-y2).^2));
-        expr_G2rmse=[expr_G2rmse;rmse2];
-        N_G2=N_G2+1;
-        idx_G2= [idx_G2;N];
-    elseif surrogate==false
-        objective=ObjFun(X, G, objective_noise);
-        C=tf([X(1),X(1)*X(2)], [1, 0]);
-        CL=feedback(C*G, 1);
-        CLU=feedback(C, G);
-        ytmp=step(CL,sampleTinit:sampleTs:sampleTf);
-        utmp=step(CLU,sampleTinit:sampleTs:sampleTf);
-        if objective_noise==true
-            noise_y = (mean(ytmp)*5/100)*randn(length(ytmp),1);
-            noise_u = (mean(utmp)*5/100)*randn(length(utmp),1);
-            ytmp=ytmp+noise_y;
-            utmp=utmp+noise_u;
-        end
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    end
-
-elseif N_G2<S1 
+if surrogate==true
     G2=tfest(G2data, npG2);
     objective=ObjFun(X, G2, false);
     t=0:3/100:3;
@@ -321,8 +292,7 @@ elseif N_G2<S1
     expr_G2rmse=[expr_G2rmse;rmse2];
     N_G2=N_G2+1;
     idx_G2= [idx_G2;N];
-else
-    N_G2=0;
+elseif surrogate==false
     objective=ObjFun(X, G, objective_noise);
     C=tf([X(1),X(1)*X(2)], [1, 0]);
     CL=feedback(C*G, 1);
@@ -337,6 +307,8 @@ else
     end
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
+fprintf('N= %d \n', N);
+fprintf('N_G2= %d \n', N_G2);
 end
 
 

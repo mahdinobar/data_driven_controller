@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, onlyBO, S1)
+function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, isGBO, S1)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -127,6 +127,7 @@ AQ_vals=[];
 i_start = length(values) - 2 + 1;
 i=i_start;
 N_G2=0;
+surrogate=false;
 while i <opt.max_iters-2+1,
     hidx = -1;
     if PAR_JOBS <= 1,
@@ -240,17 +241,22 @@ while i <opt.max_iters-2+1,
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     if ~DO_CBO, 
         if PAR_JOBS <= 1, 
-            tic; 
-            if onlyBO 
+            tic;
+            if isGBO
+                eta1=5;
+                eta2=0.2;
+                fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-                eta=0.3;
-                if aq_val>max(AQ_vals)*eta
-                    surrogate=true;
-                    if N_G2==0
-                        opt.max_iters=opt.max_iters+S1;
+                if surrogate==false && post_sigma2(hidx)>eta1
+                    %                 if aq_val>max(AQ_vals)*eta
+                    surrogate=true; %switch to use surrogate G2 for objective
+                    opt.max_iters=opt.max_iters+1;
+                elseif surrogate==true
+                    if aq_val>max(AQ_vals)*eta2
+                        opt.max_iters=opt.max_iters+1;
+                    else
+                        surrogate=false;
                     end
-                else
-                    surrogate=false;
                 end
                 [value,N_G2] = Obj(hyper_cand, surrogate);
             else

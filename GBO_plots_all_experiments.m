@@ -50,8 +50,8 @@ for expr=1:N_expr
 %     tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
 %     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
 %     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_2/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_2/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_3/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_3/";
 
     load(append(dirGBO,'trace_file.mat'),'Trace')
     TraceGBO(expr)=Trace(expr);    
