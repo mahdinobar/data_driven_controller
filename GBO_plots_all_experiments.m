@@ -23,7 +23,7 @@ clear;
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=3;
+N_expr=100;
 N_iter=N_iter+N0;
 for expr=1:N_expr
 
@@ -50,8 +50,8 @@ for expr=1:N_expr
 %     tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
 %     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
 %     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_3/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_3/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_73/results_1/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_73/results_1/";
 
     load(append(dirGBO,'trace_file.mat'),'Trace')
     TraceGBO(expr)=Trace(expr);    

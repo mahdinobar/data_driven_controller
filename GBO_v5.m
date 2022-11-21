@@ -1,10 +1,10 @@
 % GPML toolbox based implementation
-% version 4
-function GBO_v4
+% version 5
+function GBO_v5
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_5';
+idName= 'demo_GBO_v5_0_3';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -12,10 +12,10 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-isGBO=true;
+isGBO=false;
 objective_noise=false;
 N0=1; %number of initial data
-N_expr=100;
+N_expr=3;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -97,7 +97,10 @@ plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','
 addpath ./gpml/
 startup;
 % Setting parameters for Bayesian Global Optimization
-opt = defaultopt(); % Get some default values for non problem-specific options.
+opt.meanfunc={@meanConst};
+opt.covfunc={@covMaternard, 5};
+opt.hyp = -1; % Set hyperparameters using MLE.
+
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
@@ -117,7 +120,7 @@ opt.resume_trace=true;
 
 %% We define the function we would like to optimize
 if isGBO==true
-    fun = @(X, surrogate)ObjFun_Guided_v4(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise);
+    fun = @(X, surrogate)ObjFun_Guided_v5(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise);
 else
     fun = @(X) ObjFun(X, G, objective_noise); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
@@ -126,17 +129,15 @@ end
 global N
 global idx
 global G2data
-global N_G2_activated_counter
-global N_G2
+global N_G2_tmp
 global expr_G2rmse
-global idx_G2
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     expr_G2rmse=[];
     fprintf('>>>>>experiment: %d \n', expr);
     N=0;
     idx=[];
-    N_G2=0;
+    N_G2_tmp=0;
     G2_samples=[];
     G2_values=[];
     G2_post_mus=[];
@@ -176,30 +177,11 @@ for expr=1:1:N_expr
     botrace.times=RAND';
     opt.resume_trace_data = botrace;
     clear botrace
-    idx_G2=[];
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
-    [ms,mv,Trace_tmp] = bayesoptGPML_v4(fun,opt,N0, isGBO);
-    G2_samples=Trace_tmp.samples(idx_G2,:);
-    G2_values=Trace_tmp.values(idx_G2);
-    G2_post_mus=Trace_tmp.post_mus(idx_G2);
-    G2_post_sigma2s=Trace_tmp.post_sigma2s(idx_G2);
-    % keep surrogate model data seperately for plots
-    Trace_tmp.G2_samples=G2_samples;
-    Trace_tmp.G2_values=G2_values;
-    Trace_tmp.G2_post_mus=G2_post_mus;
-    Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
-    % remove previos data of older surrogate(G2) model
-    Trace_tmp.samples(idx_G2,:)=[];
-    Trace_tmp.values(idx_G2)=[];
-    Trace_tmp.post_mus(idx_G2)=[];
-    Trace_tmp.post_sigma2s(idx_G2)=[];
-    Trace_tmp.times(idx_G2)=[];
-    Trace(expr)=Trace_tmp;
-    delete Trace_tmp
+    [ms,mv,Trace(expr)] = bayesoptGPML_v5(fun,opt,N0, isGBO);
     if isGBO==true
         save(append(dir, 'trace_file.mat'),'Trace')
-        save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
@@ -268,14 +250,11 @@ constraints=-1;
 % end
 end
 
-function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
+function [objective, N_G2_tmp] = ObjFun_Guided_v5(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
 global N
-global idx
 global G2data
-global N_G2_activated_counter
-global N_G2
+global N_G2_tmp
 global expr_G2rmse
-global idx_G2
 
 N=N+1;
 if surrogate==true
@@ -286,9 +265,9 @@ if surrogate==true
     y2 = step(G2,t);
     rmse2=sqrt(mean((y-y2).^2));
     expr_G2rmse=[expr_G2rmse;rmse2];
-    N_G2=N_G2+1;
-    idx_G2= [idx_G2;N];
+    N_G2_tmp=N_G2_tmp+1;
 elseif surrogate==false
+    N_G2_tmp=0;
     objective=ObjFun(X, G, objective_noise);
     C=tf([X(1),X(1)*X(2)], [1, 0]);
     CL=feedback(C*G, 1);
@@ -304,7 +283,7 @@ elseif surrogate==false
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
 fprintf('N= %d \n', N);
-fprintf('N_G2= %d \n', N_G2);
+fprintf('N_G2_tmp= %d \n', N_G2_tmp);
 end
 
 
