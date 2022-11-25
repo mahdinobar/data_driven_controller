@@ -4,7 +4,7 @@ function GBO_v5
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v5_0_3';
+idName= 'demo_GBO_v5_0_4';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -15,7 +15,7 @@ end
 isGBO=false;
 objective_noise=false;
 N0=1; %number of initial data
-N_expr=3;
+N_expr=2;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -86,6 +86,7 @@ ylabel('Ki')
 zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
+save(append(dir, 'grount_truth.mat'),'j_pt','kp_pt','ki_pt')
 
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
@@ -99,7 +100,6 @@ startup;
 % Setting parameters for Bayesian Global Optimization
 opt.meanfunc={@meanConst};
 opt.covfunc={@covMaternard, 5};
-opt.hyp = -1; % Set hyperparameters using MLE.
 
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims

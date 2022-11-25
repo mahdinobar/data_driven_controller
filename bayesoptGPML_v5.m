@@ -45,7 +45,7 @@ if isfield(opt,'grid')
 else
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:); %creates random values from sobolset in [0,1]
-    hyper_grid_record = sobol(1:200,:);
+    hyper_grid_record = hyper_grid;%sobol(1:200,:);
     if isfield(opt,'filter_func'), % If the user wants to filter out some candidates
         hyper_grid = scale_point(opt.filter_func(unscale_point(hyper_grid,opt.mins,opt.maxes)),opt.mins,opt.maxes);
     end
@@ -130,8 +130,8 @@ i=i_start;
 N_G2=0;
 surrogate=false;
 G2_trigger_counter=0;
-post_mus_all=[];
-post_sigma2s_all=[];
+post_mus_record=[];
+post_sigma2s_record=[];
 botrace.hyper_grid_record=unscale_point(hyper_grid_record,opt.mins,opt.maxes);
 while i <opt.max_iters-2+1,
     hidx = -1;
@@ -140,87 +140,79 @@ while i <opt.max_iters-2+1,
     AQ_vals=[AQ_vals;aq_val];
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
-    if ~DO_CBO,
-        tic;
-        if isGBO
-            eta1=5;
-            eta2=0.2;
-            %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
-            %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-            if surrogate==false && post_sigma2(hidx)>eta1 && G2_trigger_counter<20
-                G2_trigger_counter=G2_trigger_counter+1;
-                fprintf('G2_trigger_counter=%d \n',G2_trigger_counter);
-                %                 if aq_val>max(AQ_vals)*eta
-                surrogate=true; %switch to use surrogate G2 for objective
+    tic;
+    if isGBO
+        eta1=5;
+        eta2=0.2;
+        %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
+        %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+        if surrogate==false && post_sigma2(hidx)>eta1 && G2_trigger_counter<20
+            G2_trigger_counter=G2_trigger_counter+1;
+            fprintf('G2_trigger_counter=%d \n',G2_trigger_counter);
+            %                 if aq_val>max(AQ_vals)*eta
+            surrogate=true; %switch to use surrogate G2 for objective
+            opt.max_iters=opt.max_iters+1;
+            counter_deadG2_trial=0; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
+        elseif surrogate==true
+            if aq_val>max(AQ_vals)*eta2 && N_G2_tmp<30
                 opt.max_iters=opt.max_iters+1;
-                counter_deadG2_trial=0; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
-            elseif surrogate==true
-                if aq_val>max(AQ_vals)*eta2 && N_G2_tmp<30
-                    opt.max_iters=opt.max_iters+1;
-                    counter_deadG2_trial=0;
-                elseif counter_deadG2_trial<2 && N_G2_tmp<30 %stop if two consecutive poor improvement
-                    counter_deadG2_trial =counter_deadG2_trial+1;
-                    opt.max_iters=opt.max_iters+1;
-                else
-                    surrogate=false; %switch back to real plant
-                    %get optimum gains of BO with surrogate
-                    [~,idx_tmp]=min(values(end-N_G2_tmp+1:end));
-                    sample_tmp=samples(end-N_G2_tmp+1:end,:);
-                    sample_tmp=sample_tmp(idx_tmp,:);
-                    %masure performance at the optimum gains of BO with surrogate
-                    [value_tmp,~] = Obj(sample_tmp, surrogate);
-                    % remove surrogate effect so far and add last data
-                    times = [times(1:end-N_G2_tmp),0];
-                    samples = [samples(1:end-N_G2_tmp,:);sample_tmp];
-                    values = [values(1:end-N_G2_tmp);value_tmp];
-                    post_mus = [post_mus(1:end-N_G2_tmp);0];
-                    post_sigma2s=[post_sigma2s(1:end-N_G2_tmp);0];
-                    AQ_vals=AQ_vals(1:end-N_G2_tmp);
-                    % Remove closest point on the grid to this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
-                    [~,hidx_tmp]=min(vecnorm(hyper_grid-sample_tmp,2,2));
-                    incomplete(hidx_tmp) = false;
-                    hyper_grid = hyper_grid(incomplete,:);
-                    incomplete = logical(ones(size(hyper_grid,1),1));
+                counter_deadG2_trial=0;
+            elseif counter_deadG2_trial<2 && N_G2_tmp<30 %stop if two consecutive poor improvement
+                counter_deadG2_trial =counter_deadG2_trial+1;
+                opt.max_iters=opt.max_iters+1;
+            else
+                surrogate=false; %switch back to real plant
+                %get optimum gains of BO with surrogate
+                [~,idx_tmp]=min(values(end-N_G2_tmp+1:end));
+                sample_tmp=samples(end-N_G2_tmp+1:end,:);
+                sample_tmp=sample_tmp(idx_tmp,:);
+                %masure performance at the optimum gains of BO with surrogate
+                [value_tmp,~] = Obj(sample_tmp, surrogate);
+                % remove surrogate effect so far and add last data
+                times = [times(1:end-N_G2_tmp),0];
+                samples = [samples(1:end-N_G2_tmp,:);sample_tmp];
+                values = [values(1:end-N_G2_tmp);value_tmp];
+                post_mus = [post_mus(1:end-N_G2_tmp);0];
+                post_sigma2s=[post_sigma2s(1:end-N_G2_tmp);0];
+                AQ_vals=AQ_vals(1:end-N_G2_tmp);
+                % Remove closest point on the grid to this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
+                [~,hidx_tmp]=min(vecnorm(hyper_grid-sample_tmp,2,2));
+                incomplete(hidx_tmp) = false;
+                hyper_grid = hyper_grid(incomplete,:);
+                incomplete = logical(ones(size(hyper_grid,1),1));
 
-                    botrace.post_mus=post_mus;
-                    botrace.post_sigma2s=post_sigma2s;
-                    botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
-                    botrace.values = values;
-                    botrace.times = times;
-                    if DO_CBO,
-                        botrace.con_values = con_values;
-                    end
-                    if opt.save_trace
-                        save(opt.trace_file,'botrace');
-                    end
-                    i=i+1;
-                    %TODO pay attention may refine code to remove continue
-                    continue
+                botrace.post_mus=post_mus;
+                botrace.post_sigma2s=post_sigma2s;
+                botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
+                botrace.values = values;
+                botrace.times = times;
+                if DO_CBO,
+                    botrace.con_values = con_values;
                 end
+                if opt.save_trace
+                    save(opt.trace_file,'botrace');
+                end
+                i=i+1;
+                %TODO pay attention may refine code to remove continue
+                continue
             end
-            [value,N_G2_tmp] = Obj(hyper_cand, surrogate);
-        else
-            [value] = Obj(hyper_cand);
         end
-        times(end+1) = toc;
-        samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
-        values(end+1,1) = value;
-        post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
-        post_sigma2s(end+1,1)=post_sigma2(hidx);
-
-        [post_mu_record,post_sigma2_record,~] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
-        post_mus_all = [post_mus_all,post_mu_record]; %keep the posterior mean where EI is maximum
-        post_sigma2s_all=[post_sigma2s_all,post_sigma2_record];
-
+        [value,N_G2_tmp] = Obj(hyper_cand, surrogate);
     else
-        tic;
-        [value,con_value] = Obj(hyper_cand);
-        times(end+1) = toc;
-        con_values = [con_values;con_value];
-        values(end+1,1) = value;
-        samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
-
+        [value] = Obj(hyper_cand);
     end
+    times(end+1) = toc;
+    samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
+    values(end+1,1) = value;
+    post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
+    post_sigma2s(end+1,1)=post_sigma2(hidx);
+
+    [post_mu_record,post_sigma2_record,~] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
+    post_mus_record = post_mu_record; %keep the posterior mean where EI is maximum
+    post_sigma2s_record=post_sigma2_record;
+%     post_mus_record=post_mu;
+%     post_sigma2s_record=post_sigma2;
+
 
 
     % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
@@ -252,8 +244,8 @@ while i <opt.max_iters-2+1,
     botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
     botrace.values = values;
     botrace.times = times;
-    botrace.post_mus_all=post_mus_all;
-    botrace.post_sigma2s_all=post_sigma2s_all;
+    botrace.post_mus_record=post_mus_record;
+    botrace.post_sigma2s_record=post_sigma2s_record;
     if DO_CBO,
         botrace.con_values = con_values;
     end
