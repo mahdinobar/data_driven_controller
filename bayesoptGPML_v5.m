@@ -133,10 +133,16 @@ G2_trigger_counter=0;
 post_mus_record=[];
 post_sigma2s_record=[];
 botrace.hyper_grid_record=unscale_point(hyper_grid_record,opt.mins,opt.maxes);
+hyp_GP_mean=[];
+hyp_GP_cov=[];
+hyp_GP_lik=[];
+GP_hypers_mean_record=[];
+GP_hypers_cov_record=[];
+GP_hypers_lik_record=[];
 while i <opt.max_iters-2+1,
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
-    [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
+    [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
     AQ_vals=[AQ_vals;aq_val];
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
@@ -205,15 +211,18 @@ while i <opt.max_iters-2+1,
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     values(end+1,1) = value;
     post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
+    hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
+    hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
+    hyp_GP_lik=[hyp_GP_lik; hyp_GP.lik'];
     post_sigma2s(end+1,1)=post_sigma2(hidx);
 
-    [post_mu_record,post_sigma2_record,~] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
-    post_mus_record = post_mu_record; %keep the posterior mean where EI is maximum
-    post_sigma2s_record=post_sigma2_record;
-%     post_mus_record=post_mu;
-%     post_sigma2s_record=post_sigma2;
-
-
+%     keep last GP model evaluated at records hyper grid 
+    [post_mu_record,post_sigma2_record,GP_hypers_record,GP_posterior_record] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
+    post_mus_record=[post_mus_record,post_mu_record];
+    post_sigma2s_record=[post_sigma2s_record,post_sigma2_record];
+    GP_hypers_mean_record=[GP_hypers_mean_record,GP_hypers_record.mean];
+    GP_hypers_cov_record=[GP_hypers_cov_record,GP_hypers_record.cov];
+    GP_hypers_lik_record=[GP_hypers_lik_record,GP_hypers_record.lik];
 
     % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
     if hidx >= 0,
@@ -222,21 +231,6 @@ while i <opt.max_iters-2+1,
         incomplete = logical(ones(size(hyper_grid,1),1));
     end
 
-    if PAR_JOBS <= 1,
-        if ~DO_CBO,
-            %fprintf(', value = %f, overall min = %f\n',value,min(values));
-        else
-            which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            %fprintf(', value = %f, feasible = %d, overall min = %f\n',value,all(con_value<=opt.lt_const),min(values(which_feas)));
-        end
-    else
-        if ~DO_CBO,
-            %fprintf('Overall min = %f\n\n',min(values));
-        else
-            which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            %fprintf('Overall min = %f\n\n',min(values(which_feas)));
-        end
-    end
     botrace.post_mus=post_mus;
     botrace.post_sigma2s=post_sigma2s;
     botrace.post_mus=post_mus;
@@ -246,6 +240,14 @@ while i <opt.max_iters-2+1,
     botrace.times = times;
     botrace.post_mus_record=post_mus_record;
     botrace.post_sigma2s_record=post_sigma2s_record;
+    botrace.GP_hypers_mean_record=GP_hypers_mean_record;
+    botrace.GP_hypers_cov_record=GP_hypers_cov_record;
+    botrace.GP_hypers_lik_record=GP_hypers_lik_record;
+    botrace.hyp_GP_lik=hyp_GP_lik;
+    botrace.hyp_GP_cov=hyp_GP_cov;
+    botrace.hyp_GP_mean=hyp_GP_mean;
+    botrace.GP_posterior_record=GP_posterior_record;
+    botrace.AQ_vals=AQ_vals;
     if DO_CBO,
         botrace.con_values = con_values;
     end
@@ -268,7 +270,7 @@ else
     minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 end
 
-function [hyper_cand,hidx,aq_val, mu, sigma2] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0)
+function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0)
 % Get posterior means and variances for all points on the grid.
 [mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,N0);
 
@@ -344,7 +346,7 @@ end
 % 		maximum EI acquired at hyper_cand
 aq_val = mei;
 
-function [mu,sigma2,hyp] = get_posterior(X,y,x_hats,opt,N0)
+function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,N0)
 meanfunc = opt.meanfunc;
 covfunc = opt.covfunc;
 
@@ -376,7 +378,7 @@ hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 % end
 %     x_hats are test inputs given to gp to predict
 % (gp function provides mus and sigma2s of the fitted GP to X, y data evaluated at x_hats)
-[mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
+[mu,sigma2,~,~,~,post] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
 
 function zstar = optimize_ei(z,X,y,best,hyp,opt)
 

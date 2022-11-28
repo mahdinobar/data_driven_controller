@@ -4,7 +4,7 @@ function GBO_v5
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v5_0_4';
+idName= 'demo_GBO_v5_0_6';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -79,6 +79,12 @@ for i=1:size(kp_pt,1)
         c_pt(i,j)=c;
     end
 end
+% j_pt=zeros(20000,1);
+% exper=1;
+% for i=1:20000
+%     [J,c]=ObjFun([Trace(exper).hyper_grid_record(i,1),Trace(exper).hyper_grid_record(i,2)],G, false);
+%     j_pt(i)=J;
+% end
 j_pt(c_pt>lt_const)=NaN;
 surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
 xlabel('Kp')

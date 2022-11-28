@@ -128,10 +128,13 @@ i_start = length(values) - 2 + 1;
 i=i_start;
 N_G2=0;
 surrogate=false;
+hyp_GP_mean=[];
+hyp_GP_cov=[];
+hyp_GP_lik=[];
 while i <opt.max_iters-2+1,
     hidx = -1;
     if PAR_JOBS <= 1,
-        [hyper_cand,hidx,aq_val, post_mu, post_sigma2] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
+        [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
         AQ_vals=[AQ_vals;aq_val];
     else
         % Pick first candidate
@@ -243,8 +246,8 @@ while i <opt.max_iters-2+1,
         if PAR_JOBS <= 1, 
             tic;
             if isGBO
-                eta1=5;
-                eta2=0.2;
+                eta1=3;
+                eta2=0.05;
 %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
 %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
                 if surrogate==false && post_sigma2(hidx)>eta1
@@ -271,6 +274,9 @@ while i <opt.max_iters-2+1,
             values(end+1,1) = value;
             post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
             post_sigma2s(end+1,1)=post_sigma2(hidx);
+            hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
+            hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
+            hyp_GP_lik=[hyp_GP_lik; hyp_GP.lik'];
         else
             par_values = {};
             par_times = {};
@@ -343,6 +349,9 @@ while i <opt.max_iters-2+1,
     botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
     botrace.values = values;
     botrace.times = times;
+    botrace.hyp_GP_lik=hyp_GP_lik;
+    botrace.hyp_GP_cov=hyp_GP_cov;
+    botrace.hyp_GP_mean=hyp_GP_mean;
     if DO_CBO,
         botrace.con_values = con_values;
     end
@@ -365,7 +374,7 @@ else
     minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 end
 
-function [hyper_cand,hidx,aq_val, mu, sigma2] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0)
+function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0)
 % Get posterior means and variances for all points on the grid.
 [mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,N0);
 
