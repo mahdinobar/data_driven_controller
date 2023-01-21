@@ -4,7 +4,7 @@ function GBO_v3
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v3_0_1';
+idName= 'demo_GBO_v3_0_4';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -13,9 +13,9 @@ end
 
 %% set hyperparameters
 withSurrogate=true;
-objective_noise=false;
+objective_noise=true;
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -26,9 +26,9 @@ lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
 if withSurrogate
     npG2=2;
-    R=3; 
-    S1=5;
-    S2 = 3; %number of consecutive optimization on real plant before surrogate
+    R=50;
+    S1=1;
+    S2 = 1; %number of consecutive optimization on real plant before surrogate
     N_G2_activated=ceil(R/S2); %total number of times switched to G2 series
     N_perturbed=S1; % number of perturbed plus one not perturbed surrogate
     N_extra= N_G2_activated*N_perturbed; %use (N_G2_activated) if you use N_G2_activated;  to compensate deleted iteration of surrogate(for N0=10, S2=2 use N_extra=27)
@@ -303,6 +303,10 @@ if N<N_perturbed
         % initially use G2
         objective=ObjFun(X, G2, false);
         N_G2_activated_counter=1;
+        tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
+        idName= 'demo_GBO_v3_0_4';
+        dir=append(tmp_dir,'/', idName, '/');
+        save(append(dir, 'G2_',num2str(N_G2_activated_counter),'.mat'),'G2')
         idx= 0;
         N_pr=0;
     end
@@ -344,6 +348,10 @@ elseif idx==S2 && N_G2_activated_counter<N_G2_activated
         N_pr=0;
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
+        tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
+        idName= 'demo_GBO_v3_0_4';
+        dir=append(tmp_dir,'/', idName, '/');
+        save(append(dir, 'G2_',num2str(N_G2_activated_counter),'.mat'),'G2')
     end
     %     % uncomment to check identification
     %     figure(2)

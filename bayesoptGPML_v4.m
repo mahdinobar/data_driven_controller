@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, isGBO)
+function [minsample,minvalue,botrace] = bayesoptGPML_v5(Obj,opt, N0, isGBO)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -26,7 +26,7 @@ else
     EI_BURN = 5;
 end
 
-if isfield(opt,'parallel_jobs'),
+if isfield(opt,'paecordallel_jobs'),
     PAR_JOBS = opt.parallel_jobs;
 else
     PAR_JOBS = 1;
@@ -44,7 +44,8 @@ if isfield(opt,'grid')
     opt.grid_size = size(hyper_grid,1);
 else
     sobol = sobolset(opt.dims);
-    hyper_grid = sobol(1:opt.grid_size,:);
+    hyper_grid = sobol(1:opt.grid_size,:); %creates random values from sobolset in [0,1]
+    hyper_grid_record = hyper_grid;%sobol(1:200,:);
     if isfield(opt,'filter_func'), % If the user wants to filter out some candidates
         hyper_grid = scale_point(opt.filter_func(unscale_point(hyper_grid,opt.mins,opt.maxes)),opt.mins,opt.maxes);
     end
@@ -128,199 +129,64 @@ i_start = length(values) - 2 + 1;
 i=i_start;
 N_G2=0;
 surrogate=false;
+G2_trigger_counter=0;
+post_mus_record=[];
+post_sigma2s_record=[];
+botrace.hyper_grid_record=unscale_point(hyper_grid_record,opt.mins,opt.maxes);
 hyp_GP_mean=[];
 hyp_GP_cov=[];
 hyp_GP_lik=[];
+GP_hypers_mean_record=[];
+GP_hypers_cov_record=[];
+GP_hypers_lik_record=[];
 while i <opt.max_iters-2+1,
     hidx = -1;
-    if PAR_JOBS <= 1,
-        [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
-        AQ_vals=[AQ_vals;aq_val];
-    else
-        % Pick first candidate
-        [mu_obj,sigma2_obj] = get_posterior(samples,values,hyper_grid,opt,N0);
-
-        if ~DO_CBO
-            best = min(values);
-            ei = compute_ei(best,mu_obj,sigma2_obj);
-        else
-            which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            best = min(values(which_feas));
-            if isempty(best), best = max(values)+999; end
-            ei = compute_ei(best,mu_obj,sigma2_obj);
-            prFeas = ones(length(ei),1);
-            for k = 1:length(opt.lt_const)
-                [mu_con,sigma2_con] = get_posterior(samples,con_values(:,k),hyper_grid,opt,N0);
-                prFeas = prFeas.*normcdf(repmat(opt.lt_const(k),length(mu_con),1),mu_con,sqrt(sigma2_con));
-            end
-            ei = prFeas.*ei;
-        end
-
-        [mei,meidx] = max(ei);
-        hyper_cands = hyper_grid(meidx,:);
-
-        % Pick rest of candidates
-        for j = 2:PAR_JOBS,
-            % Get GP predictive posterior for fantasy candidates
-            [mu_f,sigma2_f] = get_posterior(samples,values,hyper_cands,opt,N0);
-
-            mu_con = [];
-            sigma2_con = [];
-
-            % If we are doing CBO, also get predictive posteriors for constraints for fantasy points
-            if DO_CBO,
-                for C = 1:length(opt.lt_const),
-                    [mu_C,sigma2_C] = get_posterior(samples,con_values(:,C),hyper_cands,opt,N0);
-                    mu_con = [mu_con mu_C];
-                    sigma2_con = [sigma2_con sigma2_C];
-                end
-            end
-
-            eiks = {};
-            parfor k = 1:MC_ITERS, % MCMC loop to get EI marginalized over fantasy candidates
-                % Fantasize objective function values for fantasy candidates
-                fant_y = normrnd(mu_f,sqrt(sigma2_f));
-
-                % If we aren't doing CBO, that's all we need; marginalize EI over GP predictive posterior using fant_y as the labels.
-                if ~DO_CBO,
-                    [mu,sigma2] = get_posterior([samples;hyper_cands],[values;fant_y],hyper_grid,opt,N0);
-                    best = min([values;fant_y]);
-                    ei_k = compute_ei(best,mu,sigma2);
-                    eiks{k} = ei_k;
-                else % If we are doing CBO, we also need to marginalize prFeas over GP posteriors for the constraints
-                    [mu_obj,sigma2_obj] = get_posterior([samples;hyper_cands],[values;fant_y],hyper_grid,opt,N0);
-                    fant_cvals = [];
-
-                    % Fantasize constraint function values for each fantasy point
-                    for C = 1:length(opt.lt_const),
-                        fant_C = normrnd(mu_con(:,C),sigma2_con(:,C));
-                        fant_cvals = [fant_cvals;fant_C];
-                    end
-
-                    which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-                    which_fant_feas = all(bsxfun(@le,fant_cvals,opt.lt_const),2);
-                    best = min([values(which_feas);fant_y(which_fant_feas)]);
-                    if isempty(best), best = max([values;fant_y])+999; end
-
-                    ei_k = compute_ei(best,mu_obj,sigma2_obj);
-
-                    prFeas = ones(length(ei_k),1);
-                    for C = 1:length(opt.lt_const),
-                        [mu_conf,sigma2_conf] = get_posterior([samples;hyper_cands],[con_values(:,C);fant_cvals(:,C)],hyper_grid,opt,N0);
-                        prFeas = prFeas.*normcdf(repmat(opt.lt_const(C),length(mu_conf),1),mu_conf,sqrt(sigma2_conf));
-                    end
-
-                    ei_k = prFeas .* ei_k;
-                    eiks{k} = ei_k;
-                end
-            end
-            ei = mean(cell2mat(eiks),2);
-            [mei,meidx] = max(ei);
-            hyper_cand = hyper_grid(meidx,:);
-
-            incomplete(meidx) = false;
-            hyper_grid = hyper_grid(incomplete,:);
-            incomplete = logical(ones(size(hyper_grid,1),1));
-
-            hyper_cands = [hyper_cands;hyper_cand];
-        end
-    end
-
-
-    if PAR_JOBS <= 1,
-        if ~DO_CBO,
-            %fprintf('Iteration %d, Maximum EI = %f',i+2,aq_val);
-        else
-            %fprintf('Iteration %d, eic = %f',i+2,aq_val);
-        end
-    else
-        %fprintf('Iteration %d, running %d jobs in parallel...\n',i+2,PAR_JOBS);
-        for k = 1:PAR_JOBS,
-            hyper_cands(k,:) = unscale_point(hyper_cands(k,:),opt.mins,opt.maxes);
-        end
-    end
-
+    % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
+    [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
+    AQ_vals=[AQ_vals;aq_val];
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
-    if ~DO_CBO, 
-        if PAR_JOBS <= 1, 
-            tic;
-            if isGBO
-                eta1=3;
-                eta2=0.05;
-%                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
-%                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-                if surrogate==false && post_sigma2(hidx)>eta1
-                    %                 if aq_val>max(AQ_vals)*eta
-                    surrogate=true; %switch to use surrogate G2 for objective
-                    opt.max_iters=opt.max_iters+1;
-                    counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
-                elseif surrogate==true
-                    if aq_val>max(AQ_vals)*eta2
-                        opt.max_iters=opt.max_iters+1;
-                    elseif counter<3+1
-                        counter =counter+1;
-                        opt.max_iters=opt.max_iters+1;
-                    else
-                        surrogate=false;
-                    end
-                end
-                [value,N_G2] = Obj(hyper_cand, surrogate);
+    tic;
+    if isGBO
+        eta1=3;
+        eta2=0.05;
+        %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
+        %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+        if surrogate==false && post_sigma2(hidx)>eta1
+            %                 if aq_val>max(AQ_vals)*eta
+            surrogate=true; %switch to use surrogate G2 for objective
+            opt.max_iters=opt.max_iters+1;
+            counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
+        elseif surrogate==true
+            if aq_val>max(AQ_vals)*eta2
+                opt.max_iters=opt.max_iters+1;
+            elseif counter<3+1
+                counter =counter+1;
+                opt.max_iters=opt.max_iters+1;
             else
-                [value] = Obj(hyper_cand);
-            end
-            times(end+1) = toc;
-            samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
-            values(end+1,1) = value;
-            post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
-            post_sigma2s(end+1,1)=post_sigma2(hidx);
-            hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
-            hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
-            hyp_GP_lik=[hyp_GP_lik; hyp_GP.lik'];
-        else
-            par_values = {};
-            par_times = {};
-            parfor k = 1:PAR_JOBS,
-                tic;
-                par_values{k} = Obj(hyper_cands(k,:));
-                par_times{k} = toc;
-                %fprintf('    * Got value=%f\n',par_values{k});
-            end
-            for k = 1:PAR_JOBS,
-                values = [values;par_values{k}];
-                times = [times;par_times{k}];
-                samples = [samples;scale_point(hyper_cands(k,:),opt.mins,opt.maxes)];
+                surrogate=false;
             end
         end
+        [value,N_G2] = Obj(hyper_cand, surrogate);
     else
-        if PAR_JOBS <= 1,
-            tic;
-            [value,con_value] = Obj(hyper_cand);
-            times(end+1) = toc;
-            con_values = [con_values;con_value];
-            values(end+1,1) = value;
-            samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
-        else
-            par_values = {};
-            par_times = {};
-            par_con_values = {};
-            parfor k = 1:PAR_JOBS,
-                tic;
-                [v,cv] = Obj(hyper_cands(k,:));
-                par_times{k} = toc;
-                par_values{k} = v;
-                par_con_values{k} = cv;
-                %fprintf('    * Got value=%f, feasible=%d\n',v,all(par_con_values{k}<=opt.lt_const));
-            end
-            for k = 1:PAR_JOBS,
-                values = [values;par_values{k}];
-                con_values = [con_values;par_con_values{k}];
-                times = [times;par_times{k}];
-                samples = [samples;scale_point(hyper_cands(k,:),opt.mins,opt.maxes)];
-            end
-        end
+        [value] = Obj(hyper_cand);
     end
+    times(end+1) = toc;
+    samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
+    values(end+1,1) = value;
+    post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
+    hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
+    hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
+    hyp_GP_lik=[hyp_GP_lik; hyp_GP.lik'];
+    post_sigma2s(end+1,1)=post_sigma2(hidx);
 
+    %     keep last GP model evaluated at records hyper grid
+    [post_mu_record,post_sigma2_record,GP_hypers_record,GP_posterior_record] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
+    post_mus_record=[post_mus_record,post_mu_record];
+    post_sigma2s_record=[post_sigma2s_record,post_sigma2_record];
+    GP_hypers_mean_record=[GP_hypers_mean_record,GP_hypers_record.mean];
+    GP_hypers_cov_record=[GP_hypers_cov_record,GP_hypers_record.cov];
+    GP_hypers_lik_record=[GP_hypers_lik_record,GP_hypers_record.lik];
 
     % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
     if hidx >= 0,
@@ -329,36 +195,30 @@ while i <opt.max_iters-2+1,
         incomplete = logical(ones(size(hyper_grid,1),1));
     end
 
-    if PAR_JOBS <= 1,
-        if ~DO_CBO,
-            %fprintf(', value = %f, overall min = %f\n',value,min(values));
-        else
-            which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            %fprintf(', value = %f, feasible = %d, overall min = %f\n',value,all(con_value<=opt.lt_const),min(values(which_feas)));
-        end
-    else
-        if ~DO_CBO,
-            %fprintf('Overall min = %f\n\n',min(values));
-        else
-            which_feas = all(bsxfun(@le,con_values,opt.lt_const),2);
-            %fprintf('Overall min = %f\n\n',min(values(which_feas)));
-        end
-    end
+    botrace.post_mus=post_mus;
+    botrace.post_sigma2s=post_sigma2s;
     botrace.post_mus=post_mus;
     botrace.post_sigma2s=post_sigma2s;
     botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
     botrace.values = values;
     botrace.times = times;
+    botrace.post_mus_record=post_mus_record;
+    botrace.post_sigma2s_record=post_sigma2s_record;
+    botrace.GP_hypers_mean_record=GP_hypers_mean_record;
+    botrace.GP_hypers_cov_record=GP_hypers_cov_record;
+    botrace.GP_hypers_lik_record=GP_hypers_lik_record;
     botrace.hyp_GP_lik=hyp_GP_lik;
     botrace.hyp_GP_cov=hyp_GP_cov;
     botrace.hyp_GP_mean=hyp_GP_mean;
+    botrace.GP_posterior_record=GP_posterior_record;
+    botrace.AQ_vals=AQ_vals;
     if DO_CBO,
         botrace.con_values = con_values;
     end
     if opt.save_trace
         save(opt.trace_file,'botrace');
     end
-i=i+1;
+    i=i+1;
 end
 
 % Get minvalue and minsample
@@ -450,7 +310,7 @@ end
 % 		maximum EI acquired at hyper_cand
 aq_val = mei;
 
-function [mu,sigma2,hyp] = get_posterior(X,y,x_hats,opt,N0)
+function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,N0)
 meanfunc = opt.meanfunc;
 covfunc = opt.covfunc;
 
@@ -482,7 +342,7 @@ hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 % end
 %     x_hats are test inputs given to gp to predict
 % (gp function provides mus and sigma2s of the fitted GP to X, y data evaluated at x_hats)
-[mu,sigma2] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
+[mu,sigma2,~,~,~,post] = gp(hyp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1),x_hats);
 
 function zstar = optimize_ei(z,X,y,best,hyp,opt)
 

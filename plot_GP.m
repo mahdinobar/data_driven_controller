@@ -174,7 +174,7 @@ ax6.FontSize=24;
 ax6.FontName='Times New Roman';
 hold on;
 grid on;
-exper=1;
+exper=2;
 hyp_GP_cov=Trace(exper).hyp_GP_cov;
 hyp_GP_lik=Trace(exper).hyp_GP_lik;
 hyp_GP_mean=Trace(exper).hyp_GP_mean;
@@ -185,6 +185,7 @@ set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 ylabel(ax6, 'GP hyperparameter')
 xlabel(ax6, 'iteration')
 xlim([1 50])
+ylim([-30 30])
 title("GP model Hyperparameters evolution")
 legend([h1, h2(1), h2(2),h2(3), h3],{'@meanConst: c', '@covMaternard: \lambda_1', '@covMaternard: \lambda_2', '@covMaternard: \sigma_f', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
 

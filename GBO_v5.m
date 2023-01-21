@@ -4,7 +4,7 @@ function GBO_v5
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v5_0_6';
+idName= 'demo_GBO_v5_0_10';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -12,8 +12,8 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-isGBO=false;
-objective_noise=false;
+isGBO=true;
+objective_noise=true;
 N0=1; %number of initial data
 N_expr=2;
 N_iter=50;
@@ -64,12 +64,27 @@ end
 % global data_tmp
 % data_tmp=[];
 clf;
-Kp_range=Kp_max-Kp_min;
-resol=25;
-Kp_surf_resol=Kp_range/resol;
-Ki_range=Ki_max-Ki_min;
-Ki_surf_resol=Ki_range/resol;
-[kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+% Kp_range=Kp_max-Kp_min;
+% resol=15;
+% Kp_surf_resol=Kp_range/resol;
+% Ki_range=Ki_max-Ki_min;
+% Ki_range=Ki_max*Kp_max-Ki_min*Ki_min;
+% Ki_surf_resol=Ki_range/resol;
+n_grid=15;
+Kp_span=linspace(Kp_min,Kp_max,n_grid);
+% EU
+Ki_span=linspace(Ki_min,Ki_max,n_grid);
+% % US
+% Ki_span=linspace(Ki_min*Kp_min,Ki_max*Kp_max,n_grid);
+[kp_pt,ki_pt]=meshgrid(Kp_span,Ki_span);
+% [kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min:Ki_surf_resol:Ki_max);
+% [kp_pt,ki_pt]=meshgrid(Kp_min:Kp_surf_resol:Kp_max,Ki_min*Kp_min:Ki_surf_resol:Ki_max*Kp_max);
+% sobol = sobolset(2);
+% grid_size=100;
+% hyper_grid = sobol(1:grid_size,:);
+% kp_pt=hyper_grid(:,1).*(Kp_max-Kp_min)+Kp_min;
+% ki_pt=hyper_grid(:,2).*(Ki_max-Ki_min)+Ki_min;
+% ki_pt=hyper_grid(:,2).*(Ki_max*Kp_max-Ki_min**Kp_min)+Ki_min**Kp_min;
 j_pt=zeros(size(kp_pt));
 c_pt=zeros(size(kp_pt));
 for i=1:size(kp_pt,1)
@@ -79,6 +94,11 @@ for i=1:size(kp_pt,1)
         c_pt(i,j)=c;
     end
 end
+% for j=1:size(kp_pt,1)
+%     [l,c]=ObjFun([kp_pt(j),ki_pt(j)],G, false);
+%     j_pt(j)=l;
+%     c_pt(j)=c;
+% end
 % j_pt=zeros(20000,1);
 % exper=1;
 % for i=1:20000
@@ -87,12 +107,20 @@ end
 % end
 j_pt(c_pt>lt_const)=NaN;
 surf(kp_pt,ki_pt,reshape(j_pt,size(kp_pt)));
-xlabel('Kp')
-ylabel('Ki')
+% sq_grid_size=sqrt(grid_size);
+% surf(reshape(kp_pt,sq_grid_size,sq_grid_size),reshape(ki_pt,sq_grid_size,sq_grid_size),reshape(j_pt,sq_grid_size,sq_grid_size));
+xlabel('$X_{1}=K_{p}$','Interpreter','latex')
+% EU
+% ylabel('$X_{2}=\frac{1}{T_{i}}$','Interpreter','latex')
+% US
+ylabel('$X_{2}=K_{i}$','Interpreter','latex')
 zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
 save(append(dir, 'grount_truth.mat'),'j_pt','kp_pt','ki_pt')
+
+% % check convexity
+% [check,maxerr,yfit] = cvxfitfeas([reshape(kp_pt,[],1),reshape(ki_pt,[],1)],reshape(j_pt,1,[]),0.08)
 
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
@@ -209,7 +237,10 @@ end
 
 function [objective, constraints] = ObjFun(X, G, objective_noise)
 % todo move some lines outside with handler@: faster?
+% industrial(EU)
 C=tf([X(1), X(1)*X(2)], [1, 0]);
+% % theoretic(US)
+% C=tf([X(1), X(2)], [1, 0]);
 CL=feedback(C*G, 1);
 ov=abs(stepinfo(CL).Overshoot);
 st=stepinfo(CL).SettlingTime;
@@ -261,7 +292,7 @@ global N
 global G2data
 global N_G2_tmp
 global expr_G2rmse
-
+sigma2_s=0;
 N=N+1;
 if surrogate==true
     G2=tfest(G2data, npG2);
@@ -273,6 +304,13 @@ if surrogate==true
     expr_G2rmse=[expr_G2rmse;rmse2];
     N_G2_tmp=N_G2_tmp+1;
 elseif surrogate==false
+
+    G2=tfest(G2data, npG2);
+    save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_9/G2_', num2str(num2str(N))),'G2')
+    for j=1:N_G2_tmp
+        sigma2_s=sigma2_s+1/(n-1)*(ObjFun(X, G2, false)-y_gt)^2;
+    end
+
     N_G2_tmp=0;
     objective=ObjFun(X, G, objective_noise);
     C=tf([X(1),X(1)*X(2)], [1, 0]);
