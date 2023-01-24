@@ -4,7 +4,7 @@ function GBO_v4
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_7';
+idName= 'demo_GBO_v4_0_9';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -12,10 +12,12 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-isGBO=true;
-objective_noise=false;
+isGBO=false;
+objective_noise=true;
+% set seed of all random generations 
+rng(1,'twister');
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -261,6 +263,7 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
 if objective_noise==true
     noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
+%     noise = (1.6957*5/100)*randn(1,1);  % standard normal dist*(5/100 of mean of gt cost inside inside feasible set)
     objective=objective+noise;
 end
 constraints=-1;

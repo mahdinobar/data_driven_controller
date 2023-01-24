@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v5(Obj,opt, N0, isGBO)
+function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, isGBO)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -330,7 +330,7 @@ end
 hyp = [];
 hyp.mean = zeros(n_mh,1);
 hyp.cov = zeros(n_ch,1);
-hyp.lik = log(0.1);
+hyp.lik = log(1); %log(noise standard deviation)
 hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 % else
 %     hyp = [];
