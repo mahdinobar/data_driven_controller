@@ -299,9 +299,10 @@ ax9.FontSize=24;
 ax9.FontName='Times New Roman';
 hold on
 load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_6/J_truth_hyper_grid_record_1.mat")
-y = mean(Trace(exper).post_mus_record-j_pt); % your mean vector;
+diff=Trace(exper).post_mus_record-j_pt;
+y = mean(diff); % your mean vector;
 x = 1:50;
-std_dev = var(Trace(exper).post_mus_record-j_pt);;
+std_dev = sqrt(var(diff));
 curve1 = y + std_dev;
 curve2 = y - std_dev;
 x2 = [x, fliplr(x)];
@@ -312,10 +313,10 @@ plot(ax9, x, y, '-ko', 'LineWidth', 2);
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax9, 'Iteration')
 ylabel(ax9, '\mu_{GP}-J')
-ylim([-10 10])
+ylim([-5 5])
 xlim([1 50])
 xticks([1, 5:5:50])
-noise_level=mean(j_pt)*5/100;%(1.6957*5/100);
+noise_level=0.0035; %mean(j_pt)*5/100;%(1.6957*5/100);
 h=yline(ax9,noise_level,'--')
 yline(ax9,-noise_level,'--')
 legend([h],'noise level')

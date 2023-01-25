@@ -330,8 +330,9 @@ end
 hyp = [];
 hyp.mean = zeros(n_mh,1);
 hyp.cov = zeros(n_ch,1);
-hyp.lik = log(1); %log(noise standard deviation)
+hyp.lik = log(0.0035); %log(noise standard deviation)
 hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+
 % else
 %     hyp = [];
 %     hyp.mean = zeros(n_mh,1);

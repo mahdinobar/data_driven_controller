@@ -262,8 +262,9 @@ w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
 if objective_noise==true
-    noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
-%     noise = (1.6957*5/100)*randn(1,1);  % standard normal dist*(5/100 of mean of gt cost inside inside feasible set)
+    %     noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
+    %     noise = (1.6957*5/100)*randn(1,1);  % standard normal dist*(5/100 of mean of gt cost inside inside feasible set)
+    noise=0.0035*randn(1,1);
     objective=objective+noise;
 end
 constraints=-1;
