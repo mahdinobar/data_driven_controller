@@ -321,6 +321,72 @@ h=yline(ax9,noise_level,'--')
 yline(ax9,-noise_level,'--')
 legend([h],'noise level')
 title('GP uncertainty at entire hyper grid recorded')
+
+fig=figure(10);
+fig.Position=[200 0 1000 800];
+ax10=axes;
+ax10.FontSize=24;
+ax10.FontName='Times New Roman';
+hold on
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_6/J_truth_hyper_grid_record_1.mat")
+diff2=(Trace(exper).post_mus_record-j_pt).^2;
+y = mean(diff2); % your mean vector;
+x = 1:50;
+% std_dev = sqrt(var(diff2));
+% curve1 = y + std_dev;
+% curve2 = y - std_dev;
+% x2 = [x, fliplr(x)];
+% inBetween = [curve1, fliplr(curve2)];
+% fill(ax10, x2, inBetween, [.7 .7 .7]);
+hold on; grid on;
+plot(ax10, x, y, '-ko', 'LineWidth', 2);
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax10, 'Iteration')
+ylabel(ax10, 'MSE')
+ylim([-5 5])
+xlim([1 50])
+xticks([1, 5:5:50])
+noise_level=0.0035; %mean(j_pt)*5/100;%(1.6957*5/100);
+h=yline(ax10,noise_level,'--')
+yline(ax10,-noise_level,'--')
+legend([h],'noise level')
+title('Mean Squared Error')
+
+
+fig=figure(12);
+fig.Position=[200 0 1000 800];
+ax12=axes;
+ax12.FontSize=24;
+ax12.FontName='Times New Roman';
+hold on
+zlimit=0.0035*3;
+x=Trace(1).hyper_grid_record(:,1);
+y=Trace(1).hyper_grid_record(:,2);
+z=diff2(:,end);
+h=scatter3(Trace(1).samples(2:end,1),Trace(1).samples(2:end,2),zlimit.*ones(50,1),'ro','filled')
+xv = linspace(min(x), max(x), 500);
+yv = linspace(min(y), max(y), 500);
+[X,Y] = meshgrid(xv, yv);
+Z = griddata(x,y,z,X,Y);
+surf(ax12, X, Y, Z);
+colorbar
+caxis([0 zlimit])
+set(gca,'zscale','log')
+% set(gca,'ColorScale','log')
+grid on
+set(gca, 'ZLim',[0 100])
+shading interp
+title('Squared Error in feasible set')
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax12, 'kp')
+ylabel(ax12, 'ki')
+zlabel(ax12, 'SE')
+xlim([min(x), max(x)])
+ylim([min(y), max(y)])
+zlim([0 zlimit])
+legend([h],'BO sampled gains')
+view(2)
+
 % 
 % fig=figure(10);
 % fig.Position=[200 0 1000 800];
