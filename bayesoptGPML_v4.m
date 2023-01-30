@@ -139,10 +139,11 @@ hyp_GP_lik=[];
 GP_hypers_mean_record=[];
 GP_hypers_cov_record=[];
 GP_hypers_lik_record=[];
+
 while i <opt.max_iters-2+1,
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
-    [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0);
+    [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt ,DO_CBO,con_values,OPT_EI,EI_BURN, N0, botrace);
     AQ_vals=[AQ_vals;aq_val];
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
@@ -181,7 +182,7 @@ while i <opt.max_iters-2+1,
     post_sigma2s(end+1,1)=post_sigma2(hidx);
 
     %     keep last GP model evaluated at records hyper grid
-    [post_mu_record,post_sigma2_record,GP_hypers_record,GP_posterior_record] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0);
+    [post_mu_record,post_sigma2_record,GP_hypers_record,GP_posterior_record] = get_posterior(samples(1:end-1,:),values(1:end-1),hyper_grid_record,opt,N0, botrace);
     post_mus_record=[post_mus_record,post_mu_record];
     post_sigma2s_record=[post_sigma2s_record,post_sigma2_record];
     GP_hypers_mean_record=[GP_hypers_mean_record,GP_hypers_record.mean];
@@ -234,9 +235,9 @@ else
     minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 end
 
-function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0)
+function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, DO_CBO,con_values,OPT_EI,EI_BURN, N0, botrace)
 % Get posterior means and variances for all points on the grid.
-[mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,N0);
+[mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,N0, botrace);
 
 % Compute EI for all points in the grid, and find the maximum.
 if ~DO_CBO,
@@ -310,7 +311,7 @@ end
 % 		maximum EI acquired at hyper_cand
 aq_val = mei;
 
-function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,N0)
+function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,N0, botrace)
 meanfunc = opt.meanfunc;
 covfunc = opt.covfunc;
 
@@ -325,13 +326,25 @@ else
     n_ch = num_hypers(covfunc{1},opt);
 end
 
-% calculate hyp: the optimum hyperparameters of GP posterior
-% if size(X,1)==N0
-hyp = [];
-hyp.mean = zeros(n_mh,1);
-hyp.cov = zeros(n_ch,1);
-hyp.lik = log(0.0035); %log(noise standard deviation)
-hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+if ~isfield(botrace, 'hyp_GP_mean') 
+    botrace.hyp_GP_mean=zeros(n_mh,1);
+    botrace.hyp_GP_cov=zeros(n_ch,1)';
+    botrace.hyp_GP_lik=log(0.1);
+end
+% stop optimizing prior hyperparameters after certain iterations
+if length(botrace.hyp_GP_mean)<50
+%     calculate hyp: the optimum hyperparameters of prior model
+    hyp = [];
+    hyp.mean = zeros(n_mh,1);
+    hyp.cov = zeros(n_ch,1);
+    hyp.lik = log(0.1); %log(noise standard deviation)
+    hyp = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y); %here we optimize negative log marginal likelihood given training data so far with respect to the mean and kernel hyperparameters to find optimum hyperparameters
+else
+    hyp.mean = botrace.hyp_GP_mean(end, :)';
+    hyp.cov = botrace.hyp_GP_cov(end,:)';
+    hyp.lik = botrace.hyp_GP_lik(end);
+
+end
 
 % else
 %     hyp = [];

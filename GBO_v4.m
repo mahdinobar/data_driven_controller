@@ -4,7 +4,7 @@ function GBO_v4
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_9';
+idName= 'demo_GBO_v4_0_10';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -99,8 +99,8 @@ plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','
 addpath ./gpml/
 startup;
 % Setting parameters for Bayesian Global Optimization
-opt.meanfunc={@meanConst};
-opt.covfunc={@covMaternard, 5};
+opt.meanfunc={@meanZero};
+opt.covfunc={@covMaterniso, 5};
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
@@ -200,7 +200,7 @@ for expr=1:1:N_expr
     Trace_tmp.times(idx_G2)=[];
     Trace_tmp.hyp_GP_lik(idx_G2)=[];
     Trace_tmp.hyp_GP_cov(idx_G2,:)=[];
-    Trace_tmp.hyp_GP_mean(idx_G2)=[];
+    Trace_tmp.hyp_GP_mean(idx_G2,:)=[];
     Trace(expr)=Trace_tmp;
     delete Trace_tmp
     if isGBO==true

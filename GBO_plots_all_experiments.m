@@ -23,7 +23,7 @@ clear;
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=100;
+N_expr=1;
 N_iter=N_iter+N0;
 for expr=1:N_expr
 
@@ -51,6 +51,7 @@ for expr=1:N_expr
 %     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
 %     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
     dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_73/results_1/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/";
     dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_73/results_1/";
 
     load(append(dirGBO,'trace_file.mat'),'Trace')
@@ -253,11 +254,11 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5); 
+% h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5); 
 h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5); 
-h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
+% h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5); 
-legend([h3, h4],{'Guided BO', 'BO'}, 'Location', 'northeast'); 
+% legend([h3, h4],{'Guided BO', 'BO'}, 'Location', 'northeast'); 
 xlabel(ax1, 'Iteration on real plant')
 ylabel(ax1, 'Minimum observed objective')
 % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
@@ -267,6 +268,7 @@ grid on
 ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
+yline(ax1,[0.5150],'--')
 
 
 convergence_iteration=find(meanJminObservGBO<0.68,1)

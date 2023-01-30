@@ -3,7 +3,7 @@ clc
 close all;
 clear all; 
 % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/trace_file_BO.mat')
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_9/trace_file_BO.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/trace_file_BO.mat")
 % load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_8/grount_truth.mat")
 
 % post_sigma2s=[];
@@ -231,17 +231,18 @@ grid on;
 exper=1;
 hyp_GP_cov=Trace(exper).hyp_GP_cov;
 hyp_GP_lik=Trace(exper).hyp_GP_lik;
-hyp_GP_mean=Trace(exper).hyp_GP_mean;
-h1=plot(ax6,hyp_GP_mean,'-o');
+% hyp_GP_mean=Trace(exper).hyp_GP_mean; %zeros(50,1);
+% h1=plot(ax6,hyp_GP_mean,'-o');
 h2=plot(ax6,hyp_GP_cov,'-o');
 h3=plot(ax6,hyp_GP_lik,'-o');
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 ylabel(ax6, 'GP hyperparameter')
 xlabel(ax6, 'iteration')
 xlim([1 50])
-ylim([-30 30])
+ylim([-10 10])
 title("GP model Hyperparameters evolution")
-legend([h1, h2(1), h2(2),h2(3), h3],{'@meanConst: c', '@covMaternard: \lambda_1', '@covMaternard: \lambda_2', '@covMaternard: \sigma_f', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
+% legend([h2(1), h2(2),h2(3), h3],{'@covMaternard: ln(\lambda_1)', '@covMaternard: ln(\lambda_2)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
+legend([h2(1), h2(2), h3],{'@covMaternard: ln(l)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
 
 % fig=figure(7);
 % fig.Position=[200 0 1000 800];
@@ -343,7 +344,7 @@ plot(ax10, x, y, '-ko', 'LineWidth', 2);
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax10, 'Iteration')
 ylabel(ax10, 'MSE')
-ylim([-5 5])
+ylim([0 5])
 xlim([1 50])
 xticks([1, 5:5:50])
 noise_level=0.0035; %mean(j_pt)*5/100;%(1.6957*5/100);
@@ -352,6 +353,74 @@ yline(ax10,-noise_level,'--')
 legend([h],'noise level')
 title('Mean Squared Error')
 
+% fig=figure(14);
+% fig.Position=[200 0 1000 800];
+% ax14=axes;
+% ax14.FontSize=24;
+% ax14.FontName='Times New Roman';
+% hold on
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_6/J_truth_hyper_grid_record_1.mat")
+% tol=1e-1;
+% y=zeros(1,50);
+% for i=2:51
+%     s=Trace(exper).samples(i,:);
+%     d=Trace(exper).hyper_grid_record-s;
+%     idx=find(vecnorm(d,2,2)<tol);
+%     size(idx)
+%     diff2=(Trace(exper).post_mus_record(idx)-j_pt(idx)).^2;
+%     y(i-1)=mean(diff2);
+% end
+% x = 1:50;
+% % std_dev = sqrt(var(diff2));
+% % curve1 = y + std_dev;
+% % curve2 = y - std_dev;
+% % x2 = [x, fliplr(x)];
+% % inBetween = [curve1, fliplr(curve2)];
+% % fill(ax14, x2, inBetween, [.7 .7 .7]);
+% hold on; grid on;
+% plot(ax14, x, y, '-ko', 'LineWidth', 2);
+% set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% xlabel(ax14, 'Iteration')
+% ylabel(ax14, 'MSE')
+% ylim([0 5])
+% xlim([1 50])
+% xticks([1, 5:5:50])
+% noise_level=0.0035; %mean(j_pt)*5/100;%(1.6957*5/100);
+% h=yline(ax14,noise_level,'--')
+% yline(ax14,-noise_level,'--')
+% legend([h],'noise level')
+% title('Mean Squared Error (test points are around sampled data)')
+% 
+% 
+% fig=figure(13);
+% fig.Position=[200 0 1000 800];
+% ax13=axes;
+% ax13.FontSize=24;
+% ax13.FontName='Times New Roman';
+% hold on
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_6/J_truth_hyper_grid_record_1.mat")
+% diff2=(Trace(exper).post_mus_record-j_pt).^2;
+% y = mean(diff2)./std(j_pt); % your mean vector;
+% x = 1:50;
+% % std_dev = sqrt(var(diff2));
+% % curve1 = y + std_dev;
+% % curve2 = y - std_dev;
+% % x2 = [x, fliplr(x)];
+% % inBetween = [curve1, fliplr(curve2)];
+% % fill(ax13, x2, inBetween, [.7 .7 .7]);
+% hold on; grid on;
+% plot(ax13, x, y, '-ko', 'LineWidth', 2);
+% set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% xlabel(ax13, 'Iteration')
+% ylabel(ax13, 'SMSE')
+% ylim([0 5])
+% xlim([1 50])
+% xticks([1, 5:5:50])
+% noise_level=0.0035; %mean(j_pt)*5/100;%(1.6957*5/100);
+% h=yline(ax13,noise_level,'--')
+% yline(ax13,-noise_level,'--')
+% legend([h],'noise level')
+% title('Standardized Mean Squared Error')
 
 fig=figure(12);
 fig.Position=[200 0 1000 800];
@@ -362,7 +431,7 @@ hold on
 zlimit=0.0035*3;
 x=Trace(1).hyper_grid_record(:,1);
 y=Trace(1).hyper_grid_record(:,2);
-z=diff2(:,end);
+z=diff2(:,end); %for last iteration
 h=scatter3(Trace(1).samples(2:end,1),Trace(1).samples(2:end,2),zlimit.*ones(50,1),'ro','filled')
 xv = linspace(min(x), max(x), 500);
 yv = linspace(min(y), max(y), 500);
@@ -384,7 +453,9 @@ zlabel(ax12, 'SE')
 xlim([min(x), max(x)])
 ylim([min(y), max(y)])
 zlim([0 zlimit])
-legend([h],'BO sampled gains')
+[M,I]=min(j_pt);
+h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlimit,72,'go','filled')
+legend([h, h2],'BO sampled gains','gt optimum')
 view(2)
 
 % 
