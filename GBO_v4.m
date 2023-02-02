@@ -100,7 +100,7 @@ addpath ./gpml/
 startup;
 % Setting parameters for Bayesian Global Optimization
 opt.meanfunc={@meanZero};
-opt.covfunc={@covMaterniso, 5};
+opt.covfunc={@covMaternard, 5};
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.

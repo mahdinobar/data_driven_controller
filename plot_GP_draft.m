@@ -330,7 +330,8 @@ ax10.FontSize=24;
 ax10.FontName='Times New Roman';
 hold on
 load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_6/J_truth_hyper_grid_record_1.mat")
-diff2=(Trace(exper).post_mus_record-j_pt).^2;
+diff1=(Trace(exper).post_mus_record-j_pt);
+diff2=diff1.^2;
 y = mean(diff2); % your mean vector;
 x = 1:50;
 % std_dev = sqrt(var(diff2));
@@ -457,6 +458,43 @@ zlim([0 zlimit])
 h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlimit,72,'go','filled')
 legend([h, h2],'BO sampled gains','gt optimum')
 view(2)
+
+fig=figure(13);
+fig.Position=[200 0 1000 800];
+ax12=axes;
+ax12.FontSize=24;
+ax12.FontName='Times New Roman';
+hold on
+zlimit=sqrt(0.0035)*3;
+x=Trace(1).hyper_grid_record(:,1);
+y=Trace(1).hyper_grid_record(:,2);
+z=diff1(:,end); %for last iteration
+h=scatter3(Trace(1).samples(2:end,1),Trace(1).samples(2:end,2),zlimit.*ones(50,1),'ro','filled')
+xv = linspace(min(x), max(x), 500);
+yv = linspace(min(y), max(y), 500);
+[X,Y] = meshgrid(xv, yv);
+Z = griddata(x,y,z,X,Y);
+surf(ax12, X, Y, Z);
+colorbar
+caxis([-zlimit zlimit])
+set(gca,'zscale','log')
+% set(gca,'ColorScale','log')
+grid on
+set(gca, 'ZLim',[0 100])
+shading interp
+title('Residual Error (f-y) in feasible set')
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax12, 'kp')
+ylabel(ax12, 'ki')
+zlabel(ax12, 'SE')
+xlim([min(x), max(x)])
+ylim([min(y), max(y)])
+zlim([-zlimit zlimit])
+[M,I]=min(j_pt);
+h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlimit,72,'go','filled')
+legend([h, h2],'BO sampled gains','gt optimum')
+view(2)
+
 
 % 
 % fig=figure(10);
