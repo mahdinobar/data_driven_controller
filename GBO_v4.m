@@ -91,20 +91,20 @@ zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
 
-
-% load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
-% X=[];
-% y=[];
-% for i=1:1:20000
-%     X=[X;hyper_grid_record(i,:)];
-%     y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
-% end
-% save(append(dir,'Xy.mat'),'X', 'y')
-load(append(dir,'Xy.mat'))
-[y_star,i_star]=min(y,[],'all');
-i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
-X=X(i_around_Xstar,:);
-y=y(i_around_Xstar);
+% estimation of ground truth optimum hyperparameters
+load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
+X=[];
+y=[];
+for i=1:20:20000
+    X=[X;hyper_grid_record(i,:)];
+    y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
+end
+save(append(dir,'Xy_uniform_all.mat'),'X', 'y')
+% load(append(dir,'Xy.mat'))
+% [y_star,i_star]=min(y,[],'all');
+% i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
+% X=X(i_around_Xstar,:);
+% y=y(i_around_Xstar);
 meanfunc={@meanConst};
 covfunc={@covMaternard, 5};
 hyp = [];
@@ -128,6 +128,7 @@ for i=1:1000
     nlZ_dp=[nlZ_dp;nlZ];
 end
 save(append(dir,'likelihood_dp.mat'),'mean_dp','cov_dp','nlZ_dp')
+
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
 [J_gt,I]=min(j_pt,[],'all');
