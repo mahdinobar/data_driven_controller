@@ -3,6 +3,8 @@
 function GBO_v4
 %% clean start, set directories
 clear all; clc; close all;
+addpath ./gpml/
+startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
 idName= 'demo_GBO_v4_0_10';
 sys='DC_motor';
@@ -90,27 +92,28 @@ set(gca,'zscale','log')
 set(gca,'ColorScale','log')
 
 
-load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
-X=[];
-y=[];
-for i=1:20:20000
-    X=[X;hyper_grid_record(i,:)];
-    y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
-end
-save(append(dir,'hyp.mat'),'X')
-save(append(dir,'hyp.mat'),'y')
-
-
+% load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
+% X=[];
+% y=[];
+% for i=1:1:20000
+%     X=[X;hyper_grid_record(i,:)];
+%     y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
+% end
+% save(append(dir,'Xy.mat'),'X', 'y')
+load(append(dir,'Xy.mat'))
+[y_star,i_star]=min(y,[],'all');
+i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
+X=X(i_around_Xstar,:);
+y=y(i_around_Xstar);
 meanfunc={@meanZero};
 covfunc={@covMaternard, 5};
 hyp = [];
 hyp.mean = zeros(0,1);
 hyp.cov = zeros(3,1);
 hyp.lik = log(0.1); %log(noise standard deviation)
-[hyp, fhyp, j] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+[hyp, fhyp] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
 save(append(dir,'hyp.mat'),'hyp')
 save(append(dir,'fhyp.mat'),'fhyp')
-
 hyp_tmp=[];
 mean_dp=[];
 cov_dp=[];
@@ -132,8 +135,6 @@ hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
 %% Setup the Gaussian Process (GP) Library
-addpath ./gpml/
-startup;
 % Setting parameters for Bayesian Global Optimization
 opt.meanfunc={@meanZero};
 opt.covfunc={@covMaternard, 5};

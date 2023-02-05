@@ -511,7 +511,7 @@ hold on
 x=cov_dp(:,2);
 y=cov_dp(:,3);
 z=-nlZ_dp;
-h=scatter3(x,y,z,'ro','filled');
+h=scatter3(x,y,z,10,'ro','filled');
 xv = linspace(min(x), max(x), 500);
 yv = linspace(min(y), max(y), 500);
 [X,Y] = meshgrid(xv, yv);
