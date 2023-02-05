@@ -89,6 +89,42 @@ zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
 
+
+load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
+X=[];
+y=[];
+for i=1:20:20000
+    X=[X;hyper_grid_record(i,:)];
+    y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
+end
+save(append(dir,'hyp.mat'),'X')
+save(append(dir,'hyp.mat'),'y')
+
+
+meanfunc={@meanZero};
+covfunc={@covMaternard, 5};
+hyp = [];
+hyp.mean = zeros(0,1);
+hyp.cov = zeros(3,1);
+hyp.lik = log(0.1); %log(noise standard deviation)
+[hyp, fhyp, j] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+save(append(dir,'hyp.mat'),'hyp')
+save(append(dir,'fhyp.mat'),'fhyp')
+
+hyp_tmp=[];
+mean_dp=[];
+cov_dp=[];
+nlZ_dp=[];
+for i=1:1000
+    hyp_tmp.mean = hyp.mean'+randn(1,1);
+    hyp_tmp.cov = hyp.cov'+randn(1,3);
+    hyp_tmp.lik=hyp.lik';
+    [nlZ,dnlZ] = gp(hyp_tmp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1));
+    mean_dp=[mean_dp;hyp_tmp.mean];
+    cov_dp=[cov_dp;hyp_tmp.cov];
+    nlZ_dp=[nlZ_dp;nlZ];
+end
+save(append(dir,'likelihood_dp.mat'),'mean_dp','cov_dp','nlZ_dp')
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
 [J_gt,I]=min(j_pt,[],'all');
@@ -261,6 +297,7 @@ w_importance=[2, 1, 1, 1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
+% check=[ov*w(1),st*w(2),Tr*w(3),ITAE*w(4)]./objective.*100
 if objective_noise==true
     %     noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
     %     noise = (1.6957*5/100)*randn(1,1);  % standard normal dist*(5/100 of mean of gt cost inside inside feasible set)

@@ -3,7 +3,13 @@ clc
 close all;
 clear all; 
 % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/trace_file_BO.mat')
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/trace_file_BO.mat")
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/trace_file_BO.mat")
+tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
+idName= 'demo_GBO_v4_0_10';
+sys='DC_motor';
+dir=append(tmp_dir,'/', idName, '/');
+load(append(dir,'trace_file_BO.mat'))
+load(append(dir,'likelihood_dp.mat'))
 % load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_8/grount_truth.mat")
 
 % post_sigma2s=[];
@@ -461,9 +467,9 @@ view(2)
 
 fig=figure(13);
 fig.Position=[200 0 1000 800];
-ax12=axes;
-ax12.FontSize=24;
-ax12.FontName='Times New Roman';
+ax13=axes;
+ax13.FontSize=24;
+ax13.FontName='Times New Roman';
 hold on
 zlimit=sqrt(0.0035)*3;
 x=Trace(1).hyper_grid_record(:,1);
@@ -474,7 +480,7 @@ xv = linspace(min(x), max(x), 500);
 yv = linspace(min(y), max(y), 500);
 [X,Y] = meshgrid(xv, yv);
 Z = griddata(x,y,z,X,Y);
-surf(ax12, X, Y, Z);
+surf(ax13, X, Y, Z);
 colorbar
 caxis([-zlimit zlimit])
 set(gca,'zscale','log')
@@ -484,9 +490,9 @@ set(gca, 'ZLim',[0 100])
 shading interp
 title('Residual Error (f-y) in feasible set')
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-xlabel(ax12, 'kp')
-ylabel(ax12, 'ki')
-zlabel(ax12, 'SE')
+xlabel(ax13, 'kp')
+ylabel(ax13, 'ki')
+zlabel(ax13, 'SE')
 xlim([min(x), max(x)])
 ylim([min(y), max(y)])
 zlim([-zlimit zlimit])
@@ -495,6 +501,50 @@ h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlim
 legend([h, h2],'BO sampled gains','gt optimum')
 view(2)
 
+
+fig=figure(15);
+fig.Position=[200 0 1000 800];
+ax15=axes;
+ax15.FontSize=24;
+ax15.FontName='Times New Roman';
+hold on
+x=cov_dp(:,2);
+y=cov_dp(:,3);
+z=-nlZ_dp;
+h=scatter3(x,y,z,'ro','filled');
+xv = linspace(min(x), max(x), 500);
+yv = linspace(min(y), max(y), 500);
+[X,Y] = meshgrid(xv, yv);
+Z = griddata(x,y,z,X,Y);
+% surf(ax15, X, Y, Z);
+contour(ax15,X,Y,Z,linspace(max(z)*0.1,max(z),5));
+colorbar
+% caxis([max(z)*0.8 max(z)])
+% set(gca,'zscale','log')
+% set(gca,'ColorScale','log')
+grid on
+set(gca, 'ZLim',[min(z)*0.95, max(z)*1.05])
+shading interp
+title('log marginal likelihood vs hyperparameters')
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax15, '\lambda_{1}')
+ylabel(ax15, '\lambda_{2}')
+zlabel(ax15, 'log(L)')
+xlim([min(x), max(x)])
+ylim([min(y), max(y)])
+% zlim([min(z), max(z)])
+load(append(dir,'hyp.mat'),'hyp')
+load(append(dir,'fhyp.mat'),'fhyp')
+h2=scatter3(hyp.cov(2),hyp.cov(3),-fhyp(end),72,'go','filled');
+legend([h, h2],'LogL points','optimum LogL')
+view(2)
+
+% fig=figure(16);
+% fig.Position=[200 0 1000 800];
+% contour(X,Y,Z,linspace(max(z)*0.1,max(z),5));
+% hold on; grid on;
+% scatter3(hyp.cov(2),hyp.cov(3),-fhyp(end),72,'go','filled');
+% scatter3(x,y,z,10,'ro','filled');
 
 % 
 % fig=figure(10);
