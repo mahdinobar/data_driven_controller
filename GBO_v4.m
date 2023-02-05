@@ -105,10 +105,10 @@ load(append(dir,'Xy.mat'))
 i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
 X=X(i_around_Xstar,:);
 y=y(i_around_Xstar);
-meanfunc={@meanZero};
+meanfunc={@meanConst};
 covfunc={@covMaternard, 5};
 hyp = [];
-hyp.mean = zeros(0,1);
+hyp.mean = zeros(1,1);
 hyp.cov = zeros(3,1);
 hyp.lik = log(0.1); %log(noise standard deviation)
 [hyp, fhyp] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
