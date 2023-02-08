@@ -91,43 +91,43 @@ zlabel('J')
 set(gca,'zscale','log')
 set(gca,'ColorScale','log')
 
-% estimation of ground truth optimum hyperparameters
-load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
-X=[];
-y=[];
-for i=1:20:20000
-    X=[X;hyper_grid_record(i,:)];
-    y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
-end
-save(append(dir,'Xy_uniform_all.mat'),'X', 'y')
-% load(append(dir,'Xy.mat'))
-% [y_star,i_star]=min(y,[],'all');
-% i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
-% X=X(i_around_Xstar,:);
-% y=y(i_around_Xstar);
-meanfunc={@meanConst};
-covfunc={@covMaternard, 5};
-hyp = [];
-hyp.mean = zeros(1,1);
-hyp.cov = zeros(3,1);
-hyp.lik = log(0.1); %log(noise standard deviation)
-[hyp, fhyp] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
-save(append(dir,'hyp.mat'),'hyp')
-save(append(dir,'fhyp.mat'),'fhyp')
-hyp_tmp=[];
-mean_dp=[];
-cov_dp=[];
-nlZ_dp=[];
-for i=1:1000
-    hyp_tmp.mean = hyp.mean'+randn(1,1);
-    hyp_tmp.cov = hyp.cov'+randn(1,3);
-    hyp_tmp.lik=hyp.lik';
-    [nlZ,dnlZ] = gp(hyp_tmp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1));
-    mean_dp=[mean_dp;hyp_tmp.mean];
-    cov_dp=[cov_dp;hyp_tmp.cov];
-    nlZ_dp=[nlZ_dp;nlZ];
-end
-save(append(dir,'likelihood_dp.mat'),'mean_dp','cov_dp','nlZ_dp')
+% % % estimation of ground truth optimum hyperparameters
+% % load(append(dir,'hyper_grid_record.mat'),'hyper_grid_record');
+% % X=[];
+% % y=[];
+% % for i=1:20:20000
+% %     X=[X;hyper_grid_record(i,:)];
+% %     y=[y;ObjFun([X(end,1),X(end,2)],G, false)];
+% % end
+% % save(append(dir,'Xy_uniform_all.mat'),'X', 'y')
+% load(append(dir,'Xy_uniform_all.mat'))
+% % [y_star,i_star]=min(y,[],'all');
+% % i_around_Xstar=vecnorm(X-X(i_star,:),2,2)<0.1;
+% % X=X(i_around_Xstar,:);
+% % y=y(i_around_Xstar);
+% meanfunc={@meanConst};
+% covfunc={@covSEiso};
+% hyp = [];
+% hyp.mean = zeros(1,1);
+% hyp.cov = zeros(2,1);
+% hyp.lik = log(0.1); %log(noise standard deviation)
+% [hyp, fhyp] = minimize(hyp,@gp,-100,@infExact,meanfunc,covfunc,@likGauss,X,y);
+% save(append(dir,'hyp.mat'),'hyp')
+% save(append(dir,'fhyp.mat'),'fhyp')
+% hyp_tmp=[];
+% mean_dp=[];
+% cov_dp=[];
+% nlZ_dp=[];
+% for i=1:1000
+%     hyp_tmp.mean = hyp.mean'+randn(1,1);
+%     hyp_tmp.cov = hyp.cov'+randn(1,3);
+%     hyp_tmp.lik=hyp.lik';
+%     [nlZ,dnlZ] = gp(hyp_tmp,@infExact,meanfunc,covfunc,@likGauss,X,reshape(y,size(X,1),1));
+%     mean_dp=[mean_dp;hyp_tmp.mean];
+%     cov_dp=[cov_dp;hyp_tmp.cov];
+%     nlZ_dp=[nlZ_dp;nlZ];
+% end
+% save(append(dir,'likelihood_dp.mat'),'mean_dp','cov_dp','nlZ_dp')
 
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
