@@ -6,7 +6,7 @@ clear all; clc; close all;
 addpath ./gpml/
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_10';
+idName= 'demo_GBO_72_eta2_02_eta1_5';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -14,12 +14,12 @@ if not(isfolder(dir))
 end
 
 %% set hyperparameters
-isGBO=false;
+isGBO=true;
 objective_noise=true;
 % set seed of all random generations 
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=1;
+N_expr=30;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -137,7 +137,7 @@ plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','
 
 %% Setup the Gaussian Process (GP) Library
 % Setting parameters for Bayesian Global Optimization
-opt.meanfunc={@meanZero};
+opt.meanfunc={@meanConst};
 opt.covfunc={@covMaternard, 5};
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
@@ -242,6 +242,10 @@ for expr=1:1:N_expr
     Trace(expr)=Trace_tmp;
     delete Trace_tmp
     if isGBO==true
+% %         remove irrelevant fields for ease of load
+%         Trace=rmfield(Trace,'post_sigma2s_record');
+%         Trace=rmfield(Trace,'hyper_grid_record');
+%         Trace=rmfield(Trace,'post_mus_record');
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
@@ -353,7 +357,6 @@ end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
 end
-
 
 function nh = num_hypers(func,opt)
 str = func(1);

@@ -23,53 +23,62 @@ clear;
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
 N_iter=50;
-N_expr=100;
+N_expr=50;
 N_iter=N_iter+N0;
-for expr=1:N_expr
+% for expr=1:N_expr
+% 
+% %     idName= 'demo_GBO_3_';
+% %     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+% %         '/'], idName, num2str(expr), '/');
+% %     idNameBO= 'demo_BO_3_';
+% %     dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
+% %         '/'], idNameBO, num2str(expr), '/');
+% %     load(append(dir,'trace_file.mat'),'Trace')
+% %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file.mat','Trace')
+% % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GBO_new_2/trace_file.mat','Trace')
+% 
+% % %   TODO:  manual correction
+% %     if expr>4
+% %         Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
+% %         Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
+% %     end
+% 
+% %     %   TODO:  manual correction
+% %     a=16.53/min(Trace.values(1:40))
+% %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+% %     Trace.values(Trace.values<16.53)=16.53;
+% %     tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
+% %     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
+% %     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
+% %     dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72/results_1/";
+%     dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
+%     dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
+% %     dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72/results_1/";
+%     load(append(dirGBO,'trace_file.mat'),'Trace')
+%     TraceGBO(expr)=Trace(expr);    
+% %     TraceGBO=Trace;
+%     clearvars Trace
+%     load(append(dirBO,'trace_file_BO.mat'),'Trace')
+% %       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
+% % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
+% %     %   TODO:  manual correction
+% %     b=16.53/min(Trace.values(1:40))
+% %     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
+% %     Trace.values(Trace.values<16.53)=16.53;
+%     TraceBO(expr)=Trace(expr);    
+% %     TraceBO=Trace;
+%     clearvars Trace
+% end
 
-%     idName= 'demo_GBO_3_';
-%     dir=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-%         '/'], idName, num2str(expr), '/');
-%     idNameBO= 'demo_BO_3_';
-%     dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
-%         '/'], idNameBO, num2str(expr), '/');
-%     load(append(dir,'trace_file.mat'),'Trace')
-%       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file.mat','Trace')
-% load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_GBO_new_2/trace_file.mat','Trace')
+dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
+dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
+load(append(dirGBO,'trace_file.mat'),'Trace')
+TraceGBO=Trace;
+clearvars Trace
+load(append(dirBO,'trace_file_BO.mat'),'Trace')
+TraceBO=Trace;
+clearvars Trace
 
-% %   TODO:  manual correction
-%     if expr>4
-%         Trace.values=[Trace.values;repelem(Trace.values(end),29)'];
-%         Trace.samples=[Trace.samples;repelem(Trace.samples(end,:),29,1)];
-%     end
-
-%     %   TODO:  manual correction
-%     a=16.53/min(Trace.values(1:40))
-%     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
-%     Trace.values(Trace.values<16.53)=16.53;
-%     tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
-%     dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
-%     dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72/results_1/";
-%     dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72/results_1/";
-
-    load(append(dirGBO,'trace_file.mat'),'Trace')
-    TraceGBO(expr)=Trace(expr);    
-%     TraceGBO=Trace;
-    delete Trace
-    load(append(dirBO,'trace_file_BO.mat'),'Trace')
-%       load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_new_19/results_1/trace_file_BO.mat','Trace')
-% load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/experiments_6/demo_BO_new_2/trace_file.mat','Trace')
-%     %   TODO:  manual correction
-%     b=16.53/min(Trace.values(1:40))
-%     Trace.values=Trace.values*16.53/min(Trace.values(1:40));
-%     Trace.values(Trace.values<16.53)=16.53;
-    TraceBO(expr)=Trace(expr);    
-%     TraceBO=Trace;
-    delete Trace
-
-end
 
 % %  todo remove experiment 12 because of failure
 % TraceBO(12)=[];
@@ -240,13 +249,16 @@ meanJminObservBO=nanmean(JminObservBO(:,:),2);
 % set(h.out, 'marker', '.');
 % xlabel(ax0, 'Iteration')
 % ylabel(ax0, 'Optimality Ratio')
-% % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+% % ax1.title(append('Optimality Ratio vs Iteration
+% (N0=',num2str(N0),')'))q
 % set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % set(gca,'yscale','log')
 % figName=append(dir, idName,'_ORi_boxPval.png');
 % saveas(gcf,figName)
 % figName=append(dir, idName,'_ORi_boxPval.fig');
 % saveas(gcf,figName)
+% JminObservGBO(:,43)=JminObservGBO(:,1);
+% JminObservGBO(:,44)=JminObservGBO(:,2);
 
 fig=figure();
 fig.Position=[200 0 1600 800];
