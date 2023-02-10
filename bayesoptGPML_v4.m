@@ -149,7 +149,7 @@ while i <opt.max_iters-2+1,
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
     if isGBO
-        eta1=5;
+        eta1=inf;
         eta2=0.2;
         %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
         %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));

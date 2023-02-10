@@ -250,7 +250,7 @@ meanJminObservBO=nanmean(JminObservBO(:,:),2);
 % xlabel(ax0, 'Iteration')
 % ylabel(ax0, 'Optimality Ratio')
 % % ax1.title(append('Optimality Ratio vs Iteration
-% (N0=',num2str(N0),')'))q
+% (N0=',num2str(N0),')'))
 % set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % set(gca,'yscale','log')
 % figName=append(dir, idName,'_ORi_boxPval.png');

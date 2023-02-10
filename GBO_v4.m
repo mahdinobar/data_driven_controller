@@ -6,7 +6,7 @@ clear all; clc; close all;
 addpath ./gpml/
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_72_eta2_02_eta1_5';
+idName= 'demo_GBO_72_tmp';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -19,7 +19,7 @@ objective_noise=true;
 % set seed of all random generations 
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=30;
+N_expr=2;
 N_iter=50;
 N_iter=N_iter+N0;
 Nsample=150;
@@ -170,10 +170,12 @@ global G2data
 global N_G2_activated_counter
 global N_G2
 global expr_G2rmse
+global y_s
 global idx_G2
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     expr_G2rmse=[];
+    y_s=[];
     fprintf('>>>>>experiment: %d \n', expr);
     N=0;
     idx=[];
@@ -249,6 +251,7 @@ for expr=1:1:N_expr
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
+        save(append(dir, 'y_s_', num2str(expr),'.mat'),'y_s')
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
     end
@@ -327,6 +330,7 @@ global N_G2_activated_counter
 global N_G2
 global expr_G2rmse
 global idx_G2
+global y_s
 
 N=N+1;
 if surrogate==true
@@ -352,6 +356,11 @@ elseif surrogate==false
         ytmp=ytmp+noise_y;
         utmp=utmp+noise_u;
     end
+%     get data for sigma_surrogate estimation
+    G2=tfest(G2data, npG2);
+    surrogate_objective=ObjFun(X, G2, false);
+    y_s=[y_s;surrogate_objective];
+
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
 fprintf('N= %d \n', N);
