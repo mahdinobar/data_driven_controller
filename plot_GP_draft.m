@@ -621,7 +621,7 @@ ax20.FontSize=24;
 ax20.FontName='Times New Roman';
 hold on
 grid on
-eta1=[1,3,5,7,10];
+eta1=[1:10];
 mean_n_s=[];
 std_n_s=[];
 for i=1:length(eta1)
