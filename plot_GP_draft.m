@@ -613,6 +613,49 @@ set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax19, '\sigma_{s}')
 ylabel(ax19, '\sigma_{GP}')
 
+
+fig=figure(20);
+fig.Position=[200 0 1000 800];
+ax20=axes;
+ax20.FontSize=24;
+ax20.FontName='Times New Roman';
+hold on
+grid on
+eta1=[1,3,5,7,10];
+mean_n_s=[];
+std_n_s=[];
+for i=1:length(eta1)
+    n_s{i}=[];
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',num2str(eta1(i)),'/results_1/trace_file.mat'))
+    for j=1:50
+        n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+    end
+    mean_n_s=[mean_n_s,mean(n_s{i})];
+    std_n_s=[std_n_s,std(n_s{i})];
+end
+clearvars Trace
+h=errorbar(eta1,mean_n_s,std_n_s,'-o');
+title('Number of swtiching to surrogate')
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax20, '\eta_{1}')
+ylabel(ax20, 'total number of switching')
+xticks(eta1)
+
+
+% fig=figure(21);
+% fig.Position=[200 0 1000 800];
+% ax21=axes;
+% ax21.FontSize=24;
+% ax21.FontName='Times New Roman';
+% hold on
+% grid on
+% 
+% 
+% title('Number of swtiching vs \eta_{1}')
+% set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% xlabel(ax21, '\eta_{1}')
+% ylabel(ax21, 'total number of switching')
+
 % fig=figure(16);
 % fig.Position=[200 0 1000 800];
 % contour(X,Y,Z,linspace(max(z)*0.1,max(z),5));

@@ -6,7 +6,7 @@ clear all; clc; close all;
 addpath ./gpml/
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_72_tmp';
+idName= 'demo_GBO_v4_0_11';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -241,17 +241,17 @@ for expr=1:1:N_expr
     Trace_tmp.hyp_GP_lik(idx_G2)=[];
     Trace_tmp.hyp_GP_cov(idx_G2,:)=[];
     Trace_tmp.hyp_GP_mean(idx_G2,:)=[];
+    Trace_tmp.y_s=y_s;
+%     %         remove irrelevant fields for ease of load
+%     Trace_tmp=rmfield(Trace_tmp,'post_sigma2s_record');
+%     Trace_tmp=rmfield(Trace_tmp,'hyper_grid_record');
+%     Trace_tmp=rmfield(Trace_tmp,'post_mus_record');
     Trace(expr)=Trace_tmp;
-    delete Trace_tmp
+    clearvars Trace_tmp
     if isGBO==true
-% %         remove irrelevant fields for ease of load
-%         Trace=rmfield(Trace,'post_sigma2s_record');
-%         Trace=rmfield(Trace,'hyper_grid_record');
-%         Trace=rmfield(Trace,'post_mus_record');
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
-        save(append(dir, 'y_s_', num2str(expr),'.mat'),'y_s')
     else
         save(append(dir, 'trace_file_BO.mat'),'Trace')
     end
