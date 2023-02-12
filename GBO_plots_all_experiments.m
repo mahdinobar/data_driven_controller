@@ -70,8 +70,8 @@ N_iter=N_iter+N0;
 %     clearvars Trace
 % end
 
-dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
-dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_72_eta2_02_eta1_5/";
+dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
+dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
 load(append(dirGBO,'trace_file.mat'),'Trace')
 TraceGBO=Trace;
 clearvars Trace

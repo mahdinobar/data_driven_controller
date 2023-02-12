@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, isGBO)
+function [minsample,minvalue,botrace] = bayesoptGPML_v4(Obj,opt, N0, y_s, isGBO)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -139,7 +139,6 @@ hyp_GP_lik=[];
 GP_hypers_mean_record=[];
 GP_hypers_cov_record=[];
 GP_hypers_lik_record=[];
-
 while i <opt.max_iters-2+1,
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
@@ -149,11 +148,17 @@ while i <opt.max_iters-2+1,
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
     if isGBO
-        eta1=5;
+        eta1=1;
         eta2=0.2;
         %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
         %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-        if surrogate==false && post_sigma2(hidx)>eta1
+        % estimate surrogate uncertainty sigma_s
+        SE=0;
+        for i_s=1:length(y_s)
+            SE=SE+(y_s(i_s)-values(i_s))^2;
+        end
+        sigma_s=sqrt(SE/length(y_s));
+        if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
             %                 if aq_val>max(AQ_vals)*eta
             surrogate=true; %switch to use surrogate G2 for objective
             opt.max_iters=opt.max_iters+1;
@@ -168,7 +173,7 @@ while i <opt.max_iters-2+1,
                 surrogate=false;
             end
         end
-        [value,N_G2] = Obj(hyper_cand, surrogate);
+        [value,~,~, y_s] = Obj(hyper_cand, surrogate);
     else
         [value] = Obj(hyper_cand);
     end

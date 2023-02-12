@@ -6,7 +6,7 @@ clear all; clc; close all;
 addpath ./gpml/
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v4_0_11';
+idName= 'demo_GBO_v4_0_12';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -208,6 +208,10 @@ for expr=1:1:N_expr
             else
                 G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
             end
+            %     get data for sigma_surrogate estimation
+            G2=tfest(G2data, npG2);
+            surrogate_objective=ObjFun([Kp_ltn(i), Ki_ltn(i)], G2, false);
+            y_s=[y_s;surrogate_objective];
         end
     end
     % set initial dataset
@@ -222,7 +226,7 @@ for expr=1:1:N_expr
     idx_G2=[];
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
-    [ms,mv,Trace_tmp] = bayesoptGPML_v4(fun,opt,N0, isGBO);
+    [ms,mv,Trace_tmp] = bayesoptGPML_v4(fun,opt,N0,y_s, isGBO);
     G2_samples=Trace_tmp.samples(idx_G2,:);
     G2_values=Trace_tmp.values(idx_G2);
     G2_post_mus=Trace_tmp.post_mus(idx_G2);
@@ -322,7 +326,7 @@ constraints=-1;
 % end
 end
 
-function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
+function [objective, N_G2, idx_G2, y_s] = ObjFun_Guided_v4(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
 global N
 global idx
 global G2data
