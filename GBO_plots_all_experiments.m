@@ -70,8 +70,14 @@ N_iter=N_iter+N0;
 %     clearvars Trace
 % end
 
-dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
-dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
+% dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
+% dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
+dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_25/results_1/";
+dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_25/results_1/";
+% dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_7/results_1/";
+% dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_7/results_1/";
+
+
 load(append(dirGBO,'trace_file.mat'),'Trace')
 TraceGBO=Trace;
 clearvars Trace
@@ -257,8 +263,8 @@ meanJminObservBO=nanmean(JminObservBO(:,:),2);
 % saveas(gcf,figName)
 % figName=append(dir, idName,'_ORi_boxPval.fig');
 % saveas(gcf,figName)
-% JminObservGBO(:,43)=JminObservGBO(:,1);
-% JminObservGBO(:,44)=JminObservGBO(:,2);
+% JminObservGBO(:,13)=JminObservGBO(:,1);
+% JminObservGBO(:,40)=JminObservGBO(:,2);
 
 fig=figure();
 fig.Position=[200 0 1600 800];
@@ -270,6 +276,7 @@ h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'Li
 h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5); 
 h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
 h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5); 
+[a,b]=max(meanJminObservGBO<0.9915);
 xlabel(ax1, 'Iteration on real plant')
 ylabel(ax1, 'Minimum observed objective')
 % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
@@ -279,14 +286,23 @@ grid on
 ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
-h6=yline(ax1,[0.5150],'--');
+h6=yline(ax1,[0.5150],'--g');
 legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast'); 
+h7=yline(ax1,[0.9915],'--'); %MATLAB PI auto-tuner  with GM=60 degrees
 
 
-
-convergence_iteration=find(meanJminObservGBO<0.68,1)
-convergence_iteration_BO=find(meanJminObservBO<0.68,1)
-
+convergence_iteration=find(meanJminObservGBO<0.9915,1)
+convergence_iteration_BO=find(meanJminObservBO<0.9915,1)
+convergence_iteration_diff=convergence_iteration-convergence_iteration_BO
+% a=zeros(50,1);
+% for j = 1:50
+%     try
+%         a(j) = find(JminObservGBO(:,j)<0.9915,1);
+%     catch
+%         a(j)=50;
+%     end
+% end
+% std(a)
 % yticks([1, 5:5:50])
 
 % yticks([16.5, 50, 50.81, 80.0, 100.0])

@@ -92,7 +92,7 @@ load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/
 % kp=3.214;
 
 % speed sensor pole 9.918e-5
-kp=9.54434/(1.76351*2.38129);
+kp=9.54434*(1.76351*2.38129);
 
 
 taw1=tu/(2*pi)*sqrt(ku*kp-1);
@@ -101,18 +101,24 @@ t1=1.24*taw1+L1;
 t2=3.40*taw1+L1;
 taw=0.67*(t2-t1);
 L=1.3*t1-0.29*t2;
-
-Am=10^(10/20);
+Am_db=10; %gain margin in dB
+Am=10^(Am_db/20);
 Pm=60*pi/180;
 Wp=(Am*Pm+.5*pi*Am*(Am-1))/((Am^2-1)*L)
 Kp_nominal=(Wp*taw)/(Am*kp)
 Ki_nominal=2*Wp-4*Wp^2*L/pi+1/taw
 
-% validate approximated phase gain margins
-% num = [3.214];
-% den = [0.505, 1];
-% G = tf(num, den, 'InputDelay',Td);
+% % validate approximated phase gain margins
+% num = [kp];
+% den = [taw, 1];
+% Td=L;
+% Gtmp = tf(num, den, 'InputDelay',Td);
 K=tf([Kp_nominal, Kp_nominal*Ki_nominal], [1, 0]);
+% K=tf([0.6, 0.6*1.2], [1, 0]);
+
+[K,info] = pidtune(G,'PI')
+
+
 allmargin(K*G)
 margin(K*G)
 figure(2)
