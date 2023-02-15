@@ -621,18 +621,22 @@ ax20.FontSize=24;
 ax20.FontName='Times New Roman';
 hold on
 grid on
-eta1=[0.5,0.8,1,1.5,2,2.5];
-eta1_str={'05','08','1','15','2','25'};
+eta1=[0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2];
+eta1_str={'05','06','07','08','09','1','11','12','13','14','15','16','17','18','19','2'};
 mean_n_s=[];
 std_n_s=[];
 for i=1:length(eta1)
     n_s{i}=[];
     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
     for j=1:50
-        n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+        try
+            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+        catch
+            n_s{i}=[n_s{i};nan];
+        end
     end
-    mean_n_s=[mean_n_s,mean(n_s{i})];
-    std_n_s=[std_n_s,std(n_s{i})];
+    mean_n_s=[mean_n_s,nanmean(n_s{i})];
+    std_n_s=[std_n_s,nanstd(n_s{i})];
 end
 clearvars Trace
 yyaxis right
@@ -644,10 +648,9 @@ xlabel(ax20, '\eta_{1}')
 ylabel(ax20, 'total number of switching')
 xticks(eta1)
 yyaxis left
-mean_GBO_convergance=[4,3,4,14,18,4];
+mean_GBO_convergance=[4,3,18,3,4,4,4,3,3,18,14,15,18,18,18,18];
 hl=plot(eta1,mean_GBO_convergance,'-ob');
 ylabel(ax20, 'Average nominal convergance rate')
-
 
 % fig=figure(21);
 % fig.Position=[200 0 1000 800];
