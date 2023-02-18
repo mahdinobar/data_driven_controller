@@ -630,13 +630,15 @@ std_n_s=[];
 for i=1:length(eta1)
     n_s{i}=[];
 %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+% load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
 % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % load(append(dirGBO,'trace_file.mat'),'Trace')
     
-for j=1:50
+for j=1:length(Trace)
         try
-            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+%             n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+n_s{i}=[n_s{i};size(Trace(j).GP_hypers_mean_record,2)-50];
         catch
             n_s{i}=[n_s{i};nan];
         end
@@ -656,8 +658,18 @@ ylabel(ax20, 'total number of switching')
 xticks(eta1)
 ylim([0 max(mean_n_s+std_n_s)])
 yyaxis left
-mean_GBO_convergance=[1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000	4.16000000000000];%[1     1     1     2     2     2     2     2     3     4];
-std_GBO_convergance=[1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818	5.61106778008010];
+
+% % server 72 results
+% mean_GBO_convergance=[1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000	4.16000000000000];%[1     1     1     2     2     2     2     2     3     4];
+% std_GBO_convergance=[1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818	5.61106778008010];
+
+% % server 74 results
+% mean_GBO_convergance=[2.82978723404255	3.53191489361702	4.83673469387755	3.82000000000000	3.61702127659575	4.16666666666667	3.87500000000000	3.08163265306122	2.77551020408163	4.37500000000000	4.65306122448980	4.75510204081633	5.12765957446809	5.61702127659575	4.62500000000000	4.87500000000000];
+% std_GBO_convergance=[4.10894649005002	5.04264882011768	7.04848369856805	5.59405661284860	5.72391319279633	5.74023994358503	5.62526595115970	4.30521357723148	4.60645066782464	7.08797303198366	6.30327633195680	6.25010203998335	7.36801849734671	7.78391091901684	6.88391588213717	6.80933339443706];
+
+% % server 75 results 
+mean_GBO_convergance=[14.8888888888889	9.83333333333333	6.50000000000000	10.2777777777778	10.1666666666667	10.3529411764706	10.8947368421053	9.30000000000000	5	6.97435897435897];
+std_GBO_convergance=[15.6959   10.7605    5.8424   10.5875   12.5803   12.3184    9.5213   10.9933    4.9719    7.2493];
 % hl=plot(eta1,mean_GBO_convergance,'-ob');
 hr=errorbar(eta1,mean_GBO_convergance,mean_GBO_convergance,'-ob');
 ylabel(ax20, 'Average nominal convergance rate')
