@@ -4,7 +4,7 @@ function GBO_v5
 %% clean start, set directories
 clear all; clc; close all;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'demo_GBO_v5_0_10';
+idName= 'demo_GBO_v5_0_13';
 sys='DC_motor';
 dir=append(tmp_dir,'/', idName, '/');
 if not(isfolder(dir))
@@ -165,9 +165,11 @@ global idx
 global G2data
 global N_G2_tmp
 global expr_G2rmse
+global y_s
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     expr_G2rmse=[];
+    y_s=[];
     fprintf('>>>>>experiment: %d \n', expr);
     N=0;
     idx=[];
@@ -200,6 +202,10 @@ for expr=1:1:N_expr
             else
                 G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
             end
+            %     get data for sigma_surrogate estimation
+            G2=tfest(G2data, npG2);
+            surrogate_objective=ObjFun([Kp_ltn(i), Ki_ltn(i)], G2, false);
+            y_s=[y_s;surrogate_objective];
         end
     end
     % set initial dataset
@@ -213,7 +219,14 @@ for expr=1:1:N_expr
     clear botrace
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
-    [ms,mv,Trace(expr)] = bayesoptGPML_v5(fun,opt,N0, isGBO);
+    [ms,mv,Trace_tmp] = bayesoptGPML_v5(fun,opt,N0, y_s, isGBO);
+    Trace_tmp.y_s=y_s;
+    %         remove irrelevant fields for ease of load
+    Trace_tmp=rmfield(Trace_tmp,'post_sigma2s_record');
+    Trace_tmp=rmfield(Trace_tmp,'hyper_grid_record');
+    Trace_tmp=rmfield(Trace_tmp,'post_mus_record');
+    Trace(expr)=Trace_tmp;
+    clearvars Trace_tmp
     if isGBO==true
         save(append(dir, 'trace_file.mat'),'Trace')
         save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
@@ -275,7 +288,8 @@ w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
 if objective_noise==true
-    noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
+%     noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
+    noise=0.0035*randn(1,1);
     objective=objective+noise;
 end
 constraints=-1;
@@ -287,11 +301,13 @@ constraints=-1;
 % end
 end
 
-function [objective, N_G2_tmp] = ObjFun_Guided_v5(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
+function [objective, N_G2_tmp, y_s] = ObjFun_Guided_v5(X, surrogate, G, sampleTf, sampleTs, npG2, sampleTinit, objective_noise)
 global N
 global G2data
 global N_G2_tmp
 global expr_G2rmse
+global y_s
+
 sigma2_s=0;
 N=N+1;
 if surrogate==true
@@ -305,12 +321,8 @@ if surrogate==true
     N_G2_tmp=N_G2_tmp+1;
 elseif surrogate==false
 
-    G2=tfest(G2data, npG2);
-    save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_9/G2_', num2str(num2str(N))),'G2')
-    for j=1:N_G2_tmp
-        sigma2_s=sigma2_s+1/(n-1)*(ObjFun(X, G2, false)-y_gt)^2;
-    end
-
+%     G2=tfest(G2data, npG2);
+%     save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_9/G2_', num2str(num2str(N))),'G2')
     N_G2_tmp=0;
     objective=ObjFun(X, G, objective_noise);
     C=tf([X(1),X(1)*X(2)], [1, 0]);
@@ -324,6 +336,11 @@ elseif surrogate==false
         ytmp=ytmp+noise_y;
         utmp=utmp+noise_u;
     end
+    %     get data for sigma_surrogate estimation
+    G2=tfest(G2data, npG2);
+    surrogate_objective=ObjFun(X, G2, false);
+    y_s=[y_s;surrogate_objective];
+
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
 fprintf('N= %d \n', N);

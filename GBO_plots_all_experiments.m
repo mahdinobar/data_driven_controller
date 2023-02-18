@@ -70,11 +70,13 @@ N_iter=N_iter+N0;
 %     clearvars Trace
 % end
 
-% dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
-% dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_12/";
+dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
+dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 eta1_str={'1','2','3','4','5','6','7','8','9','10'};
 convergence_iteration=[];
+convergence_iteration_std=[];
 convergence_iteration_BO=[];
+convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
 % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
@@ -276,39 +278,47 @@ meanJminObservBO=nanmean(JminObservBO(:,:),2);
 % JminObservGBO(:,13)=JminObservGBO(:,1);
 % JminObservGBO(:,40)=JminObservGBO(:,2);
 
-% fig=figure();
-% fig.Position=[200 0 1600 800];
-% ax1=axes;
-% ax1.FontSize=24;
-% ax1.FontName='Times New Roman';
-% hold on
-% h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5); 
-% h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5); 
-% h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
-% h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5); 
-% [a,b]=max(meanJminObservGBO<0.9915);
-% xlabel(ax1, 'Iteration on real plant')
-% ylabel(ax1, 'Minimum observed objective')
-% % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
-% % h5=yline(2.78,'k--', 'LineWidth', 3);
-% % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
-% grid on
-% ylim([0 3])
-% xlim([1, 50])
-% xticks([1, 5:5:50])
-% h6=yline(ax1,[0.5150],'--g');
-% legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast'); 
-% h7=yline(ax1,[0.9915],'--'); %MATLAB PI auto-tuner  with GM=60 degrees
+fig=figure();
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=24;
+ax1.FontName='Times New Roman';
+hold on
+h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5); 
+h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5); 
+h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5); 
+h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5); 
+[a,b]=max(meanJminObservGBO<0.9915);
+xlabel(ax1, 'Iteration on real plant')
+ylabel(ax1, 'Minimum observed objective')
+% legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
+% h5=yline(2.78,'k--', 'LineWidth', 3);
+% legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
+grid on
+ylim([0 3])
+xlim([1, 50])
+xticks([1, 5:5:50])
+h6=yline(ax1,[0.5150],'--g');
+legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast'); 
+h7=yline(ax1,[0.9915],'--'); %MATLAB PI auto-tuner  with GM=60 degrees
 
 
-convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)];
-convergence_iteration_BO=[convergence_iteration_BO,find(meanJminObservBO<0.9915,1)];
-convergence_iteration_diff=[convergence_iteration_diff,find(meanJminObservGBO<0.9915,1)-find(meanJminObservBO<0.9915,1)];
+% convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)]
+% convergence_iteration_BO=[convergence_iteration_BO,find(meanJminObservBO<0.9915,1)]
+% convergence_iteration_diff=[convergence_iteration_diff,find(meanJminObservGBO<0.9915,1)-find(meanJminObservBO<0.9915,1)];
 
+converg_iter=[];
+converg_iter_BO=[];
+for i=1:50
+    converg_iter=[converg_iter,find(JminObservGBO(:,i)<0.9915,1)];
+    converg_iter_BO=[converg_iter_BO,find(JminObservBO(:,i)<0.9915,1)];
 end
+convergence_iteration=[convergence_iteration,mean(converg_iter)];
+convergence_iteration_std=[convergence_iteration_std,std(converg_iter)];
 
-
-
+convergence_iteration_BO=[convergence_iteration_BO,mean(converg_iter_BO)];
+convergence_iteration_std_BO=[convergence_iteration_std_BO,std(converg_iter_BO)];
+end
 % a=zeros(50,1);
 % for j = 1:50
 %     try

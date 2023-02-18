@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v5(Obj,opt, N0, isGBO)
+function [minsample,minvalue,botrace] = bayesoptGPML_v5(Obj,opt, N0, y_s, isGBO)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -148,11 +148,17 @@ while i <opt.max_iters-2+1,
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
     if isGBO
-        eta1=1e10;%5;
-        eta2=1e10;%0.2;
+        eta1=1;
+        eta2=0.2;
         %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
         %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-        if surrogate==false && post_sigma2(hidx)>eta1 && G2_trigger_counter<20
+        % estimate surrogate uncertainty sigma_s
+        SE=0;
+        for i_s=1:length(y_s)
+            SE=SE+(y_s(i_s)-values(i_s))^2;
+        end
+        sigma_s=sqrt(SE/length(y_s));
+        if surrogate==false && post_sigma2(hidx)/sigma_s>eta1 && G2_trigger_counter<20
             G2_trigger_counter=G2_trigger_counter+1;
             fprintf('G2_trigger_counter=%d \n',G2_trigger_counter);
             %                 if aq_val>max(AQ_vals)*eta
@@ -172,14 +178,14 @@ while i <opt.max_iters-2+1,
                 [~,idx_tmp]=min(values(end-N_G2_tmp+1:end));
                 sample_tmp=samples(end-N_G2_tmp+1:end,:);
                 sample_tmp=sample_tmp(idx_tmp,:);
-                %masure performance at the optimum gains of BO with surrogate
+                %measure performance at the optimum gains of BO with surrogate
                 [value_tmp,~] = Obj(sample_tmp, surrogate);
                 % remove surrogate effect so far and add last data
                 times = [times(1:end-N_G2_tmp),0];
                 samples = [samples(1:end-N_G2_tmp,:);sample_tmp];
                 values = [values(1:end-N_G2_tmp);value_tmp];
-                post_mus = [post_mus(1:end-N_G2_tmp);0];
-                post_sigma2s=[post_sigma2s(1:end-N_G2_tmp);0];
+                post_mus = [post_mus(1:end-N_G2_tmp);nan];
+                post_sigma2s=[post_sigma2s(1:end-N_G2_tmp);nan];
                 AQ_vals=AQ_vals(1:end-N_G2_tmp);
                 % Remove closest point on the grid to this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
                 [~,hidx_tmp]=min(vecnorm(hyper_grid-sample_tmp,2,2));
@@ -203,7 +209,7 @@ while i <opt.max_iters-2+1,
                 continue
             end
         end
-        [value,N_G2_tmp] = Obj(hyper_cand, surrogate);
+        [value,N_G2_tmp,y_s] = Obj(hyper_cand, surrogate);
     else
         [value] = Obj(hyper_cand);
     end

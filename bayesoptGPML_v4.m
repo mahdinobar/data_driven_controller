@@ -166,6 +166,7 @@ while i <opt.max_iters-2+1,
         elseif surrogate==true
             if aq_val>max(AQ_vals)*eta2
                 opt.max_iters=opt.max_iters+1;
+                counter = 1; %in server GBO_72 and 74results this was missing
             elseif counter<3+1
                 counter =counter+1;
                 opt.max_iters=opt.max_iters+1;

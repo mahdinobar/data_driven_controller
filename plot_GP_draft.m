@@ -631,30 +631,37 @@ for i=1:length(eta1)
     n_s{i}=[];
 %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
 load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-    for j=1:50
+% dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
+% load(append(dirGBO,'trace_file.mat'),'Trace')
+    
+for j=1:50
         try
             n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
         catch
             n_s{i}=[n_s{i};nan];
         end
-    end
+end
     mean_n_s=[mean_n_s,nanmean(n_s{i})];
     std_n_s=[std_n_s,nanstd(n_s{i})];
 end
 clearvars Trace
 yyaxis right
-% hr=errorbar(eta1,mean_n_s,std_n_s,'-o');
-hr=plot(eta1,mean_n_s,'-or');
+hr=errorbar(eta1,mean_n_s,std_n_s,'-or');
+% hr=plot(eta1,mean_n_s,'-or');
 % title('Generalization of surrogate switch $\frac{\sigma_{GP}}{\sigma_{s}}>\eta_{1}$','Interpreter','latex')
 title('Generalization of surrogate switch $\sigma_{GP}>\eta_{1}$','Interpreter','latex')
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax20, '\eta_{1}')
 ylabel(ax20, 'total number of switching')
 xticks(eta1)
+ylim([0 max(mean_n_s+std_n_s)])
 yyaxis left
-mean_GBO_convergance=[6,3,2,2,5,5,3,4,4,4];
-hl=plot(eta1,mean_GBO_convergance,'-ob');
+mean_GBO_convergance=[1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000	4.16000000000000];%[1     1     1     2     2     2     2     2     3     4];
+std_GBO_convergance=[1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818	5.61106778008010];
+% hl=plot(eta1,mean_GBO_convergance,'-ob');
+hr=errorbar(eta1,mean_GBO_convergance,mean_GBO_convergance,'-ob');
 ylabel(ax20, 'Average nominal convergance rate')
+ylim([0 max(mean_GBO_convergance+mean_GBO_convergance)])
 
 % fig=figure(21);
 % fig.Position=[200 0 1000 800];
