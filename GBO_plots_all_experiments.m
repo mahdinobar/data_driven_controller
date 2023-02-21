@@ -73,7 +73,8 @@ N_iter=N_iter+N0;
 % dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % eta1_str={'05','06','07','08','09','1','11','12','13','14','15','16','17','18','19','2'};
-eta1_str={'1','2','3','4','5','6','7','8','9','10'};
+% eta1_str={'1','2','3','4','5','6','7','8','9','10'};
+eta1_str={'05','1','15','2','3','5','10'};
 convergence_iteration=[];
 convergence_iteration_std=[];
 convergence_iteration_BO=[];
@@ -84,8 +85,10 @@ for k=1:length(eta1_str)
 % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
 % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
 % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
-dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
-dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
+% dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
+% dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
+dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
+dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
 
 
 % dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_05/results_1/";
@@ -311,11 +314,13 @@ h7=yline(ax1,[0.9915],'--'); %MATLAB PI auto-tuner  with GM=60 degrees
 % convergence_iteration_BO=[convergence_iteration_BO,find(meanJminObservBO<0.9915,1)]
 % convergence_iteration_diff=[convergence_iteration_diff,find(meanJminObservGBO<0.9915,1)-find(meanJminObservBO<0.9915,1)];
 
+J_nom=0.9915;
+J_gt=0.5789;
 converg_iter=[];
 converg_iter_BO=[];
 for i=1:size(JminObservGBO,2)
-    converg_iter=[converg_iter,find(JminObservGBO(:,i)<0.9915,1)];
-    converg_iter_BO=[converg_iter_BO,find(JminObservBO(:,i)<0.9915,1)];
+    converg_iter=[converg_iter,find(JminObservGBO(:,i)<J_gt,1)];
+    converg_iter_BO=[converg_iter_BO,find(JminObservBO(:,i)<J_gt,1)];
 end
 convergence_iteration=[convergence_iteration,mean(converg_iter)]
 convergence_iteration_std=[convergence_iteration_std,std(converg_iter)]
