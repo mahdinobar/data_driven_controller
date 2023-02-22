@@ -15,7 +15,7 @@ colormap(gca,"winter")
 colorbar
 hold on
 view(2)
-exper=1;
+exper=2;
 N0=1;
 kp = Trace(exper).samples(1+N0:end,1);
 ki = Trace(exper).samples(1+N0:end,2);
@@ -88,7 +88,7 @@ hGBO=scatter3(ax2, kp, ki, z, [120],c,'filled');
 % hBO=scatter3(ax2, meanExperBO(N0+1:end, 1), meanExperBO(N0+1:end, 2), ones(length(meanExperGBO(N0+1:end,1)), 1), [120],c,'filled','^');
 
 colormap(ax1, flipud(parula));
-colormap(ax2,flipud(hot));
+colormap(ax2,flipud(copper));
 set(ax1,'ColorScale','log')
 % get everthin lined up
 cb1 = colorbar(ax1,'Position',[0.05 0.11 0.01 0.815]); % four-elements vector to specify Position [left bottom width height]
@@ -99,7 +99,7 @@ cb1.FontSize=24;
 cb2.Label.String = 'iteration';
 cb2.FontName='Times New Roman';
 cb2.FontSize=24;
-legend([hGBO, htrue, hInit],{'Guided BO', 'BO', 'Ground Truth', 'Initial Sample'}, 'Location', 'southeast', 'fontname','Times New Roman');
+legend([hGBO, htrue, hInit],{'Guided BO', 'BO', 'Ground Truth', 'Initial Sample'}, 'Location', 'north', 'fontname','Times New Roman');
 grid on
 
 set(gca, 'DefaultAxesFontName', 'Times', 'FontSize', 24), 
