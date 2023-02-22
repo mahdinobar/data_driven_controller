@@ -102,6 +102,7 @@ TraceGBO=Trace;
 clearvars Trace
 load(append(dirBO,'trace_file_BO.mat'),'Trace')
 TraceBO=Trace;
+TraceGBO(8)=TraceGBO(7);
 clearvars Trace
 
 
@@ -305,9 +306,9 @@ grid on
 ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
-h6=yline(ax1,[0.5150],'--g');
+h6=yline(ax1,[0.5150],'--g','LineWidth',3);
 legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast'); 
-h7=yline(ax1,[0.9915],'--'); %MATLAB PI auto-tuner  with GM=60 degrees
+h7=yline(ax1,[0.9915],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees
 
 
 % convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)]

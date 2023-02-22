@@ -15,7 +15,7 @@ colormap(gca,"winter")
 colorbar
 hold on
 view(2)
-exper=8;
+exper=1;
 N0=1;
 kp = Trace(exper).samples(1+N0:end,1);
 ki = Trace(exper).samples(1+N0:end,2);
