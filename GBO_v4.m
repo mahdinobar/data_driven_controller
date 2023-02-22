@@ -131,7 +131,7 @@ set(gca,'ColorScale','log')
 
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
-[J_gt,I]=min(j_pt,[],'all');
+[J_gt,I]=min(j_pt,[],'all')
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
@@ -310,7 +310,6 @@ w_importance=[2, 1, 1, 1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
-check=[ov*w(1),st*w(2),Tr*w(3),ITAE*w(4)]./objective.*100
 if objective_noise==true
     %     noise = (objective*5/100)*randn(1,1);  % gives you 1000 samples
     %     noise = (1.6957*5/100)*randn(1,1);  % standard normal dist*(5/100 of mean of gt cost inside inside feasible set)

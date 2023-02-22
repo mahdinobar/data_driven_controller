@@ -625,23 +625,25 @@ grid on
 % eta1_str={'05','06','07','08','09','1','11','12','13','14','15','16','17','18','19','2'};
 % eta1=[1:10];
 % eta1_str={'1','2','3','4','5','6','7','8','9','10'};
-eta1=[0.5,1,1.5,2,3,5,10];
-eta1_str={'05','1','15','2','3','5','10'};
+% eta1=[0.5,1,1.5,2,3,5,10];
+% eta1_str={'05','1','15','2','3','5','10'};
+eta1=[0.1,0.5,1:10,20];
+eta1_str={'01','05','1','2','3','4','5','6','7','8','9','10','20'};
 mean_n_s=[];
 std_n_s=[];
 for i=1:length(eta1)
     n_s{i}=[];
 %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-% load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
 %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+% load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
 % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % load(append(dirGBO,'trace_file.mat'),'Trace')
     
 for j=1:length(Trace)
     try
-        %             n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
-        n_s{i}=[n_s{i};size(Trace(j).hyp_GP_mean,1)-50];
+                    n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+%         n_s{i}=[n_s{i};size(Trace(j).hyp_GP_mean,1)-50];
     catch
         n_s{i}=[n_s{i};nan];
     end
@@ -653,8 +655,8 @@ clearvars Trace
 yyaxis right
 hr=errorbar(eta1,mean_n_s,std_n_s,'-or');
 % hr=plot(eta1,mean_n_s,'-or');
-title('Generalization of surrogate switch $\frac{\sigma_{GP}}{\sigma_{s}}>\eta_{1}$','Interpreter','latex')
-% title('Generalization of surrogate switch $\sigma_{GP}>\eta_{1}$','Interpreter','latex')
+% title('Generalization of surrogate switch $\frac{\sigma_{GP}}{\sigma_{s}}>\eta_{1}$','Interpreter','latex')
+title('Generalization of surrogate switch $\sigma_{GP}>\eta_{1}$','Interpreter','latex')
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax20, '\eta_{1}')
 ylabel(ax20, 'total number of switching')
@@ -671,12 +673,12 @@ yyaxis left
 % std_GBO_convergance=[4.10894649005002	5.04264882011768	7.04848369856805	5.59405661284860	5.72391319279633	5.74023994358503	5.62526595115970	4.30521357723148	4.60645066782464	7.08797303198366	6.30327633195680	6.25010203998335	7.36801849734671	7.78391091901684	6.88391588213717	6.80933339443706];
 
 % % server 75 results 
-mean_GBO_convergance=[32.7142857142857	29.6875000000000	29.2352941176471	26.9473684210526	25.6250000000000	27.8181818181818	28.5555555555556];
-std_GBO_convergance=[12.3315016954925	10.1174354458034	9.32422524773980	11.8812348975205	12.1976773745387	10.0741837132930	10.1007991659497];
+mean_GBO_convergance=[1.74000000000000	2.04000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000	4.16000000000000	5.18000000000000];
+std_GBO_convergance=[2.58575374871228	2.51493498110462	1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818	5.61106778008010	4.80514180384950];
 % hl=plot(eta1,mean_GBO_convergance,'-ob');
 hr=errorbar(eta1,mean_GBO_convergance,std_GBO_convergance,'-ob');
-ylabel(ax20, 'Convergance iteration to ground truth performance')
-% ylabel(ax20, 'Convergance iteration to nominal performance')
+% ylabel(ax20, 'Convergance iteration to ground truth performance')
+ylabel(ax20, 'Convergance iteration to nominal performance')
 ylim([0 max(mean_GBO_convergance+std_GBO_convergance)])
 
 % fig=figure(21);
