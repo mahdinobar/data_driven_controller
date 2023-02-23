@@ -5,9 +5,10 @@ idx=0;
 LV_switch=0;
 % build and save initial dataset
 global G2data
-addpath("C:\mahdi\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
-dir=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
+addpath("C:\mahdi\data_driven_controller\functions")
+addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
+tmp_name="test_1";
+dir=append("C:\mahdi\Data\",tmp_name,"\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -15,24 +16,17 @@ start_switch=1;
 stat_value=60;
 
 N0=1; %for N0>1 modify
-% gains0=[0.5, 1.47]; %initial random 
-% gains0=[0.5349, 1.0692]; %initial random 
-% gains0=[0.3349, 1.5692]; %initial random 
-% gains0=[0.4873, 1.5970]; %nominal for PM 90degree and GM=49db
 Kp=gains0(1);
 Ki=gains0(2);
 
 sampleTf=2.5;
 sampleTs=0.01;
 Nsample=sampleTf/sampleTs;
-% sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% Nsample=150;
-% sampleTs=sampleTf/(Nsample-1);
 
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=4; % if you decrease nr_repeats to 2 you must modify J_init too
+nr_repeats=2; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;
 
@@ -53,10 +47,10 @@ if counter<1
 end
 
 if counter==1
-gain_vel=Kp;
-Tn_vel=1/Ki;
-counter=counter+1;
-return
+    gain_vel=Kp;
+    Tn_vel=1/Ki;
+    counter=counter+1;
+    return
 end
 
 sampleTs=1/100;
@@ -82,11 +76,11 @@ counter=counter+1;
 if counter>N0+1
     expr=expr+1;
     counter=0;
-    dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+    dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
     load(dir_gains)
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
 end
+%%%%%%%%%%%%%%%%%%%%%
+mkdir("C:\mahdi\Data\TEST000000000000000000000000\")
+%%%%%%%%%%%%%%%%%%%%%
 return
-%%%%%%%%%%%%%%%%%%%%%
-mkdir("C:\mahdi\LabVIEW Data\TEST000\")
-%%%%%%%%%%%%%%%%%%%%%
