@@ -3,27 +3,29 @@ close all;
 clc;
 clear;
 
-dirBO="C:\mahdi\LabVIEW Data\BO_Data\demo_BO_1\";
-dirGBO="C:\mahdi\LabVIEW Data\BO_Data\demo_GBO_1\";
-
 N0=1; %number of initial data
 N_iter=50;
-N_expr=11;
+N_expr=27;
 N_iter=N_iter+N0;
 for expr=1:N_expr
-    tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
-    dirGBO=append(tmp_dir,'\demo_GBO_', string(expr), '\');
-    load(append(dirGBO,'trace_file.mat'),'Trace')
+    tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_01102022";
+    dirGBO=append(tmp_dir,'/demo_GBO_', string(expr), '/');
+    load(append(dirGBO,'trace_file_removed_2.mat'),'Trace')
     TraceGBO(expr)=Trace(1);    
     delete Trace
-    
-    tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
-    dirBO=append(tmp_dir,'\demo_BO_', string(expr), '\');
+
+    tmp_dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/GBO_Experiment_data_26092022";
+    dirBO=append(tmp_dir,'/demo_BO_', string(expr), '/');
     load(append(dirBO,'trace_file.mat'),'Trace')
     TraceBO(expr)=Trace(1);    
     delete Trace
 
 end
+
+% todo manually remove failed experiment
+TraceBO(12)=[];
+TraceGBO(12)=[];
+
 true_objective = 1;
 expr=1;
 while expr<min([length(TraceGBO),length(TraceBO)])+1
@@ -161,7 +163,8 @@ grid on
 xlim([1, 50])
 xticks([1, 5:5:50])
 % yticks([1, 5:5:50])
-
+xlabel(ax1, 'Iteration on real plant')
+ylabel(ax1, 'Minimum observed objective')
 % yticks([16.5, 50, 50.81, 80.0, 100.0])
 
 % for nominal at gains_nom= [0.4873, 1.5970]

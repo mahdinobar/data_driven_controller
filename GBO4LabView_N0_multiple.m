@@ -4,7 +4,6 @@ N_G2_activated_counter=0;
 idx=0;
 LV_switch=0;
 % build and save initial dataset
-global G2data
 addpath("C:\mahdi\LabVIEW Data\functions")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
@@ -15,8 +14,8 @@ end
 start_switch=1;
 stat_value=60;
 
-N0=3; %for N0>1 modify
-
+N0=10; %for N0>1 modify
+N_expr=50;
 sampleTf=2.5;
 sampleTs=0.01;
 Nsample=sampleTf/sampleTs;
@@ -36,13 +35,10 @@ Tn_Angle=0;
 
 if counter<1
     % sample from latin (denoted as ltn) hypercube
-    N_ltn=N0;
-    RAND_ltn_all=zeros(N0,N_expr);
-    RAND_ltn = sort(lhsdesign(N_ltn,1));
-    RAND_ltn_all(:,1)=RAND_ltn;
+    RAND_ltn_all = sort(lhsdesign(N0,N_expr));
     save(append(dir,'RAND_ltn_all.mat'),'RAND_ltn_all')    
     load(dir_gains)
-    gains0=[Kp_min+RAND_ltn_all(counter,expr)*(Kp_max-Kp_min),Ki_min+RAND_ltn_all(counter,expr)*(Ki_max-Ki_min)];
+    gains0=[Kp_min+RAND_ltn_all.*(Kp_max-Kp_min);Ki_min+RAND_ltn_all.*(Ki_max-Ki_min)];
     save(append(dir,'gains0.mat'),'gains0')        
     gains0_init=[0.5, 1.47]; %initial random
     Kp=gains0_init(1);
@@ -59,8 +55,8 @@ if counter<1
     return
 else
     load(append(dir,'gains0.mat'),'gains0')        
-    Kp=gains0(1);
-    Ki=gains0(2);
+    Kp=gains0(counter, expr);
+    Ki=gains0(N0+counter, expr);
 end
 
 if LVswitch==0
@@ -92,31 +88,22 @@ else
     G2data_init = merge(G2data_init, iddata(ytmp,utmp,sampleTs));
     save(append(dir, 'G2data_init.mat'),'G2data_init')
     load(append(dir, 'botrace0'));
+    J_init=ObjFun(perf_Data(end-nr_repeats+1:end,:));
     botrace0.samples=[botrace0.samples;[Kp, Ki]];
     botrace0.values=[botrace0.values;J_init];
     botrace0.times=[botrace0.times;0];
     save(append(dir, 'botrace0'), 'botrace0');
 
 end
-save(append(dir, 'perf_Data_',num2str(counter)), 'perf_Data')
-save(append(dir, 'exp_Data_',num2str(counter)), 'exp_Data')
-
-
-botrace0.samples=[Kp, Ki];
-botrace0.values=J_init;
-botrace0.times=0;
-save(append(dir, 'G2data_init'),'G2data_init');
-save(append(dir, 'botrace0'), 'botrace0');
-save(append(dir, 'gains0'), 'gains0');
-save(append(dir, 'perf_Data'), 'perf_Data');
-save(append(dir, 'exp_Data'), 'exp_Data');
+save(append(dir, 'perf_Data_',num2str(counter),'_',num2str(expr)), 'perf_Data')
+save(append(dir, 'exp_Data_',num2str(counter),'_',num2str(expr)), 'exp_Data')
 
 counter=counter+1;
-if counter>N0+1
+if counter>N0
     expr=expr+1;
     counter=0;
+    %%%%%%%%%%%%%%%%%%%%%
+    mkdir("C:\mahdi\LabVIEW Data\TEST0000000000000000000\")
+    %%%%%%%%%%%%%%%%%%%%%
 end
 return
-%%%%%%%%%%%%%%%%%%%%%
-mkdir("C:\mahdi\LabVIEW Data\TEST000\")
-%%%%%%%%%%%%%%%%%%%%%
