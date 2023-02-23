@@ -25,5 +25,3 @@ w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
 end
-
-
