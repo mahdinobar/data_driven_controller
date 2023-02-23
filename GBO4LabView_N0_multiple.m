@@ -1,6 +1,6 @@
 hyper_grid_pruned=zeros(2,2);
 N_G2_activated_counter=0;
-%  build initial N0 dataset
+% build initial N0 dataset
 idx=0;
 LV_switch=0;
 % build and save initial dataset
