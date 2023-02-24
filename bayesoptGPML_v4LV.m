@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = bayesoptGPML_v4LV(Obj,opt, N0, y_s, isGBO)
+function [minsample,minvalue,botrace,LVgains, hyper_grid] = bayesoptGPML_v4LV(Obj,opt, N0, LVswitch, perf_Data, hyper_grid, y_s)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -72,41 +72,47 @@ hyp_GP_lik=[];
 GP_hypers_mean_record=[];
 GP_hypers_cov_record=[];
 GP_hypers_lik_record=[];
-while i <opt.max_iters-2+1,
-    hidx = -1;
+while i <opt.max_iters-2+1
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
     [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, N0, botrace);
     AQ_vals=[AQ_vals;aq_val];
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    if isGBO
-        eta1=1;
-        eta2=0.2;
-        % estimate surrogate uncertainty sigma_s
-        SE=0;
-        for i_s=1:length(y_s)
-            SE=SE+(y_s(i_s)-values(i_s))^2;
-        end
-        sigma_s=sqrt(SE/length(y_s));
-        if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
-            %                 if aq_val>max(AQ_vals)*eta
-            surrogate=true; %switch to use surrogate G2 for objective
+    eta1=1;
+    eta2=0.2;
+    % estimate surrogate uncertainty sigma_s
+    SE=0;
+    for i_s=1:length(y_s)
+        SE=SE+(y_s(i_s)-values(i_s))^2;
+    end
+    sigma_s=sqrt(SE/length(y_s));
+    if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
+        %                 if aq_val>max(AQ_vals)*eta
+        surrogate=true; %switch to use surrogate G2 for objective
+        opt.max_iters=opt.max_iters+1;
+        counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
+    elseif surrogate==true
+        if aq_val>max(AQ_vals)*eta2
             opt.max_iters=opt.max_iters+1;
-            counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
-        elseif surrogate==true
-            if aq_val>max(AQ_vals)*eta2
-                opt.max_iters=opt.max_iters+1;
-                counter = 1; %in server GBO_72 and 74results this was missing
-            elseif counter<3+1
-                counter =counter+1;
-                opt.max_iters=opt.max_iters+1;
-            else
-                surrogate=false;
-            end
+            counter = 1; %in server GBO_72 and 74results this was missing
+        elseif counter<3+1
+            counter =counter+1;
+            opt.max_iters=opt.max_iters+1;
+        else
+            surrogate=false;
         end
+    end
+    
+    if LVswitch==0
+        LVgains=hyper_cand;
+        minsample=[];
+        minvalue=[];
+        botrace=[];
+        return
+    elseif LVswitch==1
+        LVgains=[];
+%         value = F(perf_Data);
         [value,~,~, y_s] = Obj(hyper_cand, surrogate);
-    else
-        [value] = Obj(hyper_cand);
     end
     times(end+1) = toc;
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
@@ -155,7 +161,6 @@ end
 [mv,mi] = min(values);
 minvalue = mv;
 minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
-
 
 function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, N0, botrace)
 % Get posterior means and variances for all points on the grid.
