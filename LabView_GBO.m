@@ -1,11 +1,12 @@
 % GBO
-addpath("C:\mahdi\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
-dir0=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
-tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
-dir=append(tmp_dir,'\demo_GBO_', string(expr), '\');
+addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
+addpath("C:\mahdi\data_driven_controller\functions")
+tmp_name="exper_72";
+tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
+dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
+dir=append(tmp_dir,'\GBO_sigma_s_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -26,7 +27,7 @@ N_G=1;%N_G=5 number of iteration we use real plant before switching to surrogate
 N_G2_activated=30;
 npG2=2;
 
-sampleTf=2.5;%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+sampleTf=3.1;%check!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 sampleTs=0.01;
 Nsample=sampleTf/sampleTs;
 % Nsample=150;
@@ -41,18 +42,16 @@ Input_mode=2;
 
 gain_angle=0;
 Tn_Angle=0;
-% %%%%%%%%%%%%%%%%%%%%%
-% mkdir(append("C:\mahdi\LabVIEW Data\TEST000_", string(expr)));
-% %%%%%%%%%%%%%%%%%%%%%
+
 %% load gain limits
-dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
 
 %% We define the function we would like to optimize
 fun = @(perf_Data) ObjFun(perf_Data); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 
 %% Setup the Gaussian Process (GP) Library
-addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
+addpath("C:\mahdi\data_driven_controller\gpml")
 startup;
 % Setting parameters for Bayesian Global Optimization
 opt.hyp = -1; % Set hyperparameters using MLE.
@@ -111,7 +110,7 @@ elseif counter>1
 end
 
 opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main")
+addpath("C:\mahdi\data_driven_controller")
 
 % perf_Data is only needed when LVswitch==1
 [ms,mv,Trace_tmp, LVgains,hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)),hyper_grid);
