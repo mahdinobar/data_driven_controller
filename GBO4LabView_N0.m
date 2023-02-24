@@ -81,6 +81,6 @@ if counter>N0+1
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
 end
 %%%%%%%%%%%%%%%%%%%%%
-mkdir("C:\mahdi\Data\TEST000000000000000000000000\")
+mkdir("C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\")
 %%%%%%%%%%%%%%%%%%%%%
 return

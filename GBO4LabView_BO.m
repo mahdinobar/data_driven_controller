@@ -2,11 +2,12 @@ idx=0;
 N_G2_activated_counter=0;
 % BO
 global G2data
-addpath("C:\mahdi\LabVIEW Data\functions")
-addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
-dir0=append("C:\mahdi\LabVIEW Data\N0_Data_",string(expr),"\");
-tmp_dir="C:\mahdi\LabVIEW Data\BO_Data\";
-dir=append(tmp_dir,'\demo_BO_', string(expr), '\');
+addpath("C:\mahdi\data_driven_controller\functions")
+addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
+tmp_name="exper_72";
+tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
+dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
+dir=append(tmp_dir,'\BO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -30,7 +31,7 @@ gain_angle=0;
 Tn_Angle=0;
 
 %% load gain limits
-dir_gains=append('C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\tmp\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
 
 %% We define the function we would like to optimize
@@ -41,7 +42,7 @@ else
 end
 
 %% Setup the Gaussian Process (GP) Library
-addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main\gpml")
+addpath("C:\mahdi\data_driven_controller\gpml")
 startup;
 % Setting parameters for Bayesian Global Optimization
 opt.hyp = -1; % Set hyperparameters using MLE.
@@ -99,7 +100,7 @@ elseif counter>1
 end
 
 opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
-addpath("C:\Users\students\Documents\data_driven_controller-main\data_driven_controller-main")
+addpath("C:\mahdi\data_driven_controller")
 [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, perf_Data, hyper_grid);
 if counter==1 && LVswitch==1
     save(append(dir, 'test_trace_file.mat'),'Trace_tmp')
