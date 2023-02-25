@@ -127,8 +127,8 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     save(append(dir, 'G2data.mat'),'G2data')
     idx= idx +1; % idx counts number of real system after last G2
-%     add measured data to BO dataset
-    J_measured=ObjFun(perf_Data(end-nr_repeats+1:end,:));
+    % add measured data to BO dataset
+    J_measured=ObjFun(mean(perf_Data(end-nr_repeats+1:end,:)));
     Trace=opt.resume_trace_data;
     Kp=LVgains(1);
     Ki=LVgains(2);
@@ -136,6 +136,8 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived
     Trace.values=J_measured;
     Trace.times=0;
     save(append(dir, 'trace_file.mat'),'Trace')
+    save(append(dir, 'perf_Data_',num2str(counter),num2str(expr)), 'perf_Data')
+    save(append(dir, 'exp_Data_',num2str(counter),num2str(expr)), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to call the system either real or surrogate to get data
     [ms,mv,Trace_tmp, LVgains,hyper_grid_pruned,surrogate] = bayesoptGPMLLV_v4(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)),hyper_grid, y_s);
@@ -182,9 +184,9 @@ elseif LVswitch==0  % LVswitch==0 means we need to call the system either real o
 end
 
 Trace(1)=Trace_tmp;
-save(append(dir, 'trace_file.mat'),'Trace')
-save(append(dir, 'perf_Data_',num2str(counter),num2str(expr)), 'perf_Data')
-save(append(dir, 'exp_Data_',num2str(counter),num2str(expr)), 'exp_Data')
+% save(append(dir, 'trace_file.mat'),'Trace')
+% save(append(dir, 'perf_Data_',num2str(counter),num2str(expr)), 'perf_Data')
+% save(append(dir, 'exp_Data_',num2str(counter),num2str(expr)), 'exp_Data')
 counter=counter+1;
 
 N_iterations=50; %number of iteration on real plant
