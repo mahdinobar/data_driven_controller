@@ -116,12 +116,30 @@ end
 addpath("C:\mahdi\data_driven_controller")
 opt.max_iters = size(opt.resume_trace_data.samples,1)+1;
 
-% perf_Data is only needed when LVswitch==1
-[ms,mv,Trace_tmp, LVgains,hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)),hyper_grid, y_s);
 
-%     LVswitch==0 means we need to call the system to get data
-if LVswitch==0
-    if idx==N_G && N_G2_activated_counter<N_G2_activated
+if LVswitch==1 % means new exp_Data and perf_Data arrived
+    sample_idx=exp_Data(:,3)==step_high; %pay attention!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ytmp = exp_Data(sample_idx,3);
+    utmp= exp_Data(sample_idx,4);
+    ytmp=ytmp(1:Nsample);
+    utmp=utmp(1:Nsample);
+    load(append(dir, 'G2data.mat'))
+    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+    save(append(dir, 'G2data.mat'),'G2data')
+    idx= idx +1; % idx counts number of real system after last G2
+%     add measured data to BO dataset
+    J_measured=ObjFun(perf_Data(end-nr_repeats+1:end,:));
+    Trace=opt.resume_trace_data;
+    Kp=LVgains(1);
+    Ki=LVgains(2);
+    Trace.samples=[Kp, Ki];
+    Trace.values=J_measured;
+    Trace.times=0;
+    save(append(dir, 'trace_file.mat'),'Trace')
+    LVswitch=0;
+elseif LVswitch==0  % LVswitch==0 means we need to call the system either real or surrogate to get data
+    [ms,mv,Trace_tmp, LVgains,hyper_grid_pruned,surrogate] = bayesoptGPMLLV_v4(fun,opt,N0, LVswitch, mean(perf_Data(end-nr_repeats+1:end,:)),hyper_grid, y_s);
+    if surrogate==true %means we call the surrogate to get perf_Data
         if counter>1
             load(append(dir, 'G2data.mat'))
         end
@@ -137,7 +155,7 @@ if LVswitch==0
         ITAE = trapz(t, t.*abs(e));
         perf_Data=[perf_Data;[ov, Tr, st, ITAE, 0]];
         LVswitch=1; % means bayesoptGPML will run completely
-        [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPML(fun,opt,N0, LVswitch, [ov, Tr, st, ITAE, 0], hyper_grid);
+        [ms,mv,Trace_tmp, LVgains, hyper_grid_pruned] = bayesoptGPMLLV_v4(fun,opt,N0, LVswitch, [ov, Tr, st, ITAE, 0], hyper_grid);
         LVswitch=0;
         idx= 0;
         N_G2_activated_counter=N_G2_activated_counter+1;
@@ -153,7 +171,7 @@ if LVswitch==0
             save(append(dir, 'idx_G2.mat'),'idx_G2')
         end
         save(append(dir, 'G2_',num2str(counter),'_',num2str(expr)), 'G2')
-    else
+    elseif surrogate==false %means we call the real system to get perf_Data
         Kp=LVgains(1);
         Ki=LVgains(2);
         gain_vel=Kp;
@@ -161,17 +179,6 @@ if LVswitch==0
         LVswitch=1;
         return
     end
-elseif LVswitch==1 % means new exp_Data and perf_Data arrived
-    sample_idx=exp_Data(:,3)==step_high; %pay attention!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ytmp = exp_Data(sample_idx,3);
-    utmp= exp_Data(sample_idx,4);
-    ytmp=ytmp(1:Nsample);
-    utmp=utmp(1:Nsample);
-    load(append(dir, 'G2data.mat'))
-    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    save(append(dir, 'G2data.mat'),'G2data')
-    idx= idx +1; % idx counts number of real system after last G2
-    LVswitch=0;
 end
 
 Trace(1)=Trace_tmp;

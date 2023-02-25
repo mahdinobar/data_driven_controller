@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace,LVgains, hyper_grid] = bayesoptGPML_v4LV(Obj,opt, N0, LVswitch, perf_Data, hyper_grid, y_s)
+function [minsample,minvalue,botrace,LVgains, hyper_grid, surrogate] = bayesoptGPML_v4LV(Obj,opt, N0, surrogate, perf_Data, hyper_grid, y_s)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -58,10 +58,9 @@ else
 end
 % Main BO loop
 AQ_vals=[];
-i_start = length(values) - 2 + 1;
-i=i_start;
+% i_start = length(values) + 1;
+% i=i_start;
 N_G2=0;
-surrogate=false;
 G2_trigger_counter=0;
 post_mus_record=[];
 post_sigma2s_record=[];
@@ -72,7 +71,7 @@ hyp_GP_lik=[];
 GP_hypers_mean_record=[];
 GP_hypers_cov_record=[];
 GP_hypers_lik_record=[];
-while i <opt.max_iters-2+1
+% while i <opt.max_iters+1
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
     [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, N0, botrace);
     AQ_vals=[AQ_vals;aq_val];
@@ -103,17 +102,17 @@ while i <opt.max_iters-2+1
         end
     end
     
-    if LVswitch==0
+    if surrogate==false
         LVgains=hyper_cand;
         minsample=[];
         minvalue=[];
         botrace=[];
         return
-    elseif LVswitch==1
+    elseif surrogate==true
         LVgains=[];
-%         value = F(perf_Data);
-        [value,~,~, y_s] = Obj(hyper_cand, surrogate);
+        value = Obj(perf_Data);
     end
+    
     times(end+1) = toc;
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     values(end+1,1) = value;
@@ -155,8 +154,8 @@ while i <opt.max_iters-2+1
     if opt.save_trace
         save(opt.trace_file,'botrace');
     end
-    i=i+1;
-end
+%     i=i+1;
+% end
 % Get minvalue and minsample
 [mv,mi] = min(values);
 minvalue = mv;
