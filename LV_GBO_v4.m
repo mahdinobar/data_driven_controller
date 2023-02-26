@@ -1,11 +1,11 @@
 % GBO version 4
 %% ADD PATHS
+rehash 
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
 addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-addpath("C:\mahdi\data_driven_controller")
 tmp_name="exper_72";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
@@ -97,6 +97,7 @@ elseif counter>1
     opt.resume_trace_data = Trace;
     clear Trace
 end
+addpath("C:\mahdi\data_driven_controller")
 
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms

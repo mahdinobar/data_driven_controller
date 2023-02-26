@@ -7,9 +7,13 @@ warning('off')
 check_opts(opt);
 incomplete = true(size(hyper_grid,1),1);
 % Check for existing trace
-try 
-    % 		load(opt.trace_file);
+% try 
     botrace=opt.resume_trace_data;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    test_dir="C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\";
+    mkdir(test_dir)
+    save(test_dir,'botrace')
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %         so initial data needs to be scaled between [0,1] to be in consistent with the code. At the end the unscaled samples are collected as the trace and final resuts.
     samples = scale_point(botrace.samples,opt.mins,opt.maxes);
     values = botrace.values;
@@ -21,9 +25,9 @@ try
         post_mus=botrace.post_mus;
         post_sigma2s=botrace.post_sigma2s;
     end
-catch
-    error("Problem in resume_trace!")
-end
+% catch
+%     error("Problem in resume_trace!")
+% end
 % Main BO iteration
 if isfield(botrace,'AQ_vals')
     AQ_vals=botrace.AQ_vals;
