@@ -1,5 +1,5 @@
-idx=0;
-N_G2_activated_counter=0;
+counter_real=0;
+counter_s=0;
 % BO
 global G2data
 addpath("C:\mahdi\data_driven_controller\functions")
@@ -14,7 +14,6 @@ end
 
 start_switch=1;
 stat_value=60;
-withSurrogate=false;
 
 N0=1; %for N0>1 modify
 N_iter=50;
@@ -35,11 +34,7 @@ dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi
 load(dir_gains)
 
 %% We define the function we would like to optimize
-if withSurrogate==true
-    fun = @(X)ObjFun_Guided(X, G, sampleTf, sampleTs, npG2, N_G, N_G2_activated, N_perturbed);
-else
     fun = @(perf_Data) ObjFun(perf_Data); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
-end
 
 %% Setup the Gaussian Process (GP) Library
 addpath("C:\mahdi\data_driven_controller\gpml")
@@ -132,16 +127,4 @@ end
 
 return
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-gains0=[0.0950, 3.3293];
-Kp=gains0(1);
-Ki=gains0(2);
-gain_vel=Kp;
-Tn_vel=1/Ki;
-stat_value=0.5;
-Input_mode=0;
-LVswitch=0;
-counter=0;
-return
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

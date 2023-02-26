@@ -1,7 +1,7 @@
 hyper_grid_pruned=zeros(2,2);
 N_G2_activated_counter=0;
 %  build initial N0 dataset
-idx=0;
+counter_real=0;
 LV_switch=0;
 % build and save initial dataset
 global G2data
