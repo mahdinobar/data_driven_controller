@@ -70,7 +70,7 @@ elseif counter_s>0
     LVgains=[];
     npG2=2;
     G2=tfest(G2data, npG2);
-    C=tf([LVgains(1), LVgains(1)*LVgains(2)], [1, 0]);
+    C=tf([hyper_cand(1), hyper_cand(1)*hyper_cand(2)], [1, 0]);
     CL=feedback(C*G2, 1);
     ov=abs(stepinfo(CL).Overshoot);
     st=stepinfo(CL).SettlingTime;
@@ -82,7 +82,7 @@ elseif counter_s>0
     perf_Data=[ov, Tr, st, ITAE];
     value = Obj(perf_Data);
     values(end+1,1) = value;
-    idx_G2(end+1)=size(values);
+    idx_G2(end+1)=size(values,1);
 end
 
 times(end+1) = toc;
@@ -225,3 +225,8 @@ else
     end
 end
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% test_dir="C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\";
+% mkdir(test_dir)
+% save(test_dir,'opt.resume_trace_data')
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
