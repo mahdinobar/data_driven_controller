@@ -21,7 +21,6 @@ try
         post_mus=botrace.post_mus;
         post_sigma2s=botrace.post_sigma2s;
     end
-    clear botrace
 catch
     error("Problem in resume_trace!")
 end

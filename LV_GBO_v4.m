@@ -9,7 +9,7 @@ addpath("C:\mahdi\data_driven_controller")
 tmp_name="exper_72";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
-dir=append(tmp_dir,'\GBO_sigma_s_', string(expr), '\');
+dir=append(tmp_dir,'\GBO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
