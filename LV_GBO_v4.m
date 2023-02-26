@@ -98,7 +98,7 @@ elseif counter>1
     clear Trace
 end
 
-if LVswitch==1 % means new exp_Data and perf_Data arrived
+if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
     ytmp = exp_Data(sample_idx,3);
     utmp= exp_Data(sample_idx,4);
@@ -114,7 +114,7 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived
     save(append(dir, 'perf_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'perf_Data')
     save(append(dir, 'exp_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'exp_Data')
     LVswitch=0;
-elseif LVswitch==0  % LVswitch==0 means we need to call the system either real or surrogate to get data
+elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
     [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2] = LV_bayesoptGPML_v4(fun,opt,N0,hyper_grid,counter_s, G2data,idx_G2);
     counter=counter+1; %counter: number of BO iteration in total
     if counter_s==0 %means we call the real system to get perf_Data
