@@ -38,7 +38,7 @@ hyp_GP_mean=[];
 hyp_GP_cov=[];
 hyp_GP_lik=[];
 % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
-[hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, N0, botrace);
+[hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, botrace);
 AQ_vals=[AQ_vals;aq_val];
 % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
 tic;
@@ -60,14 +60,13 @@ end
 if hidx >= 0
     incomplete(hidx) = false;
     hyper_grid = hyper_grid(incomplete,:);
-    incomplete = logical(ones(size(hyper_grid,1),1));
+    incomplete = true(size(hyper_grid,1),1);
 end
 
+LVgains=hyper_cand;
 if counter_s==0
-    LVgains=hyper_cand;
     G2=[];
 elseif counter_s>0
-    LVgains=[];
     npG2=2;
     G2=tfest(G2data, npG2);
     C=tf([hyper_cand(1), hyper_cand(1)*hyper_cand(2)], [1, 0]);
@@ -83,10 +82,11 @@ elseif counter_s>0
     value = Obj(perf_Data);
     values(end+1,1) = value;
     idx_G2(end+1)=size(values,1);
+    samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
+    botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
 end
 
 times(end+1) = toc;
-samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
 post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
 hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
 hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
@@ -96,7 +96,6 @@ botrace.post_mus=post_mus;
 botrace.post_sigma2s=post_sigma2s;
 botrace.post_mus=post_mus;
 botrace.post_sigma2s=post_sigma2s;
-botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
 botrace.values = values;
 botrace.times = times;
 botrace.hyp_GP_lik=hyp_GP_lik;
@@ -109,9 +108,9 @@ botrace.AQ_vals=AQ_vals;
 minvalue = mv;
 minsample = unscale_point(samples(mi,:),opt.mins,opt.maxes);
 
-function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, N0, botrace)
+function [hyper_cand,hidx,aq_val, mu, sigma2, ei_hyp] = get_next_cand(samples,values,hyper_grid,opt, botrace)
 % Get posterior means and variances for all points on the grid.
-[mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,N0, botrace);
+[mu,sigma2,ei_hyp] = get_posterior(samples,values,hyper_grid,opt,botrace);
 % Compute EI for all points in the grid, and find the maximum.
 best = min(values);
 %         given posterior mu and sigma on grid_set points, compute EI taken
@@ -127,7 +126,7 @@ hidx = meidx;
 % 		maximum EI acquired at hyper_cand
 aq_val = mei;
 
-function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,N0, botrace)
+function [mu,sigma2,hyp,post] = get_posterior(X,y,x_hats,opt,botrace)
 meanfunc = opt.meanfunc;
 covfunc = opt.covfunc;
 

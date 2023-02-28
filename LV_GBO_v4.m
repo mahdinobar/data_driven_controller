@@ -6,13 +6,14 @@ addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72";
+tmp_name="exper_72_debug";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
+
 %% load gain limits
 dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
@@ -58,9 +59,8 @@ infer=@infExact;
 
 %% to initialize first the response
 if counter==0  %global initialize counter from 0
-    gains0_init=[0.5, 1.47]; %initial random
-    Kp=gains0_init(1);
-    Ki=gains0_init(2);
+    Kp=gains0(1);
+    Ki=gains0(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
     step_low=40;
@@ -71,6 +71,14 @@ if counter==0  %global initialize counter from 0
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    save(append(dir,'hyper_grid_',num2str(counter),'.mat'),'hyper_grid')
+    save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
+    save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
+    save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
+    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')   
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    idx_G2=[5];
     counter=1;
     return
 end
@@ -78,7 +86,7 @@ end
 %%
 % load initial dataset
 if counter==1
-    idx_G2=[];
+    idx_G2=[5];
     load(append(dir0, 'botrace0.mat'));
     load(append(dir0, 'G2data_init.mat'));
     G2data=G2data_init;
@@ -88,12 +96,10 @@ if counter==1
     end
     opt.resume_trace_data = botrace0;
     clear botrace0
-    % Draw initial candidate grid from a Sobol sequence
-    sobol = sobolset(opt.dims);
-    hyper_grid = sobol(1:opt.grid_size,:); %creates random values from sobolset in [0,1]
 elseif counter>1
-    load(append(dir, 'G2data.mat'))
     load(append(dir, 'trace_file'))
+    load(append(dir, 'G2data.mat'))
+    load(append(dir, 'LVgains'))
     opt.resume_trace_data = Trace;
     clear Trace
 end
@@ -111,12 +117,15 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     values=Trace.values;
     values(end+1,1)=J_measured;
     Trace.values=values;
+    samples=Trace.samples;
+    samples = [samples; LVgains];
+    Trace.samples = samples;
     save(append(dir, 'G2data_',num2str(counter_real),'_',num2str(expr),'.mat'),'G2data')
     save(append(dir, 'perf_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'perf_Data')
     save(append(dir, 'exp_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
-    [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2] = LV_bayesoptGPML_v4(fun,opt,N0,hyper_grid,counter_s, G2data,idx_G2);
+    [ms,mv,Trace, LVgains,hyper_grid00000,idx_G200000, G2] = LV_bayesoptGPML_v4(fun,opt,N0,hyper_grid,counter_s, G2data,idx_G2);
     counter=counter+1; %counter: number of BO iteration in total
     if counter_s==0 %means we call the real system to get perf_Data
         Kp=LVgains(1);
@@ -129,13 +138,22 @@ elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or
     end
 end
 save(append(dir, 'trace_file.mat'),'Trace')
-
+save(append(dir, 'LVgains.mat'),'LVgains')
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    save(append(dir,'hyper_grid_',num2str(counter),'.mat'),'hyper_grid')
+    save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
+    save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
+    save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
+    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 %% setup automation for the next experiment
 if counter_real>N_iter
     expr=expr+1;
     counter=0;
     LVswitch=0;
     counter_s=0;
+    counter_real=0;
     
     Trace_removed=opt.resume_trace_data;
     Trace_removed.samples(idx_G2,:)=[];
