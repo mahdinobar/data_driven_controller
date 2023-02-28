@@ -78,7 +78,7 @@ if counter==0  %global initialize counter from 0
     save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
     save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    idx_G2=[5];
+    idx_G2=[0];
     counter=1;
     return
 end
@@ -86,7 +86,7 @@ end
 %%
 % load initial dataset
 if counter==1
-    idx_G2=[5];
+    idx_G2=[0];
     load(append(dir0, 'botrace0.mat'));
     load(append(dir0, 'G2data_init.mat'));
     G2data=G2data_init;
@@ -125,7 +125,7 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     save(append(dir, 'exp_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
-    [ms,mv,Trace, LVgains,hyper_grid00000,idx_G200000, G2] = LV_bayesoptGPML_v4(fun,opt,N0,hyper_grid,counter_s, G2data,idx_G2);
+    [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
     counter=counter+1; %counter: number of BO iteration in total
     if counter_s==0 %means we call the real system to get perf_Data
         Kp=LVgains(1);
@@ -144,7 +144,8 @@ save(append(dir, 'LVgains.mat'),'LVgains')
     save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
     save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
     save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
-    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')   
+    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')
+    save(append(dir,'G2_',num2str(counter),'.mat'),'G2')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
 %% setup automation for the next experiment
@@ -156,6 +157,7 @@ if counter_real>N_iter
     counter_real=0;
     
     Trace_removed=opt.resume_trace_data;
+    idx_G2=idx_G2(2:end);
     Trace_removed.samples(idx_G2,:)=[];
     Trace_removed.values(idx_G2)=[];
     Trace_removed.post_mus(idx_G2)=[];
