@@ -55,14 +55,12 @@ elseif counter_s>0
         counter_s=0;
     end
 end
-
 % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
 if hidx >= 0
     incomplete(hidx) = false;
     hyper_grid = hyper_grid(incomplete,:);
     incomplete = true(size(hyper_grid,1),1);
 end
-
 LVgains=hyper_cand;
 if counter_s==0
     G2=[];
@@ -85,7 +83,6 @@ elseif counter_s>0
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
 end
-
 times(end+1) = toc;
 post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
 hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
@@ -102,7 +99,6 @@ botrace.hyp_GP_lik=hyp_GP_lik;
 botrace.hyp_GP_cov=hyp_GP_cov;
 botrace.hyp_GP_mean=hyp_GP_mean;
 botrace.AQ_vals=AQ_vals;
-
 % Get minvalue and minsample
 [mv,mi] = min(values);
 minvalue = mv;

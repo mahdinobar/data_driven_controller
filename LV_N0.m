@@ -1,13 +1,14 @@
-hyper_grid_pruned=zeros(2,2);
-N_G2_activated_counter=0;
+hyper_grid=zeros(2,2);
 %  build initial N0 dataset
-counter_real=0;
 LV_switch=0;
+LVswitch=0;
+counter_s=0;
+counter_real=0;
+idx_G2=[0];
 % build and save initial dataset
-global G2data
 addpath("C:\mahdi\data_driven_controller\functions")
-addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
-tmp_name="test_1";
+addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
+tmp_name="exper_72_debug_2";
 dir=append("C:\mahdi\Data\",tmp_name,"\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
@@ -80,7 +81,7 @@ if counter>N0+1
     load(dir_gains)
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
 end
-%%%%%%%%%%%%%%%%%%%%%
-mkdir("C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\")
-%%%%%%%%%%%%%%%%%%%%%
 return
+% %%%%%%%%%%%%%%%%%%%%%
+% mkdir("C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\")
+% %%%%%%%%%%%%%%%%%%%%%

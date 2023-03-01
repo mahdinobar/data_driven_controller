@@ -6,14 +6,13 @@ addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72_debug";
+tmp_name="exper_72_debug_2";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
-
 %% load gain limits
 dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
 load(dir_gains)
@@ -32,10 +31,8 @@ control_mode=1;
 Input_mode=2;
 gain_angle=0;
 Tn_Angle=0;
-
 %% We define the function we would like to optimize
 fun = @(perf_Data) ObjFun(perf_Data); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
-
 %% Setup the Gaussian Process (GP) Library
 startup;
 % Setting parameters for Bayesian Global Optimization
@@ -56,7 +53,6 @@ opt.covfunc={@covMaternard, 5};
 likfunc={@likGauss};
 % inference method
 infer=@infExact;
-
 %% to initialize first the response
 if counter==0  %global initialize counter from 0
     Kp=gains0(1);
@@ -71,18 +67,10 @@ if counter==0  %global initialize counter from 0
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    save(append(dir,'hyper_grid_',num2str(counter),'.mat'),'hyper_grid')
-    save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
-    save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
-    save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
-    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')   
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     idx_G2=[0];
     counter=1;
     return
 end
-
 %%
 % load initial dataset
 if counter==1
@@ -104,7 +92,6 @@ elseif counter>1
     clear Trace
 end
 addpath("C:\mahdi\data_driven_controller")
-
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
     ytmp = exp_Data(sample_idx,3);
@@ -139,15 +126,6 @@ elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or
 end
 save(append(dir, 'trace_file.mat'),'Trace')
 save(append(dir, 'LVgains.mat'),'LVgains')
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    save(append(dir,'hyper_grid_',num2str(counter),'.mat'),'hyper_grid')
-    save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
-    save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
-    save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
-    save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')
-    save(append(dir,'G2_',num2str(counter),'.mat'),'G2')
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
 %% setup automation for the next experiment
 if counter_real>N_iter
     expr=expr+1;
@@ -167,9 +145,12 @@ if counter_real>N_iter
     save(append(dir, 'trace_file_expr_',num2srtr(expr),'.mat'),'Trace')
     save(append(dir, 'idx_G2_expr_',num2srtr(expr),'.mat'),'idx_G2')    
 end
-
 return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-mkdir("C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\")
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% mkdir("C:\mahdi\data_driven_controller\Data\TEST000000000000000000000000\")
+% save(append(dir,'hyper_grid_',num2str(counter),'.mat'),'hyper_grid')
+% save(append(dir,'counter_',num2str(counter),'.mat'),'counter')
+% save(append(dir,'LVgains_',num2str(counter),'.mat'),'LVgains')
+% save(append(dir,'counter_s_',num2str(counter),'.mat'),'counter_s')
+% save(append(dir,'gains0_',num2str(counter),'.mat'),'gains0')
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
