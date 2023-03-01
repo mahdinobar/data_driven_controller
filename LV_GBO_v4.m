@@ -142,8 +142,8 @@ if counter_real>N_iter
     Trace_removed.post_sigma2s(idx_G2)=[];
     Trace_removed.times(idx_G2)=[];
     Trace(1)=Trace_removed;
-    save(append(dir, 'trace_file_expr_',num2srtr(expr),'.mat'),'Trace')
-    save(append(dir, 'idx_G2_expr_',num2srtr(expr),'.mat'),'idx_G2')    
+    save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
+    save(append(dir, 'idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')    
 end
 return
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
