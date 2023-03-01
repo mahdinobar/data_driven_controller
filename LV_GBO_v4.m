@@ -6,7 +6,7 @@ addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72_debug_2";
+tmp_name="exper_72";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_', string(expr), '\');
@@ -94,8 +94,8 @@ end
 addpath("C:\mahdi\data_driven_controller")
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
-    ytmp = exp_Data(sample_idx,3);
-    utmp= exp_Data(sample_idx,4);
+    ytmp = exp_Data(sample_idx,4);
+    utmp= exp_Data(sample_idx,5);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
     % add measured data to BO dataset
