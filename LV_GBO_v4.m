@@ -127,23 +127,39 @@ end
 save(append(dir, 'trace_file.mat'),'Trace')
 save(append(dir, 'LVgains.mat'),'LVgains')
 %% setup automation for the next experiment
-if counter_real>N_iter
-    expr=expr+1;
-    counter=0;
+if counter_real==N_iter
     LVswitch=0;
     counter_s=0;
     counter_real=0;
-    
-    Trace_removed=opt.resume_trace_data;
-    idx_G2=idx_G2(2:end);
-    Trace_removed.samples(idx_G2,:)=[];
-    Trace_removed.values(idx_G2)=[];
-    Trace_removed.post_mus(idx_G2)=[];
-    Trace_removed.post_sigma2s(idx_G2)=[];
-    Trace_removed.times(idx_G2)=[];
-    Trace(1)=Trace_removed;
+    if ~isempty(idx_G2(2:end))
+        idx_G2=idx_G2(2:end);
+        Trace_removed=opt.resume_trace_data;
+        Trace_removed.samples(idx_G2,:)=[];
+        Trace_removed.values(idx_G2)=[];
+        Trace_removed.post_mus(idx_G2)=[];
+        Trace_removed.post_sigma2s(idx_G2)=[];
+        Trace_removed.times(idx_G2)=[];
+        Trace=Trace_removed;
+        save(append(dir, 'idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')
+    end
     save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
-    save(append(dir, 'idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')    
+    expr=expr+1;
+    
+    
+    Kp=0.5;
+    Ki=1.47;
+    gain_vel=Kp;
+    Tn_vel=1/Ki;
+    step_low=40;
+    step_high=40;
+    nr_repeats=1;
+    Input_mode=2;
+    start_switch=1;
+    % Draw initial candidate grid from a Sobol sequence
+    sobol = sobolset(opt.dims);
+    hyper_grid = sobol(1:opt.grid_size,:);
+    idx_G2=[0];
+    counter=1;
 end
 return
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
