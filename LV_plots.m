@@ -5,16 +5,16 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=50;
+N_expr=45;
 true_objective = 1;
 
-tmp_name="exper_72";
+tmp_name="exper_72_setup_ID_09";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 
 % find failed experiments
 nan_expr=[];
 for i=1:N_expr
-    load(append('C:\mahdi\data_driven_controller\Data\exper_72\BO_',string(i),'\perf_Data_1_',string(i),'.mat'))
+    load(append(tmp_dir,'\BO_',string(i),'\perf_Data_1_',string(i),'.mat'))
     nan_perf=sum(isnan(perf_Data(:,1:4)));
     if nan_perf>1
         nan_expr=[nan_expr,i];

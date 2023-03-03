@@ -20,7 +20,6 @@ load(dir_gains)
 stat_value=60;
 N0=1; %for N0>1 modify
 N_iter=50; %number of BO iteration on real plant
-N_extra=10;
 % sampleTf=3.1;%check!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 sampleTs=10e-3; % 10ms
 step_low=80;
@@ -114,15 +113,22 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
     [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
     counter=counter+1; %counter: number of BO iteration in total
+    while counter_s>0
+        save(append(dir, 'G2_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'), 'G2')
+        opt.resume_trace_data = Trace;
+        [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
+        counter=counter+1; %counter: number of BO iteration in total
+    end
     if counter_s==0 %means we call the real system to get perf_Data
         Kp=LVgains(1);
         Ki=LVgains(2);
         gain_vel=Kp;
         Tn_vel=1/Ki;
         LVswitch=1;
-    else
-        save(append(dir, 'G2_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'), 'G2')
     end
+%     else
+%         save(append(dir, 'G2_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'), 'G2')
+%     end
 end
 save(append(dir, 'trace_file.mat'),'Trace')
 save(append(dir, 'LVgains.mat'),'LVgains')
