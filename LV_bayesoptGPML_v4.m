@@ -74,7 +74,7 @@ elseif counter_s>0
     perf_Data=[ov, Tr, st, ITAE];
     value = Obj(perf_Data);
     values(end+1,1) = value;
-    idx_G2(end+1)=size(values,1);
+    idx_G2=[idx_G2;size(values,1)];
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     botrace.samples = unscale_point(samples,opt.mins,opt.maxes);
 end

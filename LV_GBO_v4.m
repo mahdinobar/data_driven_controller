@@ -115,6 +115,7 @@ elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or
     counter=counter+1; %counter: number of BO iteration in total
     while counter_s>0
         save(append(dir, 'G2_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'), 'G2')
+        save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
         opt.resume_trace_data = Trace;
         [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
         counter=counter+1; %counter: number of BO iteration in total
@@ -150,7 +151,6 @@ if counter_real==N_iter
     end
     save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
     expr=expr+1;
-    
     
     Kp=0.5;
     Ki=1.47;
