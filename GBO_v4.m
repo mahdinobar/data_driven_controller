@@ -132,6 +132,7 @@ set(gca,'ColorScale','log')
 %% plot optimum (ground truth by grid search)
 % ground truth grid search optimum
 [J_gt,I]=min(j_pt,[],'all')
+[kp_pt(I) ki_pt(I)]
 hold on;
 plot3([kp_pt(I) kp_pt(I)],[ki_pt(I) ki_pt(I)],[max(j_pt(:)) min(j_pt(:))],'g-','LineWidth',3);
 
@@ -186,8 +187,16 @@ for expr=1:1:N_expr
     G2_post_sigma2s=[];
     % create initial dataset per experiment
     RAND=RAND_all_expr(:,expr);
-    Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
-    Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
+%     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
+%     Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
+    range_kp=Kp_max-Kp_min;
+    range_ki=Ki_max-Ki_min;
+    Kp_min_N0=0.5464-range_kp/20;  
+    Kp_max_N0=0.5464+range_kp/20;
+    Ki_min_N0=1.1617-range_ki/20;
+    Ki_max_N0=1.1617+range_ki/20;
+    Kp_ltn = (Kp_max_N0-Kp_min_N0).*RAND + Kp_min_N0;
+    Ki_ltn = (Ki_max_N0-Ki_min_N0).*RAND + Ki_min_N0;
     J_ltn = zeros(N0,1);
     for i=1:N0
         C=tf([Kp_ltn(i), Kp_ltn(i)*Ki_ltn(i)], [1, 0]);
