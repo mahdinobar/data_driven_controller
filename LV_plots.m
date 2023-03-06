@@ -5,21 +5,22 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=45;
+N_expr=9;
 true_objective = 1;
 
-tmp_name="exper_72_setup_ID_09";
-tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
+tmp_name="exper_72";
+tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
 % find failed experiments
 nan_expr=[];
 for i=1:N_expr
-    load(append(tmp_dir,'\BO_',string(i),'\perf_Data_1_',string(i),'.mat'))
+    load(append(tmp_dir,'/BO_',string(i),'/perf_Data_1_',string(i),'.mat'))
     nan_perf=sum(isnan(perf_Data(:,1:4)));
     if nan_perf>1
-        nan_expr=[nan_expr,i];
+        nan_expr=[nan_expr,i]
     end
 end
+
 
 JminObsBO_All=[];
 JminObsGBO_All=[];
@@ -27,12 +28,25 @@ for expr=1:N_expr
     JminObsBO=[];
     JminObsGBO=[];
     if isempty(find(nan_expr==expr, 1))
-        dirBO=append(tmp_dir,'\BO_', string(expr), '\');
-        dirGBO=dirBO;
-        
+        dirBO=append(tmp_dir,'/BO_', string(expr), '/');
+        dirGBO=append(tmp_dir,'/GBO_', string(expr), '/');
+
         load(append(dirGBO,'trace_file.mat'),'Trace')
         TraceGBO=Trace;
         clearvars Trace
+
+%         manual correction(TODO: remove later)
+        load(append(dirGBO,'/idx_G2.mat'))
+        TraceGBO.samples(idx_G2,:)=[];
+        TraceGBO.values(idx_G2)=[];
+        TraceGBO.post_mus(idx_G2)=[];
+        TraceGBO.post_sigma2s(idx_G2)=[];
+        TraceGBO.times(idx_G2)=[];
+        save(append(dirGBO, 'trace_file_expr_',num2str(expr),'.mat'),'TraceGBO')
+
+
+
+
         load(append(dirBO,'trace_file.mat'),'Trace')
         TraceBO=Trace;
         clearvars Trace
@@ -54,9 +68,9 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-% h1=semilogy(ax1, JminObsGBO_All'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObsBO_All'/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-% h3=semilogy(ax1, meanJminObsGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+h1=semilogy(ax1, JminObsGBO_All'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObsBO_All'./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
+h3=semilogy(ax1, meanJminObsGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObsBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 [a,b]=max(meanJminObsGBO<0.9915);
 xlabel(ax1, 'Iteration on real plant')
@@ -66,7 +80,7 @@ grid minor
 % ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
-legend([h4],{'BO'}, 'Location', 'northeast');
+legend([h3, h4],{'GBO','BO'}, 'Location', 'northeast');
 figName=append(dirBO,'_experiments.png');
 saveas(gcf,figName)
 figName=append(dirBO,'_experiments.fig');
