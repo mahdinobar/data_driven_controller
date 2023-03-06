@@ -66,14 +66,12 @@ if counter==0  %global initialize counter from 0
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:);
-    idx_G2=[0];
     counter=1;
     return
 end
 %%
 % load initial dataset
 if counter==1
-    idx_G2=[0];
     load(append(dir0, 'botrace0.mat'));
     load(append(dir0, 'G2data_init.mat'));
     G2data=G2data_init;
@@ -83,9 +81,15 @@ if counter==1
     end
     opt.resume_trace_data = botrace0;
     clear botrace0
+    idx_G2=[];
+    when_switch_s=[];
+    save(append(dir, 'idx_G2.mat'),'idx_G2')
+    save(append(dir, 'when_switch_s.mat'),'when_switch_s')
 elseif counter>1
     load(append(dir, 'trace_file'))
     load(append(dir, 'G2data.mat'))
+    load(append(dir, 'idx_G2.mat'))
+    load(append(dir, 'when_switch_s.mat'))
     load(append(dir, 'LVgains'))
     opt.resume_trace_data = Trace;
     clear Trace
@@ -106,18 +110,20 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     samples=Trace.samples;
     samples = [samples; LVgains];
     Trace.samples = samples;
-    save(append(dir, 'G2data_',num2str(counter_real),'_',num2str(expr),'.mat'),'G2data')
+    save(append(dir, 'G2data_',num2str(counter_real),'_','.mat'),'G2data')
     save(append(dir, 'perf_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'perf_Data')
     save(append(dir, 'exp_Data_',num2str(counter_real),'_',num2str(expr),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
-    [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
+    [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
     counter=counter+1; %counter: number of BO iteration in total
     while counter_s>0
-        save(append(dir, 'G2_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'), 'G2')
-        save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
+        save(append(dir, 'G2_all_',num2str(idx_G2(end)),'.mat'), 'G2')
+        save(append(dir, 'idx_G2.mat'),'idx_G2')
+        save(append(dir, 'when_switch_s.mat'),'when_switch_s')
+        %save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
         opt.resume_trace_data = Trace;
-        [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2);
+        [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
         counter=counter+1; %counter: number of BO iteration in total
     end
     if counter_s==0 %means we call the real system to get perf_Data
@@ -138,8 +144,7 @@ if counter_real==N_iter
     LVswitch=0;
     counter_s=0;
     counter_real=0;
-    if ~isempty(idx_G2(2:end))
-        idx_G2=idx_G2(2:end);
+    if ~isempty(idx_G2)
         Trace_removed=opt.resume_trace_data;
         Trace_removed.samples(idx_G2,:)=[];
         Trace_removed.values(idx_G2)=[];
@@ -164,7 +169,6 @@ if counter_real==N_iter
     % Draw initial candidate grid from a Sobol sequence
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:);
-    idx_G2=[0];
     counter=1;
 end
 return

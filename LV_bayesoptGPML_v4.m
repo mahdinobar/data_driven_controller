@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace,LVgains, hyper_grid, idx_G2, G2, counter_s] = LV_bayesoptGPML_v4(Obj,opt, hyper_grid,counter_s,G2data,idx_G2)
+function [minsample,minvalue,botrace,LVgains, hyper_grid, idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(Obj,opt, hyper_grid,counter_s,G2data,idx_G2,when_switch_s, counter_real)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -41,6 +41,7 @@ eta1=0.0277;
 eta2=0.2;
 if counter_s==0 && post_sigma2(hidx)>eta1
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
+    when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
     if aq_val>max(AQ_vals)*eta2 && size(idx_G2,1)<30 %limit also total number of surrogate data
         counter_s = 1; 
