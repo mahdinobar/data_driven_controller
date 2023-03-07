@@ -43,7 +43,7 @@ if counter_s==0 && post_sigma2(hidx)>eta1
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
-    if aq_val>max(AQ_vals)*eta2 && size(idx_G2,1)<30 %limit also total number of surrogate data
+    if aq_val>max(AQ_vals)*eta2 %limit also total number of surrogate data
         counter_s = 1; 
     elseif counter_s<3+1 %means if 3 consecutive iterations with surrogate there is no considerable improvement we stop BO on surrogate
         counter_s =counter_s+1;

@@ -8,7 +8,7 @@ N_iter=50;
 N_expr=9;
 true_objective = 1;
 
-tmp_name="exper_72";
+tmp_name="exper_72_2";
 tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
 % find failed experiments
@@ -25,6 +25,7 @@ end
 JminObsBO_All=[];
 JminObsGBO_All=[];
 number_s=[];
+number_idx_G2=[];
 for expr=1:N_expr
     JminObsBO=[];
     JminObsGBO=[];
@@ -39,6 +40,9 @@ for expr=1:N_expr
 
         load(append(dirGBO,'/when_switch_s.mat'))
         number_s(end+1)=size(when_switch_s,1);
+
+        load(append(dirGBO,'/idx_G2.mat'))
+        number_idx_G2(end+1)=size(idx_G2,1);
 
 %         % manual correction(TODO: remove later)
 %         load(append(dirGBO,'/idx_G2.mat'))
