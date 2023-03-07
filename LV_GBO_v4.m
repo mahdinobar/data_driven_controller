@@ -145,15 +145,14 @@ if counter_real==N_iter
     counter_s=0;
     counter_real=0;
     if ~isempty(idx_G2)
-        Trace_removed=opt.resume_trace_data;
-        Trace_removed.samples(idx_G2,:)=[];
-        Trace_removed.values(idx_G2)=[];
-        Trace_removed.post_mus(idx_G2)=[];
-        Trace_removed.post_sigma2s(idx_G2)=[];
-        Trace_removed.times(idx_G2)=[];
+        Trace.samples(idx_G2,:)=[];
+        Trace.values(idx_G2)=[];
+        Trace.post_mus(idx_G2)=[];
+        Trace.post_sigma2s(idx_G2)=[];
+        Trace.times(idx_G2)=[];
         save(append(dir, 'idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')
     end
-    save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace_removed')
+    save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
     expr=expr+1;
     
     Kp=0.5;

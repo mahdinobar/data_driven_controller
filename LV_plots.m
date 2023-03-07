@@ -24,6 +24,7 @@ end
 
 JminObsBO_All=[];
 JminObsGBO_All=[];
+number_s=[];
 for expr=1:N_expr
     JminObsBO=[];
     JminObsGBO=[];
@@ -31,18 +32,22 @@ for expr=1:N_expr
         dirBO=append(tmp_dir,'/BO_', string(expr), '/');
         dirGBO=append(tmp_dir,'/GBO_', string(expr), '/');
 
-        load(append(dirGBO,'trace_file.mat'),'Trace')
+%         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
+        load(append(dirGBO,'trace_file.mat'))
         TraceGBO=Trace;
-        clearvars Trace
+        clearvars Trace_removed
 
-%         manual correction(TODO: remove later)
-        load(append(dirGBO,'/idx_G2.mat'))
-        TraceGBO.samples(idx_G2,:)=[];
-        TraceGBO.values(idx_G2)=[];
-        TraceGBO.post_mus(idx_G2)=[];
-        TraceGBO.post_sigma2s(idx_G2)=[];
-        TraceGBO.times(idx_G2)=[];
-        save(append(dirGBO, 'trace_file_expr_',num2str(expr),'.mat'),'TraceGBO')
+        load(append(dirGBO,'/when_switch_s.mat'))
+        number_s(end+1)=size(when_switch_s,1);
+
+%         % manual correction(TODO: remove later)
+%         load(append(dirGBO,'/idx_G2.mat'))
+%         TraceGBO.samples(idx_G2,:)=[];
+%         TraceGBO.values(idx_G2)=[];
+%         TraceGBO.post_mus(idx_G2)=[];
+%         TraceGBO.post_sigma2s(idx_G2)=[];
+%         TraceGBO.times(idx_G2)=[];
+%         save(append(dirGBO, 'trace_file_expr_manually_corrected_',num2str(expr),'.mat'),'TraceGBO')
 
 
 
