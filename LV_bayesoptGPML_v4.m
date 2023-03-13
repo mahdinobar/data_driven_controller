@@ -65,7 +65,6 @@ elseif counter_s>0
     G2=tfest(G2data, npG2);
     C=tf([hyper_cand(1), hyper_cand(1)*hyper_cand(2)], [1, 0]);
     CL=feedback(C*G2, 1);
-    
     reference0=80;
     reference=120;
     t_high=5.01:0.01:10;
@@ -83,14 +82,6 @@ elseif counter_s>0
     st=S.SettlingTime;
     ov=100.*max(0,(S.max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
-
-%     ov=abs(stepinfo(CL).Overshoot);
-%     st=stepinfo(CL).SettlingTime;
-%     [y,t]=step(CL);
-%     reference=1;
-%     e=abs(y-reference);
-%     Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
-%     ITAE = trapz(t, t.*abs(e));
     perf_Data=[ov, Tr, st, ITAE];
     value = Obj(perf_Data);
     values(end+1,1) = value;
