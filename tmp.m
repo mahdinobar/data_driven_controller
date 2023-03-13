@@ -1,30 +1,30 @@
 % % %% functions
-% % 
+% %
 % % ov=mean(abs(perf_Data(:,1)));
 % % st=mean(perf_Data(:,3));
 % % Tr=mean(perf_Data(:,2));
 % % ITAE = mean(perf_Data(:,4));
-% % 
+% %
 % % if isnan(ov) || isinf(ov) || ov>1e3
 % %     ov=1e3;
 % % end
-% % 
+% %
 % % if isnan(st) || isinf(st) || st>1e5
 % %     st=1e5;
 % % end
-% % 
+% %
 % % if isnan(Tr) || isinf(Tr) || Tr>1e5
 % %     Tr=1e5;
 % % end
-% % 
+% %
 % % if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
 % %     ITAE=1e5;
 % % end
-% % 
+% %
 % % w=[2, 1, 1*0.15, 0.1*0.003];
 % % w=w./sum(w);
 % % objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)
-% % 
+% %
 % close all
 % figure(1)
 % y=Trace.values(3:end);
@@ -34,7 +34,7 @@
 % ylabel('cost')
 % legend([h1 h2],{'cost','std cost'});
 % title(append('std/mean % = ',num2str((std(y)/mean(y))*100),'%'))
-% 
+%
 % n_trials=9;
 % ov=zeros(n_trials,1);
 % st=zeros(n_trials,1);
@@ -51,67 +51,80 @@
 % metrics_w=[ov_w,st_w, Tr_w, ITAE_w];
 % h3=bar(metrics_w);
 % set(h3, {'DisplayName'}, {'weighted ov','weighted st','weighted Tr', 'weighted ITAE'}')
-% 
+%
 % figure(2)
 % metrics=[ov,st, Tr, ITAE];
 % h4=bar(metrics);
 % legend(h4, {'ov','st','Tr', 'ITAE'}')
-% 
-% 
+%
+%
 % %% functions
 % function [ov, st, Tr, ITAE, ov_w, st_w, Tr_w, ITAE_w] = ObjFun_tmp(perf_Data)
 % ov=mean(abs(perf_Data(:,1)));
 % st=mean(perf_Data(:,3));
 % Tr=mean(perf_Data(:,2));
 % ITAE = mean(perf_Data(:,4));
-% 
+%
 % if isnan(ov) || isinf(ov) || ov>1e3
 %     ov=1e3;
 % end
-% 
+%
 % if isnan(st) || isinf(st) || st>1e5
 %     st=1e5;
 % end
-% 
+%
 % if isnan(Tr) || isinf(Tr) || Tr>1e5
 %     Tr=1e5;
 % end
-% 
+%
 % if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
 %     ITAE=1e5;
 % end
-% 
+%
 % %w0=[1, 1*0.1, 1*0.15, 0.1*0.003];
 % % w0=[1/0.0678, 1/0.8609, 1/0.0867, 1/18.3778];
 % % w_mean=[0.0517    1.7722    0.2967   57.5018];
 % w_mean=[0.2055    2.6423    0.4419   30.4598];
 % w0=w_mean.^(-1);
-% 
+%
 % w=w0./sum(w0);
 % ov_w=ov*w(1);
 % st_w=+st*w(2);
 % Tr_w=Tr*w(3);
 % ITAE_w=ITAE*w(4);
 % end
-% 
-% 
+%
+%
 
 
 clc
 close all
 
-for i=10:20
-    load(append("G2_",num2str(i),"_7.mat"))
-    load(append("exp_Data_",num2str(i),"_7.mat"))
-    step_high=120;
-    sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
-    y = exp_Data(sample_idx,4);
-    t=0.01:(length(y));
-    t=0.01.*t;
-    y2 = 120.*step(G2,t);
-    rmse2=sqrt(mean((y-y2).^2))
-    plot(y,'b');hold on; plot(y2,'r')
+load('when_switch_s.mat')
+load('idx_G2.mat')
+load('trace_file_expr_3.mat')
+
+i=1;
+load(append('exp_Data_',num2str(when_switch_s(i)),'_3.mat'))
+load('G2_all_3.mat')
+gains=Trace.samples(when_switch_s(i),:);
+
+step_high=120;
+sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
+y = exp_Data(sample_idx,4);
+t=1:(length(y));
+t=0.01.*t;
+
+npG2=2;
+%     gains=[0.107285225474476	0.870733221719789];
+C=tf([gains(1), gains(1)*gains(2)], [1, 0]);
+CL=feedback(C*G2, 1);
+
+r = step_high.*ones(length(t),1);
+y2 = lsim(CL,r,t);
+
+rmse2=sqrt(mean((y-y2).^2))
+plot(y,'b');hold on; plot(y2,'r')
 %     yres=[yres,]
-end
 
 

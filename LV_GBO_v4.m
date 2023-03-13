@@ -120,7 +120,7 @@ elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or
     consecutive_G2_counter=0;
     while counter_s>0 && consecutive_G2_counter<30
         consecutive_G2_counter=consecutive_G2_counter+1;
-        save(append(dir, 'G2_all_',num2str(idx_G2(end)),'.mat'), 'G2')
+        save(append(dir, 'G2_',num2str(idx_G2(end)),'.mat'), 'G2')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'when_switch_s.mat'),'when_switch_s')
         %save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
