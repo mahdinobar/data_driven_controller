@@ -102,10 +102,10 @@ close all
 
 load('when_switch_s.mat')
 load('idx_G2.mat')
-load('trace_file_expr_3.mat')
+load('trace_file_expr_1.mat')
 
 i=1;
-load(append('exp_Data_',num2str(when_switch_s(i)),'_3.mat'))
+load(append('exp_Data_',num2str(when_switch_s(i)),'_1.mat'))
 load('G2_all_3.mat')
 gains=Trace.samples(when_switch_s(i),:);
 
