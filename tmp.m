@@ -100,14 +100,15 @@
 clc
 close all
 
-load('when_switch_s.mat')
-load('idx_G2.mat')
-load('trace_file_expr_1.mat')
+% load('when_switch_s.mat')
+% load('idx_G2.mat')
+% load('trace_file_expr_1.mat')
 
-i=1;
-load(append('exp_Data_',num2str(when_switch_s(i)),'_1.mat'))
-load('G2_all_3.mat')
-gains=Trace.samples(when_switch_s(i),:);
+% i=1;
+% load(append('exp_Data_',num2str(when_switch_s(i)),'_1.mat'))
+% load('G2_all_3.mat')
+% gains=Trace.samples(when_switch_s(i),:);
+gains=botrace0.samples;
 
 step_high=120;
 sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
