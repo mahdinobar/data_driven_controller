@@ -108,8 +108,8 @@ close all
 % load(append('exp_Data_',num2str(when_switch_s(i)),'_1.mat'))
 % load('G2_all_3.mat')
 % gains=Trace.samples(when_switch_s(i),:);
-gains=botrace0.samples;
-% gains=Trace.samples(4,:);
+% gains=botrace0.samples;
+gains=Trace.samples(30,:);
 step_high=120;
 step_low=80;
 sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
@@ -123,25 +123,42 @@ den = [1, 4.14479, 4.19941];
 Td=2e-3;
 G2 = tf(num, den, 'InputDelay',Td);
 
+% exp2=getexp(G2data,2);
+
+
+ytmp = exp_Data(:,4);
+utmp= exp_Data(:,5);
+rtmp= exp_Data(:,3);
+
+exp2=iddata(ytmp,utmp,0.01);
+opt = compareOptions('InitialCondition','z');
+compare(exp2,G2,opt)
+hold on
+ud=exp2.u;
+t=0:(length(ud)-1);
+t=t*0.01;
+yd=lsim(G2,ud,t);
+% plot(t,yd,'--r')
+
 C=tf([gains(1), gains(1)*gains(2)], [1, 0]);
 CL=feedback(C*G2, 1);
 
 
-r = [step_low.*ones(length(t),1);step_high.*ones(length(t),1)];
-t0=t;
-t=t+5;
-T=[t0,t];
+% r = [step_low.*ones(length(t),1);step_high.*ones(length(t),1)];
+% t0=t;
+% t=t+5;
+% T=[t0,t];
 
-y2 = lsim(CL,r,T);
-y2=y2(T>5);
+y2 = lsim(CL,rtmp,t);
+% y2=y2(T>5);
 % gains2=Trace.samples(5,:);
 % C2=tf([gains2(1), gains2(1)*gains2(2)], [1, 0]);
 % CL2=feedback(C2*G2, 1);
 % y3 = lsim(CL2,r,t);
 
-
-rmse2=sqrt(mean((y-y2).^2))
-plot(y,'b');hold on; plot(y2,'r'); %plot(y3,'k')
+figure(2)
+% rmse2=sqrt(mean((y-y2).^2))
+plot(ytmp,'b');hold on; plot(y2,'r'); %plot(y3,'k')
 ylabel("y")
 xlabel("timestep")
 title("plant output vs sampling timestep")

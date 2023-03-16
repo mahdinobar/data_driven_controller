@@ -53,8 +53,8 @@ elseif counter==1
     LVswitch=1;
 elseif counter==2
     sample_idx=exp_Data(:,3)==step_high;
-    ytmp = exp_Data(sample_idx,3);
-    utmp= exp_Data(sample_idx,4);
+    ytmp = exp_Data(sample_idx,4);
+    utmp= exp_Data(sample_idx,5);
     G2data_init = iddata(ytmp,utmp,sampleTs);
     J_init=ObjFun(perf_Data(end-nr_repeats+1:end,:));
     botrace0.samples=[Kp, Ki];
