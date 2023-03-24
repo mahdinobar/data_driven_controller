@@ -100,6 +100,12 @@
 clc
 close all
 
+npG2=2;
+num = [9.54434];
+den = [1, 4.14479, 4.19941];
+Td=2e-3;
+G2 = tf(num, den, 'InputDelay',Td);
+
 % load('when_switch_s.mat')
 % load('idx_G2.mat')
 % load('trace_file_expr_1.mat')
@@ -109,52 +115,49 @@ close all
 % load('G2_all_3.mat')
 % gains=Trace.samples(when_switch_s(i),:);
 % gains=botrace0.samples;
-gains=Trace.samples(30,:);
+gains=Trace.samples(10,:);
 step_high=120;
 step_low=80;
-sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
-y = exp_Data(sample_idx,4);
-t=1:(length(y));
-t=0.01.*t;
-
-npG2=2;
-num = [9.54434];
-den = [1, 4.14479, 4.19941];
-Td=2e-3;
-G2 = tf(num, den, 'InputDelay',Td);
+% sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
+% y = exp_Data(sample_idx,4);
+% t=1:(length(y));
+% t=0.01.*t;
 
 % exp2=getexp(G2data,2);
 
-
-ytmp = exp_Data(:,4);
-utmp= exp_Data(:,5);
-rtmp= exp_Data(:,3);
-
-exp2=iddata(ytmp,utmp,0.01);
-opt = compareOptions('InitialCondition','z');
-compare(exp2,G2,opt)
-hold on
-ud=exp2.u;
-t=0:(length(ud)-1);
-t=t*0.01;
-yd=lsim(G2,ud,t);
-% plot(t,yd,'--r')
+sample_idx=exp_Data(:,3)==120;
+ytmp = exp_Data(sample_idx,4);
+utmp= exp_Data(sample_idx,5);
+rtmp= exp_Data(sample_idx,3);
 
 C=tf([gains(1), gains(1)*gains(2)], [1, 0]);
 CL=feedback(C*G2, 1);
 
+exp2=iddata(ytmp,rtmp,0.01);
 
-% r = [step_low.*ones(length(t),1);step_high.*ones(length(t),1)];
-% t0=t;
-% t=t+5;
-% T=[t0,t];
+% G2_ss = idss(G2);
+% X0 = findstates(G2_ss,exp2);
+[sys,ic] = tfest(exp2,2);
+opt = compareOptions('InitialCondition',ic);
+compare(exp2,CL)
+hold on
+ud=exp2.u;
+t=0:(length(ud)-1);
+t=t*0.01;
+yd=lsim(CL,ud,t);
+plot(t,yd,'--r')
+
+
+
+
+% r = [sz
 
 y2 = lsim(CL,rtmp,t);
-% y2=y2(T>5);
-% gains2=Trace.samples(5,:);
-% C2=tf([gains2(1), gains2(1)*gains2(2)], [1, 0]);
-% CL2=feedback(C2*G2, 1);
-% y3 = lsim(CL2,r,t);
+y2=y2(T>5);
+gains2=Trace.samples(5,:);
+C2=tf([gains2(1), gains2(1)*gains2(2)], [1, 0]);
+CL2=feedback(C2*G2, 1);
+y3 = lsim(CL2,r,t);
 
 figure(2)
 % rmse2=sqrt(mean((y-y2).^2))
