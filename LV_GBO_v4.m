@@ -1,12 +1,12 @@
 % GBO version 4
 %% ADD PATHS
 rehash 
-addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\tfest.m")
-addpath("C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\")
-addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
+addpath("C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\tfest.m")
+addpath("C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\")
+addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72";
+tmp_name="exper_72_3";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_', string(expr), '\');

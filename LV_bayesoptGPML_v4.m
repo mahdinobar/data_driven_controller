@@ -80,7 +80,7 @@ elseif counter_s>0
     ITAE = trapz(t_high, t_high.*abs(e));
     S = lsiminfo(y_high,t_high,reference,reference0); 
     st=S.SettlingTime;
-    ov=100.*max(0,(S.max-reference0)/(reference-reference0)-1);
+    ov=100.*max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
     perf_Data=[ov, Tr, st, ITAE];
     value = Obj(perf_Data);

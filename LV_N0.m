@@ -8,8 +8,8 @@ counter_real=0;
 idx_G2=[0];
 % build and save initial dataset
 addpath("C:\mahdi\data_driven_controller\functions")
-addpath C:\Program Files\MATLAB\R2020b\toolbox\ident\ident\@iddata\iddata.m
-tmp_name="exper_72";
+addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
+tmp_name="exper_72_3";
 dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name,"\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
