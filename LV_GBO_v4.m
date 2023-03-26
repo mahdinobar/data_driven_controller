@@ -111,7 +111,7 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     samples = [samples; LVgains];
     Trace.samples = samples;
     save(append(dir, 'G2data.mat'),'G2data')
-    save(append(dir, 'debug_G2data_',num2str(counter_real),'_','.mat'),'G2data')
+    save(append(dir, 'debug_G2data_',num2str(counter_real),'.mat'),'G2data')
     save(append(dir, 'perf_Data_',num2str(expr),'_',num2str(counter_real),'.mat'), 'perf_Data')
     save(append(dir, 'exp_Data_',num2str(expr),'_',num2str(counter_real),'.mat'), 'exp_Data')
     LVswitch=0;
