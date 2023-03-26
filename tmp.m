@@ -100,11 +100,11 @@
 clc
 close all
 
-npG2=2;
-num = [9.54434];
-den = [1, 4.14479, 4.19941];
-Td=2e-3;
-G2 = tf(num, den, 'InputDelay',Td);
+% npG2=2;
+% num = [9.54434];
+% den = [1, 4.14479, 4.19941];
+% Td=2e-3;
+% G2 = tf(num, den, 'InputDelay',Td);
 
 % load('when_switch_s.mat')
 % load('idx_G2.mat')
@@ -115,7 +115,7 @@ G2 = tf(num, den, 'InputDelay',Td);
 % load('G2_all_3.mat')
 % gains=Trace.samples(when_switch_s(i),:);
 % gains=botrace0.samples;
-gains=Trace.samples(10,:);
+gains=Trace.samples(1,:);
 step_high=120;
 step_low=80;
 % sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
@@ -133,19 +133,19 @@ rtmp= exp_Data(sample_idx,3);
 C=tf([gains(1), gains(1)*gains(2)], [1, 0]);
 CL=feedback(C*G2, 1);
 
-exp2=iddata(ytmp,rtmp,0.01);
+% exp2=iddata(ytmp,rtmp,0.01);
 
 % G2_ss = idss(G2);
 % X0 = findstates(G2_ss,exp2);
-[sys,ic] = tfest(exp2,2);
-opt = compareOptions('InitialCondition',ic);
-compare(exp2,CL)
-hold on
-ud=exp2.u;
-t=0:(length(ud)-1);
-t=t*0.01;
-yd=lsim(CL,ud,t);
-plot(t,yd,'--r')
+% [sys,ic] = tfest(exp2,2);
+% opt = compareOptions('InitialCondition',ic);
+% compare(exp2,CL)
+% hold on
+% ud=exp2.u;
+% t=0:(length(ud)-1);
+% t=t*0.01;
+% yd=lsim(CL,ud,t);
+% plot(t,yd,'--r')
 
 
 

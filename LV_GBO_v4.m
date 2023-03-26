@@ -153,7 +153,7 @@ if counter_real==N_iter
         Trace.post_mus(idx_G2)=[];
         Trace.post_sigma2s(idx_G2)=[];
         Trace.times(idx_G2)=[];
-        save(append(dir, 'idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')
+        save(append(dir, 'debug_idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')
     end
     save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
     expr=expr+1;

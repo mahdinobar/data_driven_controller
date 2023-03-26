@@ -5,16 +5,16 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=9;
+N_expr=8;
 true_objective = 1;
 
-tmp_name="exper_72_2";
+tmp_name="exper_72_3";
 tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
 % find failed experiments
 nan_expr=[];
 for i=1:N_expr
-    load(append(tmp_dir,'/BO_',string(i),'/perf_Data_1_',string(i),'.mat'))
+    load(append(tmp_dir,'/BO_',string(i),'/perf_Data_',string(i),'_1.mat'))
     nan_perf=sum(isnan(perf_Data(:,1:4)));
     if nan_perf>1
         nan_expr=[nan_expr,i]
@@ -34,9 +34,11 @@ for expr=1:N_expr
         dirGBO=append(tmp_dir,'/GBO_', string(expr), '/');
 
 %         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
-        load(append(dirGBO,'trace_file.mat'))
+        load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
         TraceGBO=Trace;
-        clearvars Trace_removed
+%         expr
+%         size(TraceGBO.values)
+        clearvars Trace
 
         load(append(dirGBO,'/when_switch_s.mat'))
         number_s(end+1)=size(when_switch_s,1);
@@ -56,7 +58,7 @@ for expr=1:N_expr
 
 
 
-        load(append(dirBO,'trace_file.mat'),'Trace')
+        load(append(dirBO,'trace_file_expr_',num2str(expr),'.mat'))
         TraceBO=Trace;
         clearvars Trace
         for j=1:N_iter
@@ -77,6 +79,7 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
+
 h1=semilogy(ax1, JminObsGBO_All'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
 h2=semilogy(ax1, JminObsBO_All'./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObsGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
