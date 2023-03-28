@@ -62,7 +62,7 @@ if counter_s==0
     G2=[];
 elseif counter_s>0
     npG2=2;
-    G2=tfest(G2data, npG2);
+    G2=tfest(G2data, npG2,'Ts',10e-3); % without Ts it assumes continuous model that is incorrect for real setup
     C=tf([hyper_cand(1), hyper_cand(1)*hyper_cand(2)], [1, 0]);
     CL=feedback(C*G2, 1);
     reference0=80;

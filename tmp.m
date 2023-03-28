@@ -269,9 +269,11 @@
 clc
 close all
 % clear
-% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/botrace0.mat")
-% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/G2data_init.mat")
-% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/botrace0.mat")
+Trace=botrace0;
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/G2data_init.mat")
+G2data=G2data_init;
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
 
 npG2=2;
 num = [9.54434];
@@ -280,17 +282,39 @@ Td=2e-3;
 Gn = tf(num, den, 'InputDelay',Td);
 
 G2=tfest(G2data, 2);
-gains=Trace.samples(2,:);
+
+u_all=exp_Data(1:end,5);
+y_all=exp_Data(1:end,4);
+G2data_all=iddata(y_all,u_all,10e-3);
+G2_all=tfest(G2data_all, 2);
+
+gains=Trace.samples(1,:);
 step_high=120;
 step_low=80;
 sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
 y = exp_Data(sample_idx,4);
+u = exp_Data(sample_idx,5);
 t=1:(length(y));
 t=0.01.*t;
+
+% clear
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_corrected_Up.mat")
+sample_idx=exp_Data(:,3)==120; %LV sampling time=10 ms
+tmp_idx=find(sample_idx>0);
+y_corrected = exp_Data((tmp_idx(1)-10):tmp_idx(end),4);
+u_corrected = exp_Data((tmp_idx(1)-10):tmp_idx(end),5);
+% G2data_corrected_Up=iddata(y_corrected,u_corrected,10e-3);
+G2data_corrected_Up=merge(G2data_corrected_Up, iddata(y_corrected,u_corrected,10e-3));
+G2_corrected_Up=tfest(G2data_corrected_Up, 2);
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_corrected_Up.mat","G2data_corrected_Up")
+
 
 C=tf([gains(1), gains(1)*gains(2)], [1, 0]);
 CL=feedback(C*G2, 1);
 CLn=feedback(C*Gn, 1);
+CL_all=feedback(C*G2_all, 1);
+
 r = [step_low.*ones(length(t),1);step_high.*ones(length(t),1)];
 t0=t;
 t=t+5;
@@ -302,15 +326,23 @@ y2=y2(T>5);
 yn = lsim(CLn,r,T);
 yn=yn(T>5);
 
+y_all = lsim(CL_all,r,T);
+y_all=y_all(T>5);
+
 rmse2_s=sqrt(mean((y-y2).^2));
 rmse2_n=sqrt(mean((y-yn).^2));
+rmse2_all=sqrt(mean((y-y_all).^2));
+
+FP=100*(1-norm(y-y2)/norm(y-mean(y)));
+
 h1=plot(y,'b');hold on;
 h2=plot(y2,'r'); 
 hn=plot(yn,'k'); 
+h_all=plot(y_all,'--m'); 
 ylabel("y")
 xlabel("timestep")
-title(append("output vs timestep, rmse2_s=",num2str(rmse2_s), ", rmse2_n=",num2str(rmse2_n)))
+title(append("output vs timestep, rmse2_s=",num2str(rmse2_s), ", rmse2_n=",num2str(rmse2_n), ", rmse2_{all}=",num2str(rmse2_all)))
 grid on
-legend([h1,h2,hn],{"measured response","surrogate plant response","high-fidelity plant response"}, 'Location', 'southeast')
+legend([h1,h2,hn, h_all],{"measurement","surrogate","high-fidelity plant","surrogate trained on all data"}, 'Location', 'southeast')
 
 
