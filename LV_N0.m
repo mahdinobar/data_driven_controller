@@ -9,7 +9,7 @@ idx_G2=[0];
 % build and save initial dataset
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
-tmp_name="exper_72_3";
+tmp_name="exper_72_4";
 dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name,"\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
@@ -53,14 +53,15 @@ elseif counter==1
     LVswitch=1;
 elseif counter==2
     sample_idx=exp_Data(:,3)==step_high;
-    ytmp = exp_Data(sample_idx,4);
-    utmp= exp_Data(sample_idx,5);
-    G2data_init = iddata(ytmp,utmp,sampleTs);
+    tmp_idx=find(sample_idx>0);
+    ytmp = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
+    utmp = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
+    G2data = iddata(ytmp,utmp,sampleTs);
     J_init=ObjFun(perf_Data(end-nr_repeats+1:end,:));
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
     botrace0.times=0;
-    save(append(dir, 'G2data_init'),'G2data_init');
+    save(append(dir, 'G2data'),'G2data');
     save(append(dir, 'botrace0'), 'botrace0');
     save(append(dir, 'gains0'), 'gains0');
     save(append(dir, 'perf_Data'), 'perf_Data');

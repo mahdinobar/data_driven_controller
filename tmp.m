@@ -269,11 +269,11 @@
 clc
 close all
 % clear
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/botrace0.mat")
-Trace=botrace0;
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/G2data_init.mat")
-G2data=G2data_init;
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/botrace0.mat")
+% Trace=botrace0;
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/G2data_init.mat")
+% G2data=G2data_init;
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
 
 npG2=2;
 num = [9.54434];
@@ -282,6 +282,14 @@ Td=2e-3;
 Gn = tf(num, den, 'InputDelay',Td);
 
 G2=tfest(G2data, 2);
+
+% init_sys = idtf(zeros(1,2),[1,zeros(1,2)],'IODelay',0,'Ts', 0.01);
+% init_sys.Structure.IODelay.Free = 0;
+% init_sys.Structure.IODelay.Maximum = 30;
+Options = tfestOptions('Display','on');
+Options.InitialCondition = 'estimate';
+Options.EnforceStability=1;
+G2d_WS = tfest(G2data_c_UpDown_0b_all_2, 2,1,Options, 'Ts', 0.01);
 
 u_all=exp_Data(1:end,5);
 y_all=exp_Data(1:end,4);
@@ -297,17 +305,113 @@ u = exp_Data(sample_idx,5);
 t=1:(length(y));
 t=0.01.*t;
 
-% clear
-% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_corrected_Up.mat")
+clear
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_c_UpDown_0b_all_2.mat")
 sample_idx=exp_Data(:,3)==120; %LV sampling time=10 ms
 tmp_idx=find(sample_idx>0);
-y_corrected = exp_Data((tmp_idx(1)-10):tmp_idx(end),4);
-u_corrected = exp_Data((tmp_idx(1)-10):tmp_idx(end),5);
-% G2data_corrected_Up=iddata(y_corrected,u_corrected,10e-3);
-G2data_corrected_Up=merge(G2data_corrected_Up, iddata(y_corrected,u_corrected,10e-3));
-G2_corrected_Up=tfest(G2data_corrected_Up, 2);
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_corrected_Up.mat","G2data_corrected_Up")
+y_corrected = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
+u_corrected = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
+% u_corrected=u_corrected(1:10:end);
+% y_corrected=y_corrected(1:10:end);
+G2data_c_UpDown_0b_all_2=iddata(y_corrected,u_corrected,10e-3);
+% G2data_c_UpDown_0b_all_2=merge(G2data_c_UpDown_0b_all_2, iddata(y_corrected,u_corrected,10e-3));
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_c_UpDown_0b_all_2.mat","G2data_c_UpDown_0b_all_2")
+
+exper=2;
+for i=1:1
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_",num2str(exper),"/exp_Data_",num2str(exper),"_",num2str(i),".mat"))
+    load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_c_UpDown_0b_all_2.mat")
+    sample_idx=exp_Data(:,3)==120; %LV sampling time=10 ms
+    tmp_idx=find(sample_idx>0);
+    y_corrected = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
+    u_corrected = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
+%     u_corrected=u_corrected(1:10:end);
+%     y_corrected=y_corrected(1:10:end);
+    % G2data_c_UpDown_0b_all_2=iddata(y_corrected,u_corrected,10e-3);
+    G2data_c_UpDown_0b_all_2=merge(G2data_c_UpDown_0b_all_2, iddata(y_corrected,u_corrected,10e-3));
+    save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_2/G2data_c_UpDown_0b_all_2.mat","G2data_c_UpDown_0b_all_2")
+end
+
+close
+exper=2;
+u_all=cell2mat(G2data_c_Up_0b_all.u);
+y_all=cell2mat(G2data_c_Up_0b_all.y);
+sampleTs=0.01;
+t=0:sampleTs:(length(u_all)-1)*sampleTs;
+lsim(tf,u_all(:,exper),t)
+hold on
+plot(t,y_all(:,exper),"g")
+%%
+Options = tfestOptions('Display','off');
+Options.InitialCondition = 'backcast';
+Options.EnforceStability=1;
+G2d_WS = tfest(G2data_c_UpDown_0b_all, 2,1,Options, 'Ts', 0.01);
+%%
+close
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/botrace0.mat")
+Trace=botrace0;
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/N0_Data_2/exp_Data.mat")
+G2=G2d_WS;
+sample_idx=exp_Data(:,3)==120; %LV sampling time=10 ms
+tmp_idx=find(sample_idx>0);
+y_all = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
+u_all = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
+r_all = exp_Data((tmp_idx(1)-10):end,3)-exp_Data(tmp_idx(1)-1,3);
+sampleTs=0.01;
+gains=Trace.samples(1,:);
+t=0:sampleTs:(length(u_all)-1)*sampleTs;
+% C=tf([gains(1), gains(1)*gains(2)], [1, 0], 'Ts', 0.01);
+Kp = gains(1);
+Ti = 1/gains(2);
+Td = 0;   
+N=inf;
+Ts = 0.01;
+C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
+CL=feedback(C*G2, 1);
+lsim(CL,r_all,t);
+y2=lsim(CL,r_all,t);
+reference0=0;
+reference=40;
+y_high=y2(t<5.1);
+t_high=t(t<5.1)';%TODO check
+e=abs(y_high-reference);
+ITAE = trapz(t_high, t_high.*abs(e));
+S = lsiminfo(y_high,t_high,reference,reference0);
+st=S.SettlingTime;
+if isnan(st) || st>5
+    st=5;
+end
+if ITAE>(reference-reference0)*40
+    ITAE=(reference-reference0)*40;
+end
+if isnan(Tr) || Tr>5
+    Tr=5;
+end
+if isnan(ov) || ov>100
+    ov=100;
+end
+ov=100.*max(0,(S.Max-reference0)/(reference-reference0)-1);
+Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+perf_Data=[ov, Tr, st, ITAE]
+
+hold on
+plot(t,y_all,"g")
+%%
+
+uy_init_mean=[];
+uy_init_std=[];
+for exper=1:8
+uy_init=[];
+for i=1:50
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_3/GBO_",num2str(exper),"/exp_Data_",num2str(exper),"_",num2str(i)))
+    sample_idx=exp_Data(:,3)==120; %LV sampling time=10 ms
+    tmp_idx=find(sample_idx>0);
+    uy_init=[uy_init; exp_Data(tmp_idx(1)-1,5), exp_Data(tmp_idx(1)-1,4)];
+end
+uy_init_mean=[uy_init_mean;mean(uy_init)];
+uy_init_std=[uy_init_std;std(uy_init)];
+end
 
 
 C=tf([gains(1), gains(1)*gains(2)], [1, 0]);

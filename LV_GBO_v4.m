@@ -6,7 +6,7 @@ addpath("C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72_3";
+tmp_name="exper_72_4";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_', string(expr), '\');
@@ -73,8 +73,7 @@ end
 % load initial dataset
 if counter==1
     load(append(dir0, 'botrace0.mat'));
-    load(append(dir0, 'G2data_init.mat'));
-    G2data=G2data_init;
+    load(append(dir0, 'G2data.mat'));
     save(append(dir, 'G2data.mat'),'G2data')
     if LVswitch==0 %for code consistency
         load(append(dir0, 'perf_Data.mat'));
@@ -97,8 +96,9 @@ end
 addpath("C:\mahdi\data_driven_controller")
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
-    ytmp = exp_Data(sample_idx,4);
-    utmp= exp_Data(sample_idx,5);
+    tmp_idx=find(sample_idx>0);
+    ytmp = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
+    utmp = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
     % add measured data to BO dataset
@@ -112,8 +112,8 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     Trace.samples = samples;
     save(append(dir, 'G2data.mat'),'G2data')
     save(append(dir, 'debug_G2data_',num2str(counter_real),'.mat'),'G2data')
-    save(append(dir, 'perf_Data_',num2str(expr),'_',num2str(counter_real),'.mat'), 'perf_Data')
-    save(append(dir, 'exp_Data_',num2str(expr),'_',num2str(counter_real),'.mat'), 'exp_Data')
+    save(append(dir, 'perf_Data_',num2str(counter_real),'.mat'), 'perf_Data')
+    save(append(dir, 'exp_Data_',num2str(counter_real),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
     [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
@@ -121,7 +121,7 @@ elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or
     consecutive_G2_counter=0;
     while counter_s>0 && consecutive_G2_counter<30
         consecutive_G2_counter=consecutive_G2_counter+1;
-        save(append(dir, 'debug_G2_',num2str(expr),'_',num2str(counter_real),'_',num2str(idx_G2(end)),'.mat'), 'G2')
+        save(append(dir, 'debug_G2_',num2str(counter_real),'_',num2str(idx_G2(end)),'.mat'), 'G2')
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'when_switch_s.mat'),'when_switch_s')
         %save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
@@ -153,9 +153,9 @@ if counter_real==N_iter
         Trace.post_mus(idx_G2)=[];
         Trace.post_sigma2s(idx_G2)=[];
         Trace.times(idx_G2)=[];
-        save(append(dir, 'debug_idx_G2_expr_',num2str(expr),'.mat'),'idx_G2')
+        save(append(dir, 'debug_idx_G2','.mat'),'idx_G2')
     end
-    save(append(dir, 'trace_file_expr_',num2str(expr),'.mat'),'Trace')
+    save(append(dir, 'trace_file_removed','.mat'),'Trace')
     expr=expr+1;
     
     Kp=0.5;

@@ -62,24 +62,45 @@ if counter_s==0
     G2=[];
 elseif counter_s>0
     npG2=2;
-    G2=tfest(G2data, npG2,'Ts',10e-3); % without Ts it assumes continuous model that is incorrect for real setup
-    C=tf([hyper_cand(1), hyper_cand(1)*hyper_cand(2)], [1, 0]);
+    nzG2=1;
+    Options = tfestOptions('Display','on');
+    Options.InitialCondition = 'backcast';
+    Options.EnforceStability=1;
+    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
+    Kp = hyper_cand(1);
+    Ti = 1/hyper_cand(2);
+    Td = 0;
+    N=inf;
+    Ts = 0.01;
+    C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
     CL=feedback(C*G2, 1);
-    reference0=80;
-    reference=120;
-    t_high=5.01:0.01:10;
-    t_low=0.01:0.01:5;
+    reference0=0;
+    reference=40;
+    t_high=(11*Ts):Ts:(5.1-Ts);
+    t_low=0:Ts:(10*Ts);
     step_high=reference.*ones(length(t_high),1);
     step_low=reference0.*ones(length(t_low),1);
     t=[t_low,t_high]';
     r=[step_low;step_high];
-    y2 = lsim(CL,r,t);
-    y_high=y2(t>5);
-    t_high=t_high-5;%TODO check
+    y2=lsim(CL,r,t);
+    y_high=y2(t>.1);
+    t_high=t(t>.1);%TODO check
     e=abs(y_high-reference);
     ITAE = trapz(t_high, t_high.*abs(e));
-    S = lsiminfo(y_high,t_high,reference,reference0); 
+    S = lsiminfo(y_high,t_high,reference,reference0);
     st=S.SettlingTime;
+    if isnan(st) || st>5
+        st=5;
+    end
+    if ITAE>(reference-reference0)*40
+        ITAE=(reference-reference0)*40;
+    end
+    if isnan(Tr) || Tr>5
+        Tr=5;
+    end
+    if isnan(ov) || ov>100
+        ov=100;
+    end
     ov=100.*max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
     perf_Data=[ov, Tr, st, ITAE];
