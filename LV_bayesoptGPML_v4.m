@@ -63,7 +63,7 @@ if counter_s==0
 elseif counter_s>0
     npG2=2;
     nzG2=1;
-    Options = tfestOptions('Display','on');
+    Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
