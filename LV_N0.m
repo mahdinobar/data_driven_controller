@@ -1,7 +1,6 @@
 rehash 
 hyper_grid=zeros(2,2);
 %  build initial N0 dataset
-LV_switch=0;
 LVswitch=0;
 counter_s=0;
 counter_real=0;
@@ -29,7 +28,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=2; % if you decrease nr_repeats to 2 you must modify J_init too
+nr_repeats=1; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;
 
@@ -38,8 +37,8 @@ Tn_Angle=0;
 
 %% to initialize first the response
 if counter==0  %global initialize counter from 0
-    Kp=gains0(1);
-    Ki=gains0(2);
+    Kp=0.5;
+    Ki=1.47;
     gain_vel=Kp;
     Tn_vel=1/Ki;
     step_low=40;
@@ -50,14 +49,16 @@ elseif counter==1
     Ki=gains0(2);
     gain_vel=Kp;
     Tn_vel=1/Ki;
-    LVswitch=1;
 elseif counter==2
+    %%%%%%%%%%%%%%%%%%%%%
+    save(append(dir, 'debug_expr.mat'));
+    %%%%%%%%%%%%%%%%%%%%%
     sample_idx=exp_Data(:,3)==step_high;
     tmp_idx=find(sample_idx>0);
     ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
     G2data = iddata(ytmp,utmp,sampleTs);
-    J_init=ObjFun(perf_Data(1,:));
+    J_init=ObjFun(perf_Data);
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
     botrace0.times=0;
@@ -70,10 +71,17 @@ end
 counter=counter+1;
 if counter>2
     expr=expr+1;
-    counter=0;
+    counter=1;
     dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
     load(dir_gains)
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
+    Kp=0.5;
+    Ki=1.47;
+    gain_vel=Kp;
+    Tn_vel=1/Ki;
+    step_low=40;
+    step_high=40;
+    nr_repeats=1;
 end
 
 return
