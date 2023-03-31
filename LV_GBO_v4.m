@@ -25,7 +25,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=2;
+nr_repeats=1;
 control_mode=1;
 Input_mode=2;
 gain_angle=0;
@@ -102,7 +102,7 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
     % add measured data to BO dataset
-    J_measured=ObjFun(mean(perf_Data(end-nr_repeats+1:end,:)));
+    J_measured=ObjFun(mean(perf_Data(1,:)));
     Trace=opt.resume_trace_data;
     values=Trace.values;
     values(end+1,1)=J_measured;

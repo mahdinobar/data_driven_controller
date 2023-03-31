@@ -29,7 +29,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=2; % if you decrease nr_repeats to 2 you must modify J_init too
+nr_repeats=1; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;
 
@@ -57,7 +57,7 @@ elseif counter==2
     ytmp = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
     utmp = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
     G2data = iddata(ytmp,utmp,sampleTs);
-    J_init=ObjFun(perf_Data(end-nr_repeats+1:end,:));
+    J_init=ObjFun(perf_Data(1:end,:));
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
     botrace0.times=0;
