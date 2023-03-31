@@ -97,8 +97,8 @@ addpath("C:\mahdi\data_driven_controller")
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
-    ytmp = exp_Data((tmp_idx(1)-10):end,4)-exp_Data(tmp_idx(1)-1,4);
-    utmp = exp_Data((tmp_idx(1)-10):end,5)-exp_Data(tmp_idx(1)-1,5);
+    ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
+    utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
     % add measured data to BO dataset
