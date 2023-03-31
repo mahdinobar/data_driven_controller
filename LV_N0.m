@@ -50,11 +50,12 @@ elseif counter==1
     gain_vel=Kp;
     Tn_vel=1/Ki;
 elseif counter==2
-    %%%%%%%%%%%%%%%%%%%%%
-    save(append(dir, 'debug_expr.mat'));
-    %%%%%%%%%%%%%%%%%%%%%
+%     %%%%%%%%%%%%%%%%%%%%%
+%     save(append(dir, 'debug_expr.mat'));
+%     %%%%%%%%%%%%%%%%%%%%%
     sample_idx=exp_Data(:,3)==step_high;
-    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(sample_idx>0);
+    tmp_idx=find(tmp_idx_2>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
     G2data = iddata(ytmp,utmp,sampleTs);
