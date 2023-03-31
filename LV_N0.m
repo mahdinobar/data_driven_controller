@@ -29,7 +29,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=1; % if you decrease nr_repeats to 2 you must modify J_init too
+nr_repeats=2; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;
 
