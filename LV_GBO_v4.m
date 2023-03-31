@@ -118,15 +118,14 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
     [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
     counter=counter+1; %counter: number of BO iteration in total
-    consecutive_G2_counter=0;
+    consecutive_G2_counter=0; %to avoid dead loop on surrogate
     while counter_s>0 && consecutive_G2_counter<30
         consecutive_G2_counter=consecutive_G2_counter+1;
         save(append(dir, 'debug_G2_',num2str(counter_real),'_',num2str(idx_G2(end)),'.mat'), 'G2')
-        save(append(dir, 'idx_G2.mat'),'idx_G2')
-        save(append(dir, 'when_switch_s.mat'),'when_switch_s')
-        %save(append(dir, 'debug_idx_G2_expr_',num2str(idx_G2(end)),'_',num2str(expr),'.mat'),'idx_G2')
         opt.resume_trace_data = Trace;
         [ms,mv,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
+        save(append(dir, 'idx_G2.mat'),'idx_G2')
+        save(append(dir, 'when_switch_s.mat'),'when_switch_s')
         counter=counter+1; %counter: number of BO iteration in total
     end
     if counter_s==0 %means we call the real system to get perf_Data
