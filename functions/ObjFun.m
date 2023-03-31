@@ -1,9 +1,17 @@
 %% functions
 function objective = ObjFun(perf_Data)
-ov=mean(abs(perf_Data(:,1)));
-st=mean(perf_Data(:,3));
-Tr=mean(perf_Data(:,2));
-ITAE = mean(perf_Data(:,4));
+if size(perf_Data,1)>1
+    ov=mean(abs(perf_Data(:,1)));
+    st=mean(perf_Data(:,3));
+    Tr=mean(perf_Data(:,2));
+    ITAE = mean(perf_Data(:,4));
+else
+    ov=abs(perf_Data(:,1));
+    st=perf_Data(:,3);
+    Tr=perf_Data(:,2);
+    ITAE = perf_Data(:,4);
+end
+
 if isnan(ov) || isinf(ov) || ov>1e3
     ov=1e3;
 end
