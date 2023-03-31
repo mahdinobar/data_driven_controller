@@ -57,7 +57,7 @@ elseif counter==2
     ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
     G2data = iddata(ytmp,utmp,sampleTs);
-    J_init=ObjFun(perf_Data(1:end,:));
+    J_init=ObjFun(perf_Data(1,:));
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
     botrace0.times=0;
