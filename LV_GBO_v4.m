@@ -25,7 +25,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=2;
+nr_repeats=1;
 control_mode=1;
 Input_mode=2;
 gain_angle=0;
@@ -96,7 +96,8 @@ end
 addpath("C:\mahdi\data_driven_controller")
 if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     sample_idx=exp_Data(:,3)==step_high; %LV sampling time=10 ms
-    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(sample_idx>0);
+    tmp_idx=find(tmp_idx_2>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
