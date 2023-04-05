@@ -9,9 +9,9 @@ N_expr=10;
 true_objective = 1;
 
 tmp_name="exper_72_4";
-tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
+tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
-% find failed experiments
+% % find failed experiments
 nan_expr=[];
 for i=1:N_expr
     load(append(tmp_dir,'/BO_',string(i),'/perf_Data_',string(i),'.mat'))
@@ -31,7 +31,7 @@ for expr=1:N_expr
     JminObsGBO=[];
     if isempty(find(nan_expr==expr, 1))
         dirBO=append(tmp_dir,'/BO_', string(expr), '/');
-        dirGBO=append(tmp_dir,'/BO_', string(expr), '/');
+        dirGBO=append(tmp_dir,'/GBO_', string(expr), '/');
 
 %         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
         load(append(dirGBO,'trace_file_removed.mat'))
@@ -40,8 +40,8 @@ for expr=1:N_expr
 %         size(TraceGBO.values)
         clearvars Trace
 
-        load(append(dirGBO,'/when_switch_s.mat'))
-        number_s(end+1)=size(when_switch_s,1);
+%         load(append(dirGBO,'/when_switch_s.mat'))
+%         number_s(end+1)=size(when_switch_s,1);
 
         load(append(dirGBO,'/idx_G2.mat'))
         number_idx_G2(end+1)=size(idx_G2,1);
@@ -57,7 +57,7 @@ for expr=1:N_expr
 
 
 
-
+%         load(append(dirBO,'trace_file_expr_',num2str(expr),'.mat'))
         load(append(dirBO,'trace_file_removed.mat'))
         TraceBO=Trace;
         clearvars Trace
