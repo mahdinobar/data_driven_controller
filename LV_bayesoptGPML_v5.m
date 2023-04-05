@@ -1,4 +1,6 @@
-function [minsample,minvalue,botrace,LVgains, hyper_grid, idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(Obj,opt, hyper_grid,counter_s,G2data,idx_G2,when_switch_s, counter_real)
+function [minsample,minvalue,botrace,LVgains, hyper_grid, idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v5(Obj,opt, hyper_grid,counter_s,G2data,idx_G2,when_switch_s, counter_real)
+% version 5: remove surrogate data from BO dataset when you switch back to
+% real plant
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -29,9 +31,7 @@ if isfield(botrace,'AQ_vals')
 else
     AQ_vals=[];
 end
-hyp_GP_mean=[];
-hyp_GP_cov=[];
-hyp_GP_lik=[];
+
 % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
 [hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, botrace);
 AQ_vals=[AQ_vals;aq_val];
@@ -48,7 +48,34 @@ elseif counter_s>0
     elseif counter_s<3+1 %means if 3 consecutive iterations with surrogate there is no considerable improvement we stop BO on surrogate
         counter_s =counter_s+1;
     else
+%         save(append("C:\mahdi\data_driven_controller\Data\exper_72_4\GBO_v5_1\debug_data_",num2str(when_switch_s),".mat"))
+        save(append("C:\mahdi\data_driven_controller\Data\exper_72_4\GBO_v5_1\debug_data.mat"))
         counter_s=0; %switch back to real system
+        % find min observed with the last surrogate
+        [~,I]=min(botrace.values(idx_G2));
+        hyper_cand = botrace.samples(idx_G2(I),:);
+        % set/keep relevant data
+        post_mu=botrace.post_mus(idx_G2(I));
+        post_sigma2=botrace.post_sigma2s(idx_G2(I));
+        hidx=1;
+        aq_val=botrace.AQ_vals(idx_G2(I)-1);
+        % remove surrogate data
+        botrace.samples(idx_G2,:)=[];
+        botrace.values(idx_G2)=[];
+        botrace.post_mus(idx_G2)=[];
+        botrace.post_sigma2s(idx_G2)=[];
+        botrace.times(idx_G2)=[];
+        botrace.AQ_vals(idx_G2-1)=[];
+        % corrections for code consistency
+        AQ_vals=botrace.AQ_vals;
+        AQ_vals=[AQ_vals;aq_val];
+        samples = scale_point(botrace.samples,opt.mins,opt.maxes);
+        values = botrace.values;
+        times = botrace.times;
+        post_mus=botrace.post_mus;
+        post_sigma2s=botrace.post_sigma2s;
+        % reset surrogate indices
+        idx_G2=[];
     end
 end
 % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
@@ -112,19 +139,11 @@ elseif counter_s>0
 end
 times(end+1) = toc;
 post_mus(end+1,1) = post_mu(hidx); %keep the posterior mean where EI is maximum
-hyp_GP_mean=[hyp_GP_mean; hyp_GP.mean'];
-hyp_GP_cov=[hyp_GP_cov; hyp_GP.cov'];
-hyp_GP_lik=[hyp_GP_lik; hyp_GP.lik'];
 post_sigma2s(end+1,1)=post_sigma2(hidx);
-botrace.post_mus=post_mus;
-botrace.post_sigma2s=post_sigma2s;
 botrace.post_mus=post_mus;
 botrace.post_sigma2s=post_sigma2s;
 botrace.values = values;
 botrace.times = times;
-botrace.hyp_GP_lik=hyp_GP_lik;
-botrace.hyp_GP_cov=hyp_GP_cov;
-botrace.hyp_GP_mean=hyp_GP_mean;
 botrace.AQ_vals=AQ_vals;
 % Get minvalue and minsample
 [mv,mi] = min(values);

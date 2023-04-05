@@ -28,7 +28,7 @@ sampleTs=10e-3; % 10ms
 step_low=80;
 step_high=120;
 step_time=5;
-nr_repeats=1; % if you decrease nr_repeats to 2 you must modify J_init too
+nr_repeats=2; % if you decrease nr_repeats to 2 you must modify J_init too
 control_mode=1;
 Input_mode=2;
 
@@ -54,15 +54,20 @@ elseif counter==2
 %     save(append(dir, 'debug_expr.mat'));
 %     %%%%%%%%%%%%%%%%%%%%%
     sample_idx=exp_Data(:,3)==step_high;
-    tmp_idx_2=find(sample_idx>0);
-    tmp_idx=find(tmp_idx_2>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-    ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-exp_Data(tmp_idx(1)-1,4);
-    utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-exp_Data(tmp_idx(1)-1,5);
+    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    tmp_idx=tmp_idx(tmp_idx_2);
+    y_offset=exp_Data(tmp_idx(1)-10,4);
+    u_offset=exp_Data(tmp_idx(1)-10,5);
+    ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-y_offset;
+    utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
     G2data = iddata(ytmp,utmp,sampleTs);
     J_init=ObjFun(perf_Data);
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
     botrace0.times=0;
+    save(append(dir, 'y_offset.mat'),'y_offset');
+    save(append(dir, 'u_offset.mat'),'u_offset');    
     save(append(dir, 'G2data'),'G2data');
     save(append(dir, 'botrace0'), 'botrace0');
     save(append(dir, 'gains0'), 'gains0');

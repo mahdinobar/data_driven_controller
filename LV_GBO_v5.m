@@ -1,4 +1,6 @@
-% GBO version 4
+% GBO version 5
+% version 5: remove surrogate data from BO dataset when you switch back to
+% real plant
 %% ADD PATHS
 rehash 
 addpath("C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\tfest.m")
@@ -9,7 +11,7 @@ addpath("C:\mahdi\data_driven_controller\gpml")
 tmp_name="exper_72_4";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
-dir=append(tmp_dir,'\GBO_', string(expr), '\');
+dir=append(tmp_dir,'\GBO_v5_', string(expr), '\');
 if not(isfolder(dir))
     mkdir(dir)
 end
@@ -120,14 +122,15 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     save(append(dir, 'exp_Data_',num2str(counter_real),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data
-    [~,~,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
+    [~,~,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v5(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
     counter=counter+1; %counter: number of BO iteration in total
     consecutive_G2_counter=0; %to avoid dead loop on surrogate
+    save(append(dir, 'idx_G2.mat'),'idx_G2')
     while counter_s>0 && consecutive_G2_counter<30
         consecutive_G2_counter=consecutive_G2_counter+1;
         save(append(dir, 'debug_G2_',num2str(counter_real),'_',num2str(idx_G2(end)),'.mat'), 'G2')
         opt.resume_trace_data = Trace;
-        [~,~,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v4(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
+        [~,~,Trace, LVgains,hyper_grid,idx_G2, G2, counter_s,when_switch_s] = LV_bayesoptGPML_v5(fun,opt,hyper_grid,counter_s, G2data,idx_G2,when_switch_s,counter_real);
         save(append(dir, 'idx_G2.mat'),'idx_G2')
         save(append(dir, 'when_switch_s.mat'),'when_switch_s')
         counter=counter+1; %counter: number of BO iteration in total
