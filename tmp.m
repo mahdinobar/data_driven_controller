@@ -504,10 +504,10 @@
 clear all
 clc
 close all
-
-load('G2data_418.mat')
-load('exp_Data_418.mat')
-load('perf_Data_418.mat')
+i=200;
+load(append('G2data_',string(i),'.mat'))
+load(append('exp_Data_',string(i),'.mat'))
+load(append('perf_Data_',string(i),'.mat'))
 
 % npG2=2;
 % nzG2=1;
@@ -536,9 +536,18 @@ reference=40;
 y_high=G2data.y(10:end);
 t_high=0:Ts:((length(y_high)-1)*Ts);
 e=abs(y_high-reference);
-ITAE = trapz(t_high, t_high.*abs(e));
+ITAE = trapz(t_high, t_high'.*abs(e))
+perf_Data(1,4)
+(ITAE-perf_Data(1,4))
+(ITAE-perf_Data(1,4))/ITAE*100
 
-S = lsiminfo(y_high,t_high,reference,reference0);
-% st=S.SettlingTime;
-ov=100.*max(0,(S.Max-reference0)/(reference-reference0)-1)
+S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
+st=S.SettlingTime;
+(st-perf_Data(1,3))/st*100;
+ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1))
+perf_Data(1,2)
+(Tr-perf_Data(1,2))
+(Tr-perf_Data(1,2))/Tr*100
+
 
