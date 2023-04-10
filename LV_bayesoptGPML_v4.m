@@ -83,8 +83,8 @@ elseif counter_s>0
     t=[t_low,t_high]';
     r=[step_low;step_high];
     y2=lsim(CL,r,t);
-    y_high=y2(t>(.1-Ts)); %pay attention
-    t_high=t(t>(.1-Ts));%TODO check
+    y_high=y2(t>(.1)); %TODO check pay attention
+    t_high=t(t>(.1));%TODO check
     e=abs(y_high-reference);
     ITAE = trapz(t_high, t_high.*abs(e));
     S = lsiminfo(y_high,t_high,reference,reference0);
