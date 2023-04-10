@@ -449,14 +449,54 @@
 % grid on
 % legend([h1,h2,hn, h_all],{"measurement","surrogate","high-fidelity plant","surrogate trained on all data"}, 'Location', 'southeast')
 % 
-% 
-figure(1); hold on
+ 
+% figure(1); hold on
+% for i=2:500
+%     load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/exp_Data_",string(i),".mat"))
+%     plot(exp_Data(:,4)); plot(exp_Data(:,3),'k');
+% end
+% figure(2); hold on
+% for i=2:500
+%     load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/exp_Data_",string(i),".mat"))
+%     plot(exp_Data(:,5)); plot(exp_Data(:,3),'k')
+% end
+close all;
+clear all;
+figure(3); hold on
+colormap(jet)
+% colorbar('Ticks',[])
+perf_Data_up_all=[];
+u_offset_all=[];
+y_offset_all=[];
+botrace_value_all=[];
 for i=2:500
-    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/exp_Data_",string(i),".mat"))
-    plot(exp_Data(:,4)); plot(exp_Data(:,3),'k');
+    %     load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/G2data_",string(i),".mat"))
+    %     plot(G2data.y);
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/perf_Data_",string(i),".mat"))
+    perf_Data_up_all=[perf_Data_up_all;perf_Data(1,1:4)];
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/u_offset_",string(i),".mat"))
+    u_offset_all=[u_offset_all;u_offset];
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/y_offset_",string(i),".mat"))
+    y_offset_all=[y_offset_all;y_offset];
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/botrace0_",string(i),".mat"))
+    botrace_value_all=[botrace_value_all;botrace0.values];
 end
-figure(2); hold on
+plot(perf_Data_up_all)
+legend("overshoot","settling time","rise time", "ITAE")
+
+figure(4); hold on
+w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
+w_importance=[2, 1, 1, 1];
+w=w_importance./w_mean_grid;
+w=w./sum(w);
+plot(perf_Data_up_all.*w)
+legend("overshoot","settling time","rise time", "ITAE")
+
+figure(5); hold on
+colormap(jet)
+colorbar('Ticks',[])
 for i=2:500
-    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/exp_Data_",string(i),".mat"))
-    plot(exp_Data(:,5)); plot(exp_Data(:,3),'k')
+    load(append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements/N0_Data_1/G2data_",string(i),".mat"))
+    plot(G2data.u); 
 end
+
