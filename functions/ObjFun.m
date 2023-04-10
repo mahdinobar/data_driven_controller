@@ -18,8 +18,8 @@ st=perf_Data(1,3);
 Tr=perf_Data(1,2);
 ITAE = perf_Data(1,4);
 
-if isnan(ov) || isinf(ov) || ov>1e3
-    ov=1e3;
+if isnan(ov) || isinf(ov) || ov>1
+    ov=1;
 end
 
 if isnan(st) || isinf(st) || st>1e5

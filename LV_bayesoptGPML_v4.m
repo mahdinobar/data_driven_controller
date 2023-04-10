@@ -89,7 +89,7 @@ elseif counter_s>0
     ITAE = trapz(t_high, t_high.*abs(e));
     S = lsiminfo(y_high,t_high,reference,reference0);
     st=S.SettlingTime;
-    ov=100.*max(0,(S.Max-reference0)/(reference-reference0)-1);
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
     if isnan(st) || st>5
         st=5;
@@ -100,8 +100,8 @@ elseif counter_s>0
     if isnan(Tr) || Tr>5
         Tr=5;
     end
-    if isnan(ov) || ov>100
-        ov=100;
+    if isnan(ov) || ov>1
+        ov=1;
     end
     perf_Data=[ov, Tr, st, ITAE];
     value = Obj(perf_Data);
