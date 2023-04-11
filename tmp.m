@@ -501,53 +501,58 @@
 % end
 %
 
-clear all
+clear 
 clc
-close all
-i=200;
-load(append('G2data_',string(i),'.mat'))
-load(append('exp_Data_',string(i),'.mat'))
-load(append('perf_Data_',string(i),'.mat'))
+close
+ov_all=[];
+Tr_all=[];
+st_all=[];
+ITAE_all=[];
+perf_Data_all=[];
+perf_Data_all_LV=[];
+for i=2:500
 
-% npG2=2;
-% nzG2=1;
-% Options = tfestOptions('Display','off');
-% Options.InitialCondition = 'backcast';
-% Options.EnforceStability=1;
-% G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
-% Kp = hyper_cand(1);
-% Ti = 1/hyper_cand(2);
-% Td = 0;
-% N=inf;
-Ts = 0.01;
-% C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
-% CL=feedback(C*G2, 1);
-reference0=0;
-reference=40;
-% t_high=(11*Ts):Ts:(5.1-Ts);
-% t_low=0:Ts:(10*Ts);
-% step_high=reference.*ones(length(t_high),1);
-% step_low=reference0.*ones(length(t_low),1);
-% t=[t_low,t_high]';
-% r=[step_low;step_high];
-% y2=lsim(CL,r,t);
-% y_high=y2(t>.1);
+    load(append('G2data_',string(i),'.mat'))
+    load(append('exp_Data_',string(i),'.mat'))
+    load(append('perf_Data_',string(i),'.mat'))
 
-y_high=G2data.y(10:end);
-t_high=0:Ts:((length(y_high)-1)*Ts);
-e=abs(y_high-reference);
-ITAE = trapz(t_high, t_high'.*abs(e))
-perf_Data(1,4)
-(ITAE-perf_Data(1,4))
-(ITAE-perf_Data(1,4))/ITAE*100
+    Ts = 0.01;
+    reference0=0;
+    reference=40;
 
-S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
-st=S.SettlingTime;
-(st-perf_Data(1,3))/st*100;
-ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
-Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1))
-perf_Data(1,2)
-(Tr-perf_Data(1,2))
-(Tr-perf_Data(1,2))/Tr*100
+    y_high=G2data.y(10:end);
+    t_high=0:Ts:((length(y_high)-1)*Ts);
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high, t_high'.*abs(e));
+    ITAE_all=[ITAE_all;ITAE];
 
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
+    st=S.SettlingTime;
+    st_all=[st_all;st];
 
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+    ov_all=[ov_all;ov];
+
+    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    Tr_all=[Tr_all;Tr];
+    
+    perf_Data_all_LV=[perf_Data_all_LV;perf_Data(1,1:4)];
+end
+perf_Data_all=[ov_all,Tr_all,st_all,ITAE_all];
+% remove NAN dat rows
+[r,~]=find(isnan(perf_Data_all));
+perf_Data_all(r,:)=[];
+perf_Data_all_LV(r,:)=[];
+
+save("perf_Data_all.mat","perf_Data_all")
+save("perf_Data_all_LV.mat","perf_Data_all_LV")
+
+w_mean_grid=[0.272170491516590,0.368857250362635,3.10390673875809,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
+w_importance=[2, 1, 1, 1];
+w=(w_importance)./w_mean_grid;
+w=w./sum(w);
+perf_Data_all_weighted=perf_Data_all.*w;
+perf_Data_all_LV_weighted=perf_Data_all_LV.*w;
+
+figure(1);plot(perf_Data_all_LV_weighted); legend({"overshoot","rise time","settling time","ITAE"});
+figure(2);plot(perf_Data_all_weighted); legend({"overshoot","rise time","settling time","ITAE"});
