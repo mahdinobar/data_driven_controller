@@ -76,13 +76,28 @@ else
 end
 counter=counter+1;
 if counter>11
-    expr=expr+1;
     counter=1;
     dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
     load(dir_gains)
     gains_span=10;
+
+%     choose grid Kp,Ki from low to high and return back from high to
+%     low(works for expr in [1:200]
+    expr_tmp=expr;
+    if expr<101
+            expr_tmp=expr;
+    else
+            expr_tmp=expr-100;
+    end
     tmp=linspace(0,1,gains_span);
-    gains0=[Kp_min+tmp(expr-1)*(Kp_max-Kp_min),Ki_min+tmp(rem(expr-1,gains_span))*(Ki_max-Ki_min)];
+    if rem(expr_tmp,gains_span)==0
+        idx_tmp=10;
+    else
+        idx_tmp=rem(expr_tmp,gains_span);
+    end
+    gains0=[Kp_min+tmp(idx_tmp)*(Kp_max-Kp_min),Ki_min+tmp(floor((expr_tmp-1)/gains_span)+1)*(Ki_max-Ki_min)];
+
+    expr=expr+1;
     Kp=0.5;
     Ki=1.47;
     gain_vel=Kp;
