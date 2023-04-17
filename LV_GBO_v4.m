@@ -105,6 +105,21 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
+    %calculate performance data based on experimental step response measurements
+    reference0=0;
+    reference=40;
+    y_high=ytmp(10:end);
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high, t_high'.*abs(e));
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
+    st=S.SettlingTime;
+    if isnan(st)
+        st=5;
+    end
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    perf_Data=[ov,Tr,st,ITAE];
     % add measured data to BO dataset
     J_measured=ObjFun(perf_Data);
     Trace=opt.resume_trace_data;
@@ -117,6 +132,7 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     save(append(dir, 'G2data.mat'),'G2data')
     save(append(dir, 'debug_G2data_',num2str(counter_real),'.mat'),'G2data')
     save(append(dir, 'perf_Data_',num2str(counter_real),'.mat'), 'perf_Data')
+    save(append(dir, 'perf_Data_LV_',num2str(counter_real),'.mat'), 'perf_Data_LV')
     save(append(dir, 'exp_Data_',num2str(counter_real),'.mat'), 'exp_Data')
     LVswitch=0;
 elseif LVswitch==0  % LVswitch==0 means we need to decide to call either real or surrogate to get data

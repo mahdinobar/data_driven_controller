@@ -62,6 +62,22 @@ elseif counter==2
     ytmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),4)-y_offset;
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
     G2data = iddata(ytmp,utmp,sampleTs);
+    %calculate performance data based on experimental step response measurements
+    reference0=0;
+    reference=40;
+    y_high=ytmp(10:end);
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high, t_high'.*abs(e));
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
+    st=S.SettlingTime;
+    if isnan(st)
+        st=5;
+    end
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    perf_Data=[ov,Tr,st,ITAE];
+
     J_init=ObjFun(perf_Data);
     botrace0.samples=[Kp, Ki];
     botrace0.values=J_init;
@@ -72,6 +88,7 @@ elseif counter==2
     save(append(dir, 'botrace0'), 'botrace0');
     save(append(dir, 'gains0'), 'gains0');
     save(append(dir, 'perf_Data'), 'perf_Data');
+    save(append(dir, 'perf_Data_LV'), 'perf_Data_LV');
     save(append(dir, 'exp_Data'), 'exp_Data');
 end
 counter=counter+1;
