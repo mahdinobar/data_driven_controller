@@ -64,6 +64,7 @@ end
 save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements_several_gains/results.mat","gains","means","stds","means_LV","stds_LV")
 selected_means=means(gains(:,1)>0.3291,:);
 selected_stds=stds(gains(:,1)>0.3291,:);
+selected_stds=selected_stds./mean(selected_means);
 mean_selected_means=selected_means./mean(selected_means);
 % %TODO manual corrections
 % means(1,:)=[];
