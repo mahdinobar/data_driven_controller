@@ -61,8 +61,10 @@ for n=1:200
     gains=[gains;gains0];
 
 end
-save("results.mat","gains","means","stds","means_LV","stds_LV")
-
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/tmp_test_measurements_several_gains/results.mat","gains","means","stds","means_LV","stds_LV")
+selected_means=means(gains(:,1)>0.3291,:);
+selected_stds=stds(gains(:,1)>0.3291,:);
+mean_selected_means=selected_means./mean(selected_means);
 % %TODO manual corrections
 % means(1,:)=[];
 % means(101,:)=[];
@@ -107,4 +109,36 @@ legend({"first round","second round"});
 xlabel("gains")
 ylabel("metric")
 
-% legend({"overshoot","rise time","settling time","ITAE"});
+figure(2)
+subplot(4,1,1)
+errorbar(mean_selected_means(2:70,1),selected_stds(2:70,1),'b')
+hold on
+errorbar(mean_selected_means(72:140,1),selected_stds(72:140,1),'r')
+title({"overshoot"});
+legend({"first round","second round"});
+xlabel("gains")
+ylabel("metric")
+subplot(4,1,2)
+errorbar(mean_selected_means(2:70,2),selected_stds(2:70,2),'b')
+hold on
+errorbar(mean_selected_means(72:140,2),selected_stds(72:140,2),'r')
+title({"rise time"});
+legend({"first round","second round"});
+xlabel("gains")
+ylabel("metric")
+subplot(4,1,3)
+errorbar(mean_selected_means(2:70,3),selected_stds(2:70,3),'b')
+hold on
+errorbar(mean_selected_means(72:140,3),selected_stds(72:140,3),'r')
+title({"settling time"});
+legend({"first round","second round"});
+xlabel("gains")
+ylabel("metric")
+subplot(4,1,4)
+errorbar(mean_selected_means(2:70,4),selected_stds(2:70,4),'b')
+hold on
+errorbar(mean_selected_means(72:140,4),selected_stds(72:140,4),'r')
+title({"ITAE"});
+legend({"first round","second round"});
+xlabel("gains")
+ylabel("metric")
