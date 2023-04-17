@@ -14,7 +14,7 @@ if not(isfolder(dir))
     mkdir(dir)
 end
 %% load gain limits
-dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_3.mat');
 load(dir_gains)
 %% set params
 stat_value=60;

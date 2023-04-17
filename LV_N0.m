@@ -8,7 +8,7 @@ idx_G2=[0];
 % build and save initial dataset
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
-tmp_name="exper_72_4";
+tmp_name="exper_72_5";
 dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name,"\N0_Data_",string(expr),"\");
 if not(isfolder(dir))
     mkdir(dir)
@@ -95,7 +95,7 @@ counter=counter+1;
 if counter>2
     expr=expr+1;
     counter=1;
-    dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+    dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_3.mat');
     load(dir_gains)
     gains0=[Kp_min+rand(1,1)*(Kp_max-Kp_min),Ki_min+rand(1,1)*(Ki_max-Ki_min)];
     Kp=0.5;
