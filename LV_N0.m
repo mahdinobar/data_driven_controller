@@ -14,7 +14,7 @@ if not(isfolder(dir))
     mkdir(dir)
 end
 start_switch=1;
-stat_value=60;
+stat_value=60; 
 
 N0=1; %for N0>1 modify
 Kp=gains0(1);

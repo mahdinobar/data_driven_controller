@@ -1,14 +1,13 @@
-function LV_plots
 close all;
 clc;
 clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=10;
+N_expr=12;
 true_objective = 1;
 
-tmp_name="exper_72_4";
+tmp_name="exper_72_5";
 tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
 % % find failed experiments
@@ -31,7 +30,7 @@ for expr=1:N_expr
     JminObsGBO=[];
     if isempty(find(nan_expr==expr, 1))
         dirBO=append(tmp_dir,'/BO_', string(expr), '/');
-        dirGBO=append(tmp_dir,'/GBO_', string(expr), '/');
+        dirGBO=append(tmp_dir,'/BO_', string(expr), '/');
 
 %         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
         load(append(dirGBO,'trace_file_removed.mat'))
@@ -80,10 +79,10 @@ ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
 
-h1=semilogy(ax1, JminObsGBO_All'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
-h2=semilogy(ax1, JminObsBO_All'./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-h3=semilogy(ax1, meanJminObsGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
-h4=semilogy(ax1, meanJminObsBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
+h1=semilogy(ax1, JminObsGBO_All(:,:)'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
+h2=semilogy(ax1, JminObsBO_All(:,:)'./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
+h3=semilogy(ax1, meanJminObsGBO(:)./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+h4=semilogy(ax1, meanJminObsBO(:)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 [a,b]=max(meanJminObsGBO<0.9915);
 xlabel(ax1, 'Iteration on real plant')
 ylabel(ax1, 'Minimum observed objective')
@@ -97,4 +96,3 @@ figName=append(dirBO,'_experiments.png');
 saveas(gcf,figName)
 figName=append(dirBO,'_experiments.fig');
 saveas(gcf,figName)
-end
