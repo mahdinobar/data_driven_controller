@@ -87,10 +87,11 @@ elseif counter_s>0
     t_high=t(t>(.1));%TODO check
     e=abs(y_high-reference);
     ITAE = trapz(t_high, t_high.*abs(e));
-    S = lsiminfo(y_high,t_high,reference,reference0);
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
     st=S.SettlingTime;
     ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    save("C:\mahdi\data_driven_controller\Data\exper_72_5\GBO_4\debug.mat")
     if isnan(st) || st>5
         st=5;
     end
