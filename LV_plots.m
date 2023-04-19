@@ -4,10 +4,10 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=12;
+N_expr=17;
 true_objective = 1;
 
-tmp_name="exper_72_5";
+tmp_name="exper_72_6";
 tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
 
 % % find failed experiments
@@ -19,7 +19,6 @@ for i=1:N_expr
         nan_expr=[nan_expr,i]
     end
 end
-
 
 JminObsBO_All=[];
 JminObsGBO_All=[];
@@ -78,11 +77,13 @@ ax1=axes;
 ax1.FontSize=24;
 ax1.FontName='Times New Roman';
 hold on
-
+noise_level=0.0439;
 h1=semilogy(ax1, JminObsGBO_All(:,:)'./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
 h2=semilogy(ax1, JminObsBO_All(:,:)'./true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
 h3=semilogy(ax1, meanJminObsGBO(:)./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
 h4=semilogy(ax1, meanJminObsBO(:)./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
+h5=semilogy(ax1, [meanJminObsGBO(:)./true_objective+noise_level,meanJminObsGBO(:)./true_objective-noise_level], "--", 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+h6=semilogy(ax1, [meanJminObsBO(:)./true_objective+noise_level,meanJminObsBO(:)./true_objective-noise_level], "--", 'Color', [0, 0, 1, 1], 'LineWidth', 5);
 [a,b]=max(meanJminObsGBO<0.9915);
 xlabel(ax1, 'Iteration on real plant')
 ylabel(ax1, 'Minimum observed objective')
@@ -91,7 +92,7 @@ grid minor
 % ylim([0 3])
 xlim([1, 50])
 xticks([1, 5:5:50])
-legend([h3, h4],{'GBO','BO'}, 'Location', 'northeast');
+legend([h3, h4, h5(1), h6(1)],{'GBO','BO','GBO noise level','BO noise level'}, 'Location', 'northeast');
 figName=append(dirBO,'_experiments.png');
 saveas(gcf,figName)
 figName=append(dirBO,'_experiments.fig');
