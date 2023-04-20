@@ -4,7 +4,7 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=17;
+N_expr=59;
 true_objective = 1;
 
 tmp_name="exper_72_6";
@@ -12,7 +12,7 @@ tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name)
 
 % % find failed experiments
 nan_expr=[];
-for i=1:N_expr
+for i=1:N_iter
     load(append(tmp_dir,'/BO_',string(i),'/perf_Data_',string(i),'.mat'))
     nan_perf=sum(isnan(perf_Data(:,1:4)));
     if nan_perf>1
