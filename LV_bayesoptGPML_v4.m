@@ -37,9 +37,9 @@ hyp_GP_lik=[];
 AQ_vals=[AQ_vals;aq_val];
 % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
 tic;
-eta1=0.003; %0.0277; %3; %inf; 
+eta1=0.003; %0.0173; %0.0277; %3; %inf; %appr. 0.0173 is the mean+2std sigma2_GP of 2nd experiment after N0
 eta2=0.2;
-if counter_s==0 && post_sigma2(hidx)>eta1
+if counter_s==0 && post_sigma2(hidx)>eta1 && length(when_switch_s)<15 %put safety that not switch more than certain times to surrogate
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
@@ -87,7 +87,7 @@ elseif counter_s>0
     t_high=t(t>(.1));%TODO check
     e=abs(y_high-reference);
     ITAE = trapz(t_high, t_high.*abs(e));
-    S = lsiminfo(y_high,t_high,reference,reference0);
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
     st=S.SettlingTime;
     ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
