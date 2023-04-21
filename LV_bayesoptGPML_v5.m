@@ -33,13 +33,13 @@ else
 end
 
 % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
-[hyper_cand,hidx,aq_val, post_mu, post_sigma2, hyp_GP] = get_next_cand(samples,values, hyper_grid, opt, botrace);
+[hyper_cand,hidx,aq_val, post_mu, post_sigma2, ~] = get_next_cand(samples,values, hyper_grid, opt, botrace);
 AQ_vals=[AQ_vals;aq_val];
 % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
 tic;
-eta1=0.03; %0.0277; %3; %inf;
+eta1=0.003; %0.0277; %3; %inf;
 eta2=0.2;
-if counter_s==0 && post_sigma2(hidx)>eta1
+if counter_s==0 && post_sigma2(hidx)>eta1 && length(when_switch_s)<15
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
@@ -48,7 +48,6 @@ elseif counter_s>0
     elseif counter_s<3+1 %means if 3 consecutive iterations with surrogate there is no considerable improvement we stop BO on surrogate
         counter_s =counter_s+1;
     else
-%         save(append("C:\mahdi\data_driven_controller\Data\exper_72_4\GBO_v5_1\debug_data_",num2str(when_switch_s),".mat"))
         save(append("C:\mahdi\data_driven_controller\Data\exper_72_4\GBO_v5_1\debug_data.mat"))
         counter_s=0; %switch back to real system
         % find min observed with the last surrogate

@@ -8,7 +8,7 @@ addpath("C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\")
 addpath C:\Program Files\MATLAB\R2022b\toolbox\ident\ident\@iddata\iddata.m
 addpath("C:\mahdi\data_driven_controller\functions")
 addpath("C:\mahdi\data_driven_controller\gpml")
-tmp_name="exper_72_4";
+tmp_name="exper_72_6";
 tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 dir0=append(tmp_dir,"\N0_Data_",string(expr),"\");
 dir=append(tmp_dir,'\GBO_v5_', string(expr), '\');
@@ -16,7 +16,7 @@ if not(isfolder(dir))
     mkdir(dir)
 end
 %% load gain limits
-dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_2.mat');
+dir_gains=append('C:\mahdi\data_driven_controller\Data\DC_motor_gain_bounds\KpKi_bounds_new_3.mat');
 load(dir_gains)
 %% set params
 stat_value=60;
@@ -107,6 +107,21 @@ if LVswitch==1 % means new exp_Data and perf_Data arrived from real system
     utmp = exp_Data((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     counter_real= counter_real +1; % counter_real counts number of real system measurements
+    %calculate performance data based on experimental step response measurements
+    reference0=0;
+    reference=40;
+    y_high=ytmp(10:end);
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high, t_high'.*abs(e));
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
+    st=S.SettlingTime;
+    if isnan(st)
+        st=5;
+    end
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    perf_Data=[ov,Tr,st,ITAE];
     % add measured data to BO dataset
     J_measured=ObjFun(perf_Data);
     Trace=opt.resume_trace_data;
