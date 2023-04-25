@@ -37,7 +37,7 @@ hyp_GP_lik=[];
 AQ_vals=[AQ_vals;aq_val];
 % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
 tic;
-eta1=0.003; %0.0173; %0.0277; %3; %inf; %appr. 0.0173 is the mean+2std sigma2_GP of 2nd experiment after N0
+eta1=0.0043; %0.0173; %0.0277; %3; %inf; %appr. 0.0173 is the mean+2std sigma2_GP of 2nd experiment after N0
 eta2=0.2;
 if counter_s==0 && post_sigma2(hidx)>eta1 && length(when_switch_s)<15 %put safety that not switch more than certain times to surrogate
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
