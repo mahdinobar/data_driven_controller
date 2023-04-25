@@ -518,59 +518,70 @@
 % %     plot(G2data.u);
 % % end
 % %
-
-clear 
+% 
+% clear
+% clc
+% close
+% ov_all=[];
+% Tr_all=[];
+% st_all=[];
+% ITAE_all=[];
+% perf_Data_all=[];
+% perf_Data_all_LV=[];
+% for i=2:500
+% 
+%     load(append('G2data_',string(i),'.mat'))
+%     load(append('exp_Data_',string(i),'.mat'))
+%     load(append('perf_Data_',string(i),'.mat'))
+% 
+%     Ts = 0.01;
+%     reference0=0;
+%     reference=40;
+% 
+%     y_high=G2data.y(10:end);
+%     t_high=0:Ts:((length(y_high)-1)*Ts);
+%     e=abs(y_high-reference);
+%     ITAE = trapz(t_high, t_high'.*abs(e));
+%     ITAE_all=[ITAE_all;ITAE];
+% 
+%     S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
+%     st=S.SettlingTime;
+%     st_all=[st_all;st];
+% 
+%     ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+%     ov_all=[ov_all;ov];
+% 
+%     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+%     Tr_all=[Tr_all;Tr];
+% 
+%     perf_Data_all_LV=[perf_Data_all_LV;perf_Data(1,1:4)];
+% end
+% perf_Data_all=[ov_all,Tr_all,st_all,ITAE_all];
+% % remove NAN dat rows
+% [r,~]=find(isnan(perf_Data_all));
+% perf_Data_all(r,:)=[];
+% perf_Data_all_LV(r,:)=[];
+% 
+% save("perf_Data_all.mat","perf_Data_all")
+% save("perf_Data_all_LV.mat","perf_Data_all_LV")
+% 
+% w_mean_grid=[0.272170491516590,0.368857250362635,3.10390673875809,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
+% w_importance=[2, 1, 1, 1];
+% w=(w_importance)./w_mean_grid;
+% w=w./sum(w);
+% perf_Data_all_weighted=perf_Data_all.*w;
+% perf_Data_all_LV_weighted=perf_Data_all_LV.*w;
+% 
+% figure(1);plot(perf_Data_all_LV_weighted); legend({"overshoot","rise time","settling time","ITAE"});
+% figure(2);plot(perf_Data_all_weighted); legend({"overshoot","rise time","settling time","ITAE"});
+clear all
+close all
 clc
-close
-ov_all=[];
-Tr_all=[];
-st_all=[];
-ITAE_all=[];
-perf_Data_all=[];
-perf_Data_all_LV=[];
-for i=2:500
-
-    load(append('G2data_',string(i),'.mat'))
-    load(append('exp_Data_',string(i),'.mat'))
-    load(append('perf_Data_',string(i),'.mat'))
-
-    Ts = 0.01;
-    reference0=0;
-    reference=40;
-
-    y_high=G2data.y(10:end);
-    t_high=0:Ts:((length(y_high)-1)*Ts);
-    e=abs(y_high-reference);
-    ITAE = trapz(t_high, t_high'.*abs(e));
-    ITAE_all=[ITAE_all;ITAE];
-
-    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.05);
-    st=S.SettlingTime;
-    st_all=[st_all;st];
-
-    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
-    ov_all=[ov_all;ov];
-
-    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
-    Tr_all=[Tr_all;Tr];
-    
-    perf_Data_all_LV=[perf_Data_all_LV;perf_Data(1,1:4)];
+dir="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_6/GBO_sw1_v4_5/";
+figure(1)
+for i=1:50
+    load(append(dir,"exp_Data_",string(i),".mat"))
+    plot(exp_Data(:,4),'b');
+    plot(exp_Data(:,5),'r');
+    hold on
 end
-perf_Data_all=[ov_all,Tr_all,st_all,ITAE_all];
-% remove NAN dat rows
-[r,~]=find(isnan(perf_Data_all));
-perf_Data_all(r,:)=[];
-perf_Data_all_LV(r,:)=[];
-
-save("perf_Data_all.mat","perf_Data_all")
-save("perf_Data_all_LV.mat","perf_Data_all_LV")
-
-w_mean_grid=[0.272170491516590,0.368857250362635,3.10390673875809,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
-w_importance=[2, 1, 1, 1];
-w=(w_importance)./w_mean_grid;
-w=w./sum(w);
-perf_Data_all_weighted=perf_Data_all.*w;
-perf_Data_all_LV_weighted=perf_Data_all_LV.*w;
-
-figure(1);plot(perf_Data_all_LV_weighted); legend({"overshoot","rise time","settling time","ITAE"});
-figure(2);plot(perf_Data_all_weighted); legend({"overshoot","rise time","settling time","ITAE"});
