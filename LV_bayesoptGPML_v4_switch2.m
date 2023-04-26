@@ -45,12 +45,14 @@ if ~isempty(when_switch_s)
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
-            Trace_tmp.samples(idx_G2,:)=[];
+    if ~isempty(idx_G2)
+        Trace_tmp.samples(idx_G2,:)=[];
         Trace_tmp.values(idx_G2)=[];
         Trace_tmp.post_mus(idx_G2)=[];
         Trace_tmp.post_sigma2s(idx_G2)=[];
         Trace_tmp.times(idx_G2)=[];
         Trace_tmp.AQ_vals(idx_G2)=[];
+    end
     ys=[];
     for k=1+N0:length(Trace_tmp.values)
         Kp = Trace_tmp.samples(k,1);
