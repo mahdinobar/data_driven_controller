@@ -46,8 +46,8 @@ if ~isempty(when_switch_s)
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
     save("C:\mahdi\data_driven_controller\Data\debug.mat")
+    Trace_tmp=botrace;
     if ~isempty(idx_G2)
-        Trace_tmp=botrace;
         Trace_tmp.samples(idx_G2,:)=[];
         Trace_tmp.values(idx_G2)=[];
         Trace_tmp.post_mus(idx_G2)=[];
