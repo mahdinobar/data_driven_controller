@@ -4,11 +4,11 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=46;
+N_expr=8;
 true_objective = 1;
 
 tmp_name="exper_72_6";
-tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
+tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 
 % % find failed experiments
 nan_expr=[];
@@ -29,7 +29,7 @@ for expr=1:N_expr
     JminObsGBO=[];
     if isempty(find(nan_expr==expr, 1))
         dirBO=append(tmp_dir,'/BO_', string(expr), '/');
-        dirGBO=append(tmp_dir,'/GBO_sw1_v4_', string(expr), '/');
+        dirGBO=append(tmp_dir,'/GBO_sw2_v5_', string(expr), '/');
 
 %         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
         load(append(dirGBO,'trace_file_removed.mat'))
