@@ -45,13 +45,15 @@ if ~isempty(when_switch_s)
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
+    save("C:\mahdi\data_driven_controller\Data\debug.mat")
     if ~isempty(idx_G2)
+        Trace_tmp=botrace;
         Trace_tmp.samples(idx_G2,:)=[];
         Trace_tmp.values(idx_G2)=[];
         Trace_tmp.post_mus(idx_G2)=[];
         Trace_tmp.post_sigma2s(idx_G2)=[];
         Trace_tmp.times(idx_G2)=[];
-        Trace_tmp.AQ_vals(idx_G2)=[];
+%         Trace_tmp.AQ_vals(idx_G2)=[];
     end
     ys=[];
     for k=1+N0:length(Trace_tmp.values)
@@ -94,17 +96,17 @@ if ~isempty(when_switch_s)
         perf_Data=[ov, Tr, st, ITAE];
         value = Obj(perf_Data);
         ys=[ys;value];
-        save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/exper_72_6/GBO_2_tmp_1/debug_tmp.mat")
+        save("C:\mahdi\data_driven_controller\Data\debug2.mat")
     end
-    sigma2_s=sqrt(1/(length(Trace_tmp.values)-N0)*sum(ys-Trace_tmp.values));
+    sigma2_s=sqrt(1/(length(Trace_tmp.values)-N0)*sum(ys-Trace_tmp.values(1+N0:end)));
 else
     sigma2_s=0;
     ys=[0];
 end
 debug_ratio=post_sigma2(hidx)/sigma2_s;
-eta1=1;
+eta1=0.1;
 eta2=0.2;
-if counter_s==0 && post_sigma2(hidx)/sigma2_s>eta1 && length(when_switch_s)<15 %put safety that not switch more than certain times to surrogate
+if counter_s==0 && post_sigma2(hidx)/sigma2_s>eta1 && length(when_switch_s)<15 && counter_real>0 %put safety that not switch more than certain times to surrogate + at least one iteration after initial dataset is done on real system
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
