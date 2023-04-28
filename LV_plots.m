@@ -4,7 +4,7 @@ clear;
 
 N0=1; %number of initial data
 N_iter=50;
-N_expr=46;
+N_expr=18;
 true_objective = 1;
 
 tmp_name="exper_72_6";
@@ -25,11 +25,16 @@ JminObsGBO_All=[];
 number_s=[];
 number_idx_G2=[];
 for expr=1:N_expr
+%     remove manually outlier batches
+    if expr==16 || expr==15 || expr==5 || expr==9
+        expr=10;
+    end
+
     JminObsBO=[];
     JminObsGBO=[];
     if isempty(find(nan_expr==expr, 1))
         dirBO=append(tmp_dir,'/BO_', string(expr), '/');
-        dirGBO=append(tmp_dir,'/GBO_sw1_v4_', string(expr), '/');
+        dirGBO=append(tmp_dir,'/GBO_sw1_v5_', string(expr), '/');
 
 %         load(append(dirGBO,'trace_file_expr_',num2str(expr),'.mat'))
         load(append(dirGBO,'trace_file_removed.mat'))
