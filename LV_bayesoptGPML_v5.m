@@ -39,7 +39,7 @@ AQ_vals=[AQ_vals;aq_val];
 tic;
 eta1=0.0043; %0.0277; %3; %inf;
 eta2=0.2;
-if counter_s==0 && post_sigma2(hidx)>eta1 && length(when_switch_s)<15
+if counter_s==0 && post_sigma2(hidx)>eta1 && length(when_switch_s)<25
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0

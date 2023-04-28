@@ -8,7 +8,7 @@ N_expr=18;
 true_objective = 1;
 
 tmp_name="exper_72_6";
-tmp_dir=append("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/",tmp_name);
+tmp_dir=append("C:\mahdi\data_driven_controller\Data\",tmp_name);
 
 % % find failed experiments
 nan_expr=[];

@@ -105,9 +105,9 @@ else
     ys=[0];
 end
 debug_ratio=post_sigma2(hidx)/sigma2_s;
-eta1=0.1;
+eta1=0.001;
 eta2=0.2;
-if counter_s==0 && post_sigma2(hidx)/sigma2_s>eta1 && length(when_switch_s)<15 %put safety that not switch more than certain times to surrogate
+if counter_s==0 && post_sigma2(hidx)/sigma2_s>eta1 && length(when_switch_s)<20 %put safety that not switch more than certain times to surrogate
     counter_s=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
     when_switch_s=[when_switch_s;counter_real];
 elseif counter_s>0
