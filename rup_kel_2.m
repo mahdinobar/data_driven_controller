@@ -271,7 +271,6 @@ h4=plot(time, 245.31+(306.64-245.31)*y_GBO_worst, 	'Color', 'b', 'LineWidth', 3)
 % h5=plot(time, y_BO, 'b', 'LineWidth', 3);
 h5=stairs([0,Tf/2,Tf], [306,245,245],'--k', 'LineWidth', 3);
 
-
 legend([h1, h2, h3, h4, h5],{'Ground Truth', 'Nominal PGM', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
 grid on
 xlim(ax1, [0 Tf])

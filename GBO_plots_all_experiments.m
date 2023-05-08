@@ -73,9 +73,10 @@ N_iter=N_iter+N0;
 % dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
 % eta1_str={'05','06','07','08','09','1','11','12','13','14','15','16','17','18','19','2'};
-eta1_str={'01','05','1','2','3','4','5','6','7','8','9','10','20'};
+% eta1_str={'01','05','1','2','3','4','5','6','7','8','9','10','20'};
 % eta1_str={'1','2','3','4','5','6','7','8','9','10','20','30','50'};
 % eta1_str={'05','1','15','2','3','5','10'};
+eta1_str={'3'};
 convergence_iteration=[];
 convergence_iteration_std=[];
 convergence_iteration_BO=[];
@@ -293,23 +294,45 @@ for k=1:length(eta1_str)
     ax1.FontSize=24;
     ax1.FontName='Times New Roman';
     hold on
-    h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [1, 0, 0, .5], 'LineWidth', 1.5);
+    h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 1.5);
     h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [1, 0, 0, 1], 'LineWidth', 5);
+    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 5);
     h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
     [a,b]=max(meanJminObservGBO<0.9915);
-    xlabel(ax1, 'Iteration on real plant')
-    ylabel(ax1, 'Minimum observed objective')
+    % xlabel(ax1, 'Iteration on real plant')
+    % ylabel(ax1, 'Minimum observed objective')
+    xlabel(ax1, 'Iteration')
+    ylabel(ax1, 'Cost')
     % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
     % h5=yline(2.78,'k--', 'LineWidth', 3);
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
-    ylim([0 3])
+    ylim([0.4 2.5])
     xlim([1, 50])
     xticks([1, 5:5:50])
     h6=yline(ax1,[0.5150*1.01^3],'--g','LineWidth',3);
     legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast');
-    h7=yline(ax1,[0.9915],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees
+    h7=yline(ax1,[0.9989],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees See:
+%     [K,info] = pidtune(G,'PI')
+% 
+% K =
+% 
+%              1 
+%   Kp + Ki * ---
+%              s 
+% 
+%   with Kp = 0.854, Ki = 0.915
+% 
+% Continuous-time PI controller in parallel form.
+% Model Properties
+% 
+% info = 
+% 
+%   struct with fields:
+% 
+%                 Stable: 1
+%     CrossoverFrequency: 2.1857
+%            PhaseMargin: 60.0000
     legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
 %     title(append("eta1=",eta1_str{k}))
 
@@ -330,6 +353,8 @@ for k=1:length(eta1_str)
 
     convergence_iteration_BO=[convergence_iteration_BO,mean(converg_iter_BO)];
     convergence_iteration_std_BO=[convergence_iteration_std_BO,std(converg_iter_BO)];
+
+    box on
 end
 % a=zeros(50,1);
 % for j = 1:50
@@ -345,7 +370,6 @@ end
 % yticks([16.5, 50, 50.81, 80.0, 100.0])
 
 % for nominal at gains_nom= [0.4873, 1.5970]
-ylim([0.48,2.55])
 grid minor
 
 figName=append(dirBO,'_experiments.png');
@@ -527,3 +551,80 @@ saveas(gcf,figName)
 % objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
 % constraints=-1;
 % end
+
+
+%% plot step response per various benchmark tunings
+fig=figure(20);
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=24;
+ax1.FontName='Times New Roman';
+hold on
+% DC motor at FHNW lab
+% speed sensor pole 9.918e-5
+num = [9.54434];
+den = [1, 4.14479, 4.19941];
+Td=2e-3;
+% MATLAB: "For SISO transfer functions, a delay at the input is equivalent to a delay at the output. Therefore, the following command creates the same transfer function:"
+G = tf(num, den, 'InputDelay',Td);
+
+Tf=10;
+resol=5000;
+dt=Tf/resol;
+x0=0;
+time=0:dt:Tf;
+
+u_ref1=1.*ones(floor(size(time,2)/2),1);
+u_ref2=0.*ones(ceil(size(time,2)/2),1);
+u_ref=[u_ref1;u_ref2];
+
+Kp_gt=0.5464;
+Ki_gt=1.1617;
+Ctl_gt=tf([Kp_gt,Kp_gt*Ki_gt], [1, 0]);
+CL_gt=feedback(Ctl_gt*G, 1);
+Kp_nominal=0.854;
+Ki_nominal=0.915/0.854;
+Ctl_nom=tf([Kp_nominal,Kp_nominal*Ki_nominal], [1, 0]);
+CL_nom=feedback(Ctl_nom*G, 1);
+Kp_GBO_best=0.5297;
+Ki_GBO_best=1.1946;
+Ctl_GBO_best=tf([Kp_GBO_best,Kp_GBO_best*Ki_GBO_best], [1, 0]);
+CL_GBO_best=feedback(Ctl_GBO_best*G, 1);
+% Kp_GBO_worst=0.4369;
+% Ki_GBO_worst=1.6667;
+% Ctl_GBO_worst=tf([Kp_GBO_worst,Kp_GBO_worst*Ki_GBO_worst], [1, 0]);
+% CL_GBO_worst=feedback(Ctl_GBO_worst*G, 1);
+Kp_BO=0.4143;
+Ki_BO=1.2438;
+Ctl_BO=tf([Kp_BO,Kp_BO*Ki_BO], [1, 0]);
+CL_BO=feedback(Ctl_BO*G, 1);
+y_gt = lsim(CL_gt, u_ref, time);
+y_nom = lsim(CL_nom, u_ref, time);
+y_GBO_best = lsim(CL_GBO_best, u_ref, time);
+% y_GBO_worst = lsim(CL_GBO_worst, u_ref, time, x0, 'zoh');
+y_BO = lsim(CL_BO, u_ref, time);
+step_low=80;
+step_high=120;
+h1=plot(time, step_low+(step_high-step_low)*y_gt, 'g', 'LineWidth', 4);
+h2=plot(time, step_low+(step_high-step_low)*y_nom, 'k', 'LineWidth', 3);
+h3=plot(time, step_low+(step_high-step_low)*y_GBO_best, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 3);
+% h4=plot(time, step_low+(step_high-step_low)*y_GBO_worst, 	'Color', 'b', 'LineWidth', 3);
+h4=plot(time, step_low+(step_high-step_low)*y_BO, 'b', 'LineWidth', 3);
+h5=stairs([0,Tf/2,Tf], [step_high,step_low,step_low],'--k', 'LineWidth', 3);
+
+legend([h1, h2, h3, h4, h5],{'Ground Truth', 'Nominal PGM', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+grid on
+xlim(ax1, [0 Tf])
+yticks([step_low, step_high])
+xlabel(ax1, 'Time (s)')
+ylabel(ax1, 'Speed (rad/s)')
+% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% set(gca,'yscale','log')
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.png');
+saveas(gcf,figName)
+figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.fig');
+saveas(gcf,figName)
+box on
+
+
