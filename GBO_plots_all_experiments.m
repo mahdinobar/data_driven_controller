@@ -104,7 +104,7 @@ for k=1:length(eta1_str)
     clearvars Trace
     load(append(dirBO,'trace_file_BO.mat'),'Trace')
     TraceBO=Trace;
-    TraceGBO(8)=TraceGBO(7);
+    % TraceGBO(8)=TraceGBO(7);
     clearvars Trace
 
 
@@ -310,7 +310,7 @@ for k=1:length(eta1_str)
     ylim([0.4 2.5])
     xlim([1, 50])
     xticks([1, 5:5:50])
-    h6=yline(ax1,[0.5150*1.01^3],'--g','LineWidth',3);
+    h6=yline(ax1,[0.5449],'--g','LineWidth',3);
     legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast');
     h7=yline(ax1,[0.9989],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees See:
 %     [K,info] = pidtune(G,'PI')
