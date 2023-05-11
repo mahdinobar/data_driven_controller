@@ -657,7 +657,7 @@ box on
     set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
     fontsize(gca,24,"pixels")
     fontname(gca,"Times New Roman")
-    box on
+    box on 
 % end
 
 
