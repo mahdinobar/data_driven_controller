@@ -3,3 +3,5 @@ server_data/
 gpml/
 gpml_orig/
 tmp/
+
+linear_motor/
