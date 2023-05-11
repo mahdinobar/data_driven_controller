@@ -5,7 +5,7 @@
 
 % =========================================================================
 % uncomment for server plots
-function GBO_plots_all_experiments
+% function GBO_plots_all_experiments
 close all;
 clc;
 clear;
@@ -87,8 +87,8 @@ for k=1:length(eta1_str)
     % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
-%     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
-%     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
+    %     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
+    %     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
     % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
     % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
 
@@ -102,10 +102,18 @@ for k=1:length(eta1_str)
     load(append(dirGBO,'trace_file.mat'),'Trace')
     TraceGBO=Trace;
     clearvars Trace
+
     load(append(dirBO,'trace_file_BO.mat'),'Trace')
     TraceBO=Trace;
     % TraceGBO(8)=TraceGBO(7);
     clearvars Trace
+
+    JObservGBO=[];
+    JObservBO=[];
+    for i=1:50
+        JObservGBO(:,end+1)=TraceGBO(i).values;
+        JObservBO(:,end+1) =TraceBO(i).values;
+    end
 
 
     % %  todo remove experiment 12 because of failure
@@ -313,28 +321,28 @@ for k=1:length(eta1_str)
     h6=yline(ax1,[0.5449],'--g','LineWidth',3);
     legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast');
     h7=yline(ax1,[0.9989],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees See:
-%     [K,info] = pidtune(G,'PI')
-% 
-% K =
-% 
-%              1 
-%   Kp + Ki * ---
-%              s 
-% 
-%   with Kp = 0.854, Ki = 0.915
-% 
-% Continuous-time PI controller in parallel form.
-% Model Properties
-% 
-% info = 
-% 
-%   struct with fields:
-% 
-%                 Stable: 1
-%     CrossoverFrequency: 2.1857
-%            PhaseMargin: 60.0000
+    %     [K,info] = pidtune(G,'PI')
+    %
+    % K =
+    %
+    %              1
+    %   Kp + Ki * ---
+    %              s
+    %
+    %   with Kp = 0.854, Ki = 0.915
+    %
+    % Continuous-time PI controller in parallel form.
+    % Model Properties
+    %
+    % info =
+    %
+    %   struct with fields:
+    %
+    %                 Stable: 1
+    %     CrossoverFrequency: 2.1857
+    %            PhaseMargin: 60.0000
     legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
-%     title(append("eta1=",eta1_str{k}))
+    %     title(append("eta1=",eta1_str{k}))
 
     % convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)]
     % convergence_iteration_BO=[convergence_iteration_BO,find(meanJminObservBO<0.9915,1)]
@@ -626,5 +634,30 @@ saveas(gcf,figName)
 figName=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/','StepRsps.fig');
 saveas(gcf,figName)
 box on
+
+
+% for expr=26:26
+    % JObservGBO=TraceGBO(expr).values(N0+1:N_iter);
+    % JObservBO=TraceBO(expr).values(N0+1:N_iter);
+    close
+    fig3=figure(3);
+    % title(string(expr))
+    fig3.Position=[200 0 1600 800];
+    ax3=gca;
+    ax3.FontSize=24;
+    ax3.FontName='Times New Roman';
+    edges = [0.5:0.02:0.8,1.1,1.4,1.7,2,2.3,2.6];
+    hist_BO = histogram(JObservBO(:),edges,'FaceColor','b','Normalization','probability');
+    hold on;
+    hist_GBO = histogram(JObservGBO(:),edges,'FaceColor',[0.6350 0.0780 0.1840],'Normalization','probability');
+    xlabel(ax3, 'Cost')
+    ylabel(ax3, 'Percentage of experiments in each cost band')
+    legend([hist_GBO, hist_BO],{'Guided BO','BO'}, 'Location', 'northeast');
+    ytix = get(gca, 'YTick');
+    set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
+    fontsize(gca,24,"pixels")
+    fontname(gca,"Times New Roman")
+    box on
+% end
 
 
