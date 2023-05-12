@@ -85,8 +85,15 @@ convergence_iteration_diff=[];
 for k=1:length(eta1_str)
     % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
     % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
-    dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
-    dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
+    dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
+    dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
+%     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
+
+    dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
+    load(append(dirGBOinf,'trace_file.mat'),'Trace')
+    TraceGBOinf=Trace;
+    clearvars Trace
+    
     %     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
     %     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
     % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
@@ -205,6 +212,7 @@ for k=1:length(eta1_str)
                 JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
             else
                 [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
+                [JminObservGBOinf(j-N0,expr), NDX_GBOinf]=nanmin(TraceGBOinf(expr).values(1:j));
                 JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
                 JminObservGBO_post_sigma2s(j-N0,expr,:)=TraceGBO(expr).post_sigma2s(NDX_GBO,:);
                 [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
@@ -228,6 +236,7 @@ for k=1:length(eta1_str)
     % meanJminObservGBO_post_sigma2s=JminObservGBO_post_sigma2s;%nanmean(JminObservGBO_post_sigma2s(:,idx_acceptable),2);
     % meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
     meanJminObservGBO=nanmean(JminObservGBO(:,:),2);
+    meanJminObservGBOinf=nanmean(JminObservGBOinf(:,:),2);
     meanJminObservBO=nanmean(JminObservBO(:,:),2);
 
 
@@ -303,9 +312,11 @@ for k=1:length(eta1_str)
     ax1.FontName='Times New Roman';
     hold on
     h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 1.5);
+    h11=semilogy(ax1, JminObservGBOinf./true_objective, ':', 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 1.5);
     h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 5);
-    h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 5);
+    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 6);
+    h33=semilogy(ax1, meanJminObservGBOinf./true_objective, 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
+    h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 6);
     [a,b]=max(meanJminObservGBO<0.9915);
     % xlabel(ax1, 'Iteration on real plant')
     % ylabel(ax1, 'Minimum observed objective')
@@ -318,9 +329,9 @@ for k=1:length(eta1_str)
     ylim([0.4 2.5])
     xlim([1, 50])
     xticks([1, 5:5:50])
-    h6=yline(ax1,[0.5449],'--g','LineWidth',3);
-    legend([h3, h4, h6],{'Guided BO', 'BO', 'ground truth'}, 'Location', 'northeast');
-    h7=yline(ax1,[0.9989],'--','LineWidth',3); %MATLAB PI auto-tuner  with GM=60 degrees See:
+    h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
+    h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
+    legend([h3, h33, h4, h6, h7],{'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Ground truth', 'Nominal'}, 'Location', 'northeast');
     %     [K,info] = pidtune(G,'PI')
     %
     % K =
@@ -341,7 +352,7 @@ for k=1:length(eta1_str)
     %                 Stable: 1
     %     CrossoverFrequency: 2.1857
     %            PhaseMargin: 60.0000
-    legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
+%     legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
     %     title(append("eta1=",eta1_str{k}))
 
     % convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)]
@@ -655,8 +666,6 @@ box on
     legend([hist_GBO, hist_BO],{'Guided BO','BO'}, 'Location', 'northeast');
     ytix = get(gca, 'YTick');
     set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
-    fontsize(gca,24,"pixels")
-    fontname(gca,"Times New Roman")
     box on 
 % end
 
