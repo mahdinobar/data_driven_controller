@@ -185,6 +185,9 @@ for k=1:length(eta1_str)
     % true_objective=15.800;
     expr=1;
     while expr<min([length(TraceGBO),length(TraceBO)])+1
+        JGBO_all(:,expr)=TraceGBO(expr).values(:);
+        JGBOinfer_all(:,expr)=TraceGBOinf(expr).values(:);
+        JBO_all(:,expr)=TraceBO(expr).values(:);
         %     try
         JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
         JminObservGBO_samples(:,expr,:)=TraceGBO(expr).samples(N0+1:N_iter,:);
@@ -321,12 +324,12 @@ for k=1:length(eta1_str)
     % xlabel(ax1, 'Iteration on real plant')
     % ylabel(ax1, 'Minimum observed objective')
     xlabel(ax1, 'Iteration')
-    ylabel(ax1, 'Cost')
+    ylabel(ax1, 'Minimum observed cost')
     % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
     % h5=yline(2.78,'k--', 'LineWidth', 3);
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
-    ylim([0.4 2.5])
+    ylim([0.45 2.5])
     xlim([1, 50])
     xticks([1, 5:5:50])
     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
@@ -373,6 +376,35 @@ for k=1:length(eta1_str)
     convergence_iteration_BO=[convergence_iteration_BO,mean(converg_iter_BO)];
     convergence_iteration_std_BO=[convergence_iteration_std_BO,std(converg_iter_BO)];
 
+    box on
+
+
+
+    fig=figure(2);
+    fig.Position=[200 0 1600 800];
+    ax1=axes;
+    ax1.FontSize=24;
+    ax1.FontName='Times New Roman';
+    hold on
+    h3=semilogy(ax1, mean(JGBO_all'), 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 6);
+    h33=semilogy(ax1, mean(JGBOinfer_all'), 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
+    h4=semilogy(ax1, mean(JBO_all'), 'Color', [0, 0, 1, 1], 'LineWidth', 6);
+    [a,b]=max(meanJminObservGBO<0.9915);
+    % xlabel(ax1, 'Iteration on real plant')
+    % ylabel(ax1, 'Minimum observed objective')
+    xlabel(ax1, 'Iteration')
+    ylabel(ax1, 'Mean evaluated cost')
+    % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
+    % h5=yline(2.78,'k--', 'LineWidth', 3);
+    % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
+    grid on
+    ylim([0.45 100])
+    set(gca,'yscale','log')
+    xlim([1, 50])
+    xticks([1, 5:5:50])
+    h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
+    h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
+%     legend([h3, h33, h4, h6, h7],{'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Ground truth', 'Nominal'}, 'Location', 'northeast');
     box on
 end
 % a=zeros(50,1);
