@@ -609,10 +609,10 @@ Kp_GBO_best=0.5297;
 Ki_GBO_best=1.1946;
 Ctl_GBO_best=tf([Kp_GBO_best,Kp_GBO_best*Ki_GBO_best], [1, 0]);
 CL_GBO_best=feedback(Ctl_GBO_best*G, 1);
-% Kp_GBO_worst=0.4369;
-% Ki_GBO_worst=1.6667;
-% Ctl_GBO_worst=tf([Kp_GBO_worst,Kp_GBO_worst*Ki_GBO_worst], [1, 0]);
-% CL_GBO_worst=feedback(Ctl_GBO_worst*G, 1);
+Kp_GBO_inferior=0.4139;
+Ki_GBO_inferior=1.5085;
+Ctl_GBO_inferior=tf([Kp_GBO_inferior,Kp_GBO_inferior*Ki_GBO_inferior], [1, 0]);
+CL_GBO_inferior=feedback(Ctl_GBO_inferior*G, 1);
 Kp_BO=0.4143;
 Ki_BO=1.2438;
 Ctl_BO=tf([Kp_BO,Kp_BO*Ki_BO], [1, 0]);
@@ -620,18 +620,18 @@ CL_BO=feedback(Ctl_BO*G, 1);
 y_gt = lsim(CL_gt, u_ref, time);
 y_nom = lsim(CL_nom, u_ref, time);
 y_GBO_best = lsim(CL_GBO_best, u_ref, time);
-% y_GBO_worst = lsim(CL_GBO_worst, u_ref, time, x0, 'zoh');
+y_GBO_inferior = lsim(CL_GBO_inferior, u_ref, time, x0, 'zoh');
 y_BO = lsim(CL_BO, u_ref, time);
 step_low=80;
 step_high=120;
 h1=plot(time, step_low+(step_high-step_low)*y_gt, 'g', 'LineWidth', 4);
 h2=plot(time, step_low+(step_high-step_low)*y_nom, 'k', 'LineWidth', 3);
 h3=plot(time, step_low+(step_high-step_low)*y_GBO_best, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 3);
-% h4=plot(time, step_low+(step_high-step_low)*y_GBO_worst, 	'Color', 'b', 'LineWidth', 3);
+h3inferior=plot(time, step_low+(step_high-step_low)*y_GBO_inferior, 	'Color', [0.9290 0.6940 0.1250], 'LineWidth', 3);
 h4=plot(time, step_low+(step_high-step_low)*y_BO, 'b', 'LineWidth', 3);
 h5=stairs([0,Tf/2,Tf], [step_high,step_low,step_low],'--k', 'LineWidth', 3);
 
-legend([h1, h2, h3, h4, h5],{'Ground Truth', 'Nominal PGM', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+legend([h1, h2, h3, h3inferior, h4, h5],{'Ground truth', 'Nominal PGM', 'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Reference input'}, 'Location', 'northeast');
 grid on
 xlim(ax1, [0 Tf])
 yticks([step_low, step_high])
@@ -650,7 +650,7 @@ box on
 % for expr=26:26
     % JObservGBO=TraceGBO(expr).values(N0+1:N_iter);
     % JObservBO=TraceBO(expr).values(N0+1:N_iter);
-    close
+    
     fig3=figure(3);
     % title(string(expr))
     fig3.Position=[200 0 1600 800];

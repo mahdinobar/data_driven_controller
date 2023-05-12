@@ -13,6 +13,10 @@ clear Trace
 load(append(dir,'trace_file_BO.mat'),'Trace')
 TraceBO=Trace;
 clear Trace
+dirGBOinfer=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
+load(append(dirGBOinfer,'trace_file.mat'),'Trace')
+TraceGBOinfer=Trace;
+clearvars Trace
 dir_gains=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/DC_motor_gain_bounds/KpKi_bounds_new_2.mat');
 load(dir_gains, 'Kp_min', 'Kp_max', 'Ki_min', 'Ki_max')
 gain_mins=[Kp_min, Ki_min];
@@ -45,12 +49,10 @@ fig=figure(exper);
 % title(string(exper))
 fig.Position=[200 0 1800 800];
 ax1 = axes; hold on;
-ax1.FontSize=24;
-ax1.FontName='Times New Roman';
 surf(ax1, kp_pt,ki_pt,reshape(j_pt,size(kp_pt)),'EdgeColor','Interp','FaceColor','Interp');
-xlabel(ax1,'Kp', 'FontSize',24, 'FontName','Times new Roman')
-ylabel(ax1,'Ki', 'FontSize',24, 'FontName','Times new Roman')
-zlabel(ax1,'J', 'FontSize',24, 'FontName','Times new Roman')
+xlabel(ax1,'Kp', 'FontSize',32, 'FontName','Times new Roman')
+ylabel(ax1,'Ki', 'FontSize',32, 'FontName','Times new Roman')
+zlabel(ax1,'J', 'FontSize',32, 'FontName','Times new Roman')
 view(ax1,[0,0,1])
 xlim(ax1, [gain_mins(1), gain_maxes(1)])
 ylim(ax1, [gain_mins(2), gain_maxes(2)])
@@ -63,16 +65,17 @@ ax2.XTick = [];
 ax2.YTick = [];
 % plot metrics=[emax, Ts, Tr, ITAE, ess, ov] vs iteration
 hold on;
-ax1.FontSize=24;
+ax1.FontSize=32;
 ax1.FontName='Times New Roman';
-ax2.FontSize=24;
+ax2.FontSize=32;
 ax2.FontName='Times New Roman';
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 
 ms_true=[0.5464, 1.1617];
 ms_nominal=[0.854, 1.0714];
 c = linspace(1,length(TraceGBO(exper).values(N0+1:end,1)),length(TraceGBO(exper).values(N0+1:end,1)));
-hGBO=plot3(ax2, TraceGBO(exper).samples(N0+1:end, 1), TraceGBO(exper).samples(N0+1:end, 2), TraceGBO(exper).values(N0+1:end, 1),'o', 'MarkerEdgeColor', 'black' , 'MarkerSize',25,'MarkerFaceColor','red');
+hGBO=plot3(ax2, TraceGBO(exper).samples(N0+1:end, 1), TraceGBO(exper).samples(N0+1:end, 2), TraceGBO(exper).values(N0+1:end, 1),'o', 'MarkerEdgeColor', 'black' , 'MarkerSize',25,'MarkerFaceColor',[0.6350 0.0780 0.1840]);
+hGBOinfer=plot3(ax2, TraceGBOinfer(exper).samples(N0+1:end, 1), TraceGBOinfer(exper).samples(N0+1:end, 2), TraceGBOinfer(exper).values(N0+1:end, 1),'>', 'MarkerEdgeColor', 'black' , 'MarkerSize',25,'MarkerFaceColor',[0.9290 0.6940 0.1250]);
 hBO=plot3(ax2, TraceBO(exper).samples(N0+1:end, 1), TraceBO(exper).samples(N0+1:end, 2), TraceBO(exper).values(N0+1:end, 1),'^', 'MarkerEdgeColor', 'black' , 'MarkerSize',25, 'MarkerFaceColor','cyan');
 htrue=plot3(ax2,ms_true(1), ms_true(2),2.4,'pentagram', 'MarkerFaceColor', [0,1,0], 'MarkerEdgeColor', 'black', 'MarkerSize',25);
 hnom=plot3(ax2,ms_nominal(1), ms_nominal(2), 0.9915+.5,'hexagram', 'MarkerFaceColor', [1,1,0], 'MarkerEdgeColor', 'black', 'MarkerSize',25);
@@ -97,7 +100,7 @@ cb1 = colorbar(ax1,'Position',[0.92 0.11 0.01 0.815]); % four-elements vector to
 cb1.Label.String = 'Cost';
 % cb2.Label.String = 'iteration';
 % legend([hGBO, hBO, hinit],{'Guided BO', 'BO', 'Initial data'}, 'Location', 'northwest');
-legend([hinit, htrue, hnom, hBO, hGBO],{'Initial gains', 'Ground Truth', 'nominal gains', 'BO', 'Guided BO',}, 'Position', [0.79,0.68,0.1,0.1], 'fontname','Times New Roman');
+legend([hinit, htrue, hnom, hBO, hGBO, hGBOinfer],{'Initial gains', 'Ground Truth', 'nominal gains', 'BO', 'Guided BO with superior surrogate','Guided BO with inferior surrogate'}, 'Position', [0.47,0.89,0.1,0.1], 'fontname','Times New Roman','NumColumns',5);
 grid on
 
 set(gca, 'DefaultAxesFontName', 'Times')
