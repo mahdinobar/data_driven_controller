@@ -1,7 +1,7 @@
 function plot_GP_draft()
 clc
 close all;
-clear all; 
+clear all;
 % % load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_68/results_1/trace_file_BO.mat')
 % % load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v4_0_10/trace_file_BO.mat")
 % tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
@@ -11,7 +11,7 @@ clear all;
 % load(append(dir,'trace_file_BO.mat'))
 % load(append(dir,'likelihood_dp.mat'))
 % % load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_8/grount_truth.mat")
-% 
+%
 % % post_sigma2s=[];
 % % post_mus=[];
 % % values=[];
@@ -24,7 +24,7 @@ clear all;
 % %     samples_P=[samples_P, Trace(i).samples(:,1)];
 % %     samples_I=[samples_I, Trace(i).samples(:,2)];
 % % end
-% % 
+% %
 % % fig=figure(1);
 % % fig.Position=[200 0 1000 800];
 % % ax1=axes;
@@ -49,7 +49,7 @@ clear all;
 % % ylim([0 5])
 % % xlim([1 50])
 % % title('GP uncertainty at sampled point')
-% % 
+% %
 % % fig=figure(11);
 % % fig.Position=[200 0 1000 800];
 % % ax11=axes;
@@ -75,7 +75,7 @@ clear all;
 % % ylim([0 1])
 % % xlim([1 50])
 % % title('GP model coefficient of variance in sampled point by aquisition function')
-% % 
+% %
 % % fig=figure(12);
 % % fig.Position=[200 0 1000 800];
 % % ax12=axes;
@@ -101,9 +101,9 @@ clear all;
 % % ylim([0 1])
 % % xlim([1 50])
 % % title('GP model expected coefficient of variance in entire feasible hypergrid')
-% % 
-% % 
-% % 
+% %
+% %
+% %
 % % fig2=figure(2);
 % % fig2.Position=[200 0 1000 800];
 % % ax2=axes;
@@ -130,7 +130,7 @@ clear all;
 % % title('GP uncertainty at sampled point')
 % % ylim([-5 5])
 % % xlim([1 50])
-% % 
+% %
 % % % fig=figure(3);
 % % % fig.Position=[200 0 1000 800];
 % % % ax3=axes;
@@ -160,7 +160,7 @@ clear all;
 % % % ylabel(ax3, 'latent value f(P,I)')
 % % % title("GP model of BO after 50 Iterations")
 % % % % ylim([-1 1])
-% % % 
+% % %
 % % % fig=figure(4);
 % % % fig.Position=[200 0 1000 800];
 % % % ax4=axes;
@@ -188,8 +188,8 @@ clear all;
 % % % xlabel(ax4, 'I gain')
 % % % ylabel(ax4, 'latent value f(P,I)')
 % % % title("GP model of BO after 50 Iterations")
-% % 
-% % 
+% %
+% %
 % % fig=figure(5);
 % % fig.Position=[200 0 1000 800];
 % % ax5=axes;
@@ -208,8 +208,8 @@ clear all;
 % % % h1=surf(ax5, x,y,z);
 % % dt = delaunayTriangulation(x,y) ;
 % % tri = dt.ConnectivityList ;
-% % xi = dt.Points(:,1) ; 
-% % yi = dt.Points(:,2) ; 
+% % xi = dt.Points(:,1) ;
+% % yi = dt.Points(:,2) ;
 % % F = scatteredInterpolant(x,y,z);
 % % zi = F(xi,yi) ;
 % % h1=trisurf(tri,xi,yi,zi,'FaceColor','black','FaceAlpha',0.3);
@@ -225,8 +225,8 @@ clear all;
 % % ylabel(ax5, 'I gain')
 % % zlabel(ax5, 'latent value f(P,I)')
 % % title("GP model of BO after 50 Iterations")
-% % legend([h1, h2, h3],{'GP model', 'BO samples', 'ground truth'}, 'Location', 'northeast'); 
-% 
+% % legend([h1, h2, h3],{'GP model', 'BO samples', 'ground truth'}, 'Location', 'northeast');
+%
 % fig=figure(6);
 % fig.Position=[200 0 1000 800];
 % ax6=axes;
@@ -247,9 +247,9 @@ clear all;
 % xlim([1 50])
 % ylim([-10 10])
 % title("GP model Hyperparameters evolution")
-% % legend([h2(1), h2(2),h2(3), h3],{'@covMaternard: ln(\lambda_1)', '@covMaternard: ln(\lambda_2)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
-% legend([h2(1), h2(2), h3],{'@covMaternard: ln(l)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best'); 
-% 
+% % legend([h2(1), h2(2),h2(3), h3],{'@covMaternard: ln(\lambda_1)', '@covMaternard: ln(\lambda_2)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best');
+% legend([h2(1), h2(2), h3],{'@covMaternard: ln(l)', '@covMaternard: ln(\sigma_f)', '@likGauss: ln(\sigma)'}, 'Location', 'best');
+%
 % % fig=figure(7);
 % % fig.Position=[200 0 1000 800];
 % % ax7=axes;
@@ -270,9 +270,9 @@ clear all;
 % % xlim([1 50])
 % % ylim([-100 100])
 % % title("GP approximate posterior")
-% % legend([h1, h2],{'alpha', 'sW'}, 'Location', 'best'); 
-% % 
-% % 
+% % legend([h1, h2],{'alpha', 'sW'}, 'Location', 'best');
+% %
+% %
 % % fig=figure(8);
 % % fig.Position=[200 0 1000 800];
 % % ax8=axes;
@@ -297,8 +297,8 @@ clear all;
 % % xlim([1 50])
 % % xticks([1, 5:5:50])
 % % title('GP uncertainty at entire hyper grid recorded')
-% % 
-% % 
+% %
+% %
 % fig=figure(9);
 % fig.Position=[200 0 1000 800];
 % ax9=axes;
@@ -328,7 +328,7 @@ clear all;
 % yline(ax9,-noise_level,'--')
 % legend([h],'noise level')
 % title('GP uncertainty at entire hyper grid recorded')
-% 
+%
 % fig=figure(10);
 % fig.Position=[200 0 1000 800];
 % ax10=axes;
@@ -359,7 +359,7 @@ clear all;
 % yline(ax10,-noise_level,'--')
 % legend([h],'noise level')
 % title('Mean Squared Error')
-% 
+%
 % % fig=figure(14);
 % % fig.Position=[200 0 1000 800];
 % % ax14=axes;
@@ -397,8 +397,8 @@ clear all;
 % % yline(ax14,-noise_level,'--')
 % % legend([h],'noise level')
 % % title('Mean Squared Error (test points are around sampled data)')
-% % 
-% % 
+% %
+% %
 % % fig=figure(13);
 % % fig.Position=[200 0 1000 800];
 % % ax13=axes;
@@ -428,7 +428,7 @@ clear all;
 % % yline(ax13,-noise_level,'--')
 % % legend([h],'noise level')
 % % title('Standardized Mean Squared Error')
-% 
+%
 % fig=figure(12);
 % fig.Position=[200 0 1000 800];
 % ax12=axes;
@@ -464,7 +464,7 @@ clear all;
 % h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlimit,72,'go','filled')
 % legend([h, h2],'BO sampled gains','gt optimum')
 % view(2)
-% 
+%
 % fig=figure(13);
 % fig.Position=[200 0 1000 800];
 % ax13=axes;
@@ -500,8 +500,8 @@ clear all;
 % h2=scatter3(Trace(1).hyper_grid_record(I,1),Trace(1).hyper_grid_record(I,2),zlimit,72,'go','filled')
 % legend([h, h2],'BO sampled gains','gt optimum')
 % view(2)
-% 
-% 
+%
+%
 % fig=figure(15);
 % fig.Position=[200 0 1000 800];
 % ax15=axes;
@@ -631,25 +631,28 @@ eta1=[0.1,1:10];
 eta1_str={'01','1','2','3','4','5','6','7','8','9','10'};
 mean_n_s=[];
 std_n_s=[];
+mean_values_all=[];
 for i=1:length(eta1)
     n_s{i}=[];
-%     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-%     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-% load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-% dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
-% load(append(dirGBO,'trace_file.mat'),'Trace')
-    
-for j=1:length(Trace)
-    try
-                    n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
-%         n_s{i}=[n_s{i};size(Trace(j).hyp_GP_mean,1)-50];
-    catch
-        n_s{i}=[n_s{i};nan];
+    %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    % load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
+    % load(append(dirGBO,'trace_file.mat'),'Trace')
+    values=[];
+    for j=1:length(Trace)
+        try
+            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+            %         n_s{i}=[n_s{i};size(Trace(j).hyp_GP_mean,1)-50];
+            values=[values,Trace(j).values];
+        catch
+            n_s{i}=[n_s{i};nan];
+        end
     end
-end
     mean_n_s=[mean_n_s,nanmean(n_s{i})];
     std_n_s=[std_n_s,nanstd(n_s{i})];
+    mean_values_all=[mean_values_all,mean(values-0.5449,"all")];
 end
 clearvars Trace
 yyaxis right
@@ -660,7 +663,7 @@ hr=plot(eta1,mean_n_s,'.-','Color',"#7E2F8E", 'MarkerSize',40,'MarkerEdgeColor',
 % title('Generalization of surrogate switch $\sigma_{GP}>\eta_{1}$','Interpreter','latex')
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax20, '\eta_{1}')
-ylabel(ax20, 'number of surrogate activation',"Color","#7E2F8E")
+ylabel(ax20, 'Counted surrogate activation ',"Color","#7E2F8E")
 ax20.YColor="#7E2F8E";
 xticks([0.1,1:10])
 % ylim([min(mean_n_s-1) max(mean_n_s+1)])
@@ -676,19 +679,23 @@ mean_GBO_convergance=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000
 % mean_GBO_convergance=[2.82978723404255	3.53191489361702	4.83673469387755	3.82000000000000	3.61702127659575	4.16666666666667	3.87500000000000	3.08163265306122	2.77551020408163	4.37500000000000	4.65306122448980	4.75510204081633	5.12765957446809	5.61702127659575	4.62500000000000	4.87500000000000];
 % std_GBO_convergance=[4.10894649005002	5.04264882011768	7.04848369856805	5.59405661284860	5.72391319279633	5.74023994358503	5.62526595115970	4.30521357723148	4.60645066782464	7.08797303198366	6.30327633195680	6.25010203998335	7.36801849734671	7.78391091901684	6.88391588213717	6.80933339443706];
 
-% % % server 75 results 
+% % % server 75 results
 % mean_GBO_convergance=[1.74000000000000	2.04000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000	4.16000000000000	5.18000000000000];
 % std_GBO_convergance=[2.58575374871228	2.51493498110462	1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818	5.61106778008010	4.80514180384950];
 % hl=plot(eta1,mean_GBO_convergance,'-ob');
 % hl=errorbar(eta1,mean_GBO_convergance,std_GBO_convergance,'-ob');
-hl=plot(eta1,mean_GBO_convergance,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
+% hl=plot(eta1,mean_GBO_convergance,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
+hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"#D95319");
 
 % ylabel(ax20, 'Convergance iteration to ground truth performance')
-ylabel(ax20, 'iteration',"Color","#D95319") %mean iteration to outperform nominal controller
-ax20.YColor="#D95319";
+% ylabel(ax20, 'iteration',"Color","#D95319") %mean iteration to outperform nominal controller
+ylabel(ax20, 'Mean absolute evaluated cost error',"Color","m") %mean iteration to outperform nominal controller
+ax20.YColor="m";
 % ylim([0 max(mean_GBO_convergance+std_GBO_convergance)])
 % ylim([min(mean_GBO_convergance-1), max(mean_GBO_convergance+1)])
 xlim([0 10.1])
+% yticks([1:1:5])
+% ylim([1 5])
 
 % fig=figure(21);
 % fig.Position=[200 0 1000 800];
@@ -697,8 +704,8 @@ xlim([0 10.1])
 % ax21.FontName='Times New Roman';
 % hold on
 % grid on
-% 
-% 
+%
+%
 % title('Number of swtiching vs \eta_{1}')
 % set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 % xlabel(ax21, '\eta_{1}')
@@ -711,7 +718,7 @@ xlim([0 10.1])
 % scatter3(hyp.cov(2),hyp.cov(3),-fhyp(end),72,'go','filled');
 % scatter3(x,y,z,10,'ro','filled');
 
-% 
+%
 % fig=figure(10);
 % fig.Position=[200 0 1000 800];
 % ax10=axes;
