@@ -742,4 +742,66 @@ xlim([0 10.1])
 % xticks([1, 5:5:50])
 % title('EI over maximum EI vs iteration')
 
+fig=figure(30);
+fig.Position=[200 0 1000 800];
+ax30=axes;
+ax30.FontSize=24;
+ax30.FontName='Times New Roman';
+hold on
+grid on
+% eta1=[0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2];
+% eta1_str={'05','06','07','08','09','1','11','12','13','14','15','16','17','18','19','2'};
+% eta1=[1:10];
+% eta1_str={'1','2','3','4','5','6','7','8','9','10'};
+% eta1=[0.5,1,1.5,2,3,5,10];
+% eta1_str={'05','1','15','2','3','5','10'};
+eta1=[0.1,1,2,4:10];
+eta1_str={'01','1','2','4','5','6','7','8','9','10'};
+mean_n_s=[];
+std_n_s=[];
+mean_values_all=[];
+for i=1:length(eta1)
+    n_s{i}=[];
+    %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'_inferiorsurrogate/results_1/trace_file.mat'))
+    %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    % load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
+    % load(append(dirGBO,'trace_file.mat'),'Trace')
+    values=[];
+    for j=1:length(Trace)
+        try
+            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+            %         n_s{i}=[n_s{i};size(Trace(j).hyp_GP_mean,1)-50];
+            values=[values,Trace(j).values];
+        catch
+            n_s{i}=[n_s{i};nan];
+        end
+    end
+    mean_n_s=[mean_n_s,nanmean(n_s{i})];
+    std_n_s=[std_n_s,nanstd(n_s{i})];
+    mean_values_all=[mean_values_all,mean(values-0.5449,"all")];
+end
+clearvars Trace
+yyaxis right
+% hr=errorbar(eta1,mean_n_s,std_n_s,'-or');
+hr=plot(eta1,mean_n_s,'.-','Color',"#7E2F8E", 'MarkerSize',40,'MarkerEdgeColor',"#7E2F8E",'MarkerFaceColor',"#7E2F8E");
+% hr=plot(eta1,mean_n_s,'-or');
+% title('Generalization of surrogate switch $\frac{\sigma_{GP}}{\sigma_{s}}>\eta_{1}$','Interpreter','latex')
+% title('Generalization of surrogate switch $\sigma_{GP}>\eta_{1}$','Interpreter','latex')
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax30, '\eta_{1}')
+ylabel(ax30, 'Counted surrogate activation ',"Color","#7E2F8E")
+ax30.YColor="#7E2F8E";
+xticks([0.1,1:10])
+
+yyaxis left
+
+% server 72 results
+mean_GBO_convergance=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
+hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"#D95319");
+ylabel(ax30, 'Mean absolute evaluated cost error',"Color","m") %mean iteration to outperform nominal controller
+ax30.YColor="m";
+xlim([0 10.1])
+
 end
