@@ -3,8 +3,12 @@ load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data.mat
 figure(1)
 hold on
 plot(exp_data.t_all(:,1),exp_data.r_all(:,1),'k');
-plot(exp_data.t_all(:,1),exp_data.actPos_all);
-xlabel('Time [s]'); ylabel('Pos [m]')
+plot(exp_data.t_all(:,1),exp_data.actPos_all(:,1:200));
+xlabel('Time [s]'); ylabel('Pos [mm]')
+colormap(jet(200))
+hc = colorbar;
+cb = linspace(1,200,200);
+set(hc, 'YTick',cb, 'YTickLabel',cb)
 
 
 figure(2)
@@ -48,22 +52,23 @@ for exper=2:200
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
     st=S.SettlingTime;
-    e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(st*1000)), t_high(1:ceil(st*1000))'.*abs(e(1:ceil(st*1000))));
     if isnan(st)
         st=3;
     end
     ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
     perf_Data=[ov,Tr,st,ITAE];
     perf_Data_all=[perf_Data_all;perf_Data];
 end
-figure(2)
+figure(4)
 subplot(4,1,1)
 plot(perf_Data_all(:,1))
 ylabel('overshoot')
 subplot(4,1,2)
 plot(perf_Data_all(:,2))
+ylim([0,0.02])
 ylabel('rise time')
 subplot(4,1,3)
 plot(perf_Data_all(:,3))

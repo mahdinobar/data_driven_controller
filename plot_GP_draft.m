@@ -1,4 +1,3 @@
-function plot_GP_draft()
 clc
 close all;
 clear all;
@@ -673,8 +672,8 @@ yyaxis left
 % server 72 results
 % mean_GBO_convergance=[1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.36000000000000	1.94000000000000	1.78000000000000	2.62000000000000	3.54000000000000];%	4.16000000000000];%[1     1     1     2     2     2     2     2     3     4];
 % std_GBO_convergance=[1.55760150519303	2.83592118712630	1.34331299253687	2.83592118712630	2.61674357528121	2.05446253957832	1.98247423227457	3.42195790715890	4.14142832503818];%	5.61106778008010];
-% mean_GBO_convergance=[19.0714285714286	21.9000000000000	23.1724137931035	21.3333333333333	22.4545454545455	23.8484848484848	22.5675675675676	25.4285714285714	23.9743589743590	28.6097560975610	29.3250000000000	26.6363636363636]; %convergance to gt
-mean_GBO_convergance=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
+mean_GBO_convergance=[19.0714285714286	21.9000000000000	23.1724137931035	21.3333333333333	22.4545454545455	23.8484848484848	22.5675675675676	25.4285714285714	23.9743589743590	28.6097560975610	29.3250000000000];%	26.6363636363636]; %convergance to gt
+% mean_GBO_convergance=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
 % % server 74 results
 % mean_GBO_convergance=[2.82978723404255	3.53191489361702	4.83673469387755	3.82000000000000	3.61702127659575	4.16666666666667	3.87500000000000	3.08163265306122	2.77551020408163	4.37500000000000	4.65306122448980	4.75510204081633	5.12765957446809	5.61702127659575	4.62500000000000	4.87500000000000];
 % std_GBO_convergance=[4.10894649005002	5.04264882011768	7.04848369856805	5.59405661284860	5.72391319279633	5.74023994358503	5.62526595115970	4.30521357723148	4.60645066782464	7.08797303198366	6.30327633195680	6.25010203998335	7.36801849734671	7.78391091901684	6.88391588213717	6.80933339443706];
@@ -685,6 +684,7 @@ mean_GBO_convergance=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000
 % hl=plot(eta1,mean_GBO_convergance,'-ob');
 % hl=errorbar(eta1,mean_GBO_convergance,std_GBO_convergance,'-ob');
 % hl=plot(eta1,mean_GBO_convergance,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
+
 hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"#D95319");
 
 % ylabel(ax20, 'Convergance iteration to ground truth performance')
@@ -763,7 +763,8 @@ mean_values_all=[];
 for i=1:length(eta1)
     n_s{i}=[];
     %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
-    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'_inferiorsurrogate/results_1/trace_file.mat'))
+%     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'_inferiorsurrogate/results_1/trace_file.mat'))
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
     %     load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
     % load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
     % dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/demo_GBO_v5_0_12/";
@@ -804,4 +805,91 @@ ylabel(ax30, 'Mean absolute evaluated cost error',"Color","m") %mean iteration t
 ax30.YColor="m";
 xlim([0 10.1])
 
+
+fig=figure(40);
+fig.Position=[200 0 1000 800];
+ax40=axes;
+ax40.FontSize=24;
+ax40.FontName='Times New Roman';
+hold on
+grid on
+eta1=[0.1,1:10];
+eta1_str={'01','1','2','3','4','5','6','7','8','9','10'};
+mean_n_s=[];
+std_n_s=[];
+mean_values_all=[];
+for i=1:length(eta1)
+    n_s{i}=[];
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    values=[];
+    for j=1:length(Trace)
+        try
+            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+            values=[values,Trace(j).values];
+        catch
+            n_s{i}=[n_s{i};nan];
+        end
+    end
+    mean_n_s=[mean_n_s,nanmean(n_s{i})];
+    std_n_s=[std_n_s,nanstd(n_s{i})];
+    mean_values_all=[mean_values_all,mean(values-0.5449,"all")];
 end
+clearvars Trace
+yyaxis right
+hr=plot(eta1,mean_n_s,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax40, '\eta_{1}')
+ylabel(ax40, 'Counted surrogate activation',"Color","#D95319")
+xticks([0.1,1:10])
+yyaxis left
+hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"m");
+ylabel(ax40, 'Normalized mean absolute evaluated cost error',"Color","m") %mean iteration to outperform nominal controller
+ax40.YColor="m";
+xlim([0 10.1])
+ylim([0.2,0.81])
+box on
+
+fig=figure(50);
+fig.Position=[200 0 1000 800];
+ax50=axes;
+ax50.FontSize=24;
+ax50.FontName='Times New Roman';
+hold on
+grid on
+eta1=[0.1,1:10];
+mean_GBO_convergance_gt=[19.0714285714286	21.9000000000000	23.1724137931035	21.3333333333333	22.4545454545455	23.8484848484848	22.5675675675676	25.4285714285714	23.9743589743590	28.6097560975610	29.3250000000000];%	26.6363636363636]; %convergance to gt
+mean_GBO_convergance_n=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
+eta1_str={'01','1','2','3','4','5','6','7','8','9','10'};
+mean_n_s=[];
+std_n_s=[];
+mean_values_all=[];
+for i=1:length(eta1)
+    n_s{i}=[];
+    load(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{i},'/results_1/trace_file.mat'))
+    values=[];
+    for j=1:length(Trace)
+        try
+            n_s{i}=[n_s{i};size(Trace(j).G2_values,1)];
+            values=[values,Trace(j).values];
+        catch
+            n_s{i}=[n_s{i};nan];
+        end
+    end
+    mean_n_s=[mean_n_s,nanmean(n_s{i})];
+    std_n_s=[std_n_s,nanstd(n_s{i})];
+    mean_values_all=[mean_values_all,mean(values-0.5449,"all")];
+end
+clearvars Trace
+yyaxis right
+hr=plot(eta1,mean_GBO_convergance_gt,'.-','Color',"#77AC30", 'MarkerSize',40,'MarkerEdgeColor',"#77AC30",'MarkerFaceColor',"#77AC30");
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+xlabel(ax50, '\eta_{1}')
+ylabel(ax50, 'Convergance iteration to ground truth performance',"Color","#7E2F8E")
+ax50.YColor="#77AC30";
+xticks([0.1,1:10])
+yyaxis left
+hl=plot(eta1,mean_GBO_convergance_n,'.-','Color',"k", 'MarkerSize',40,'MarkerEdgeColor',"k",'MarkerFaceColor',"k");
+ylabel(ax50, 'Convergance iteration to nominal performance',"Color","k") %mean iteration to outperform nominal controller
+ax50.YColor="k";
+xlim([0 10.1])
+box on
