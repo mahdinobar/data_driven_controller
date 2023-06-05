@@ -1,6 +1,6 @@
 %% Connect to OPCUA
 clear all; clc;
-addpath('C:\Users\nobar\data_driven_controller\linear_motor')
+addpath('C:\Users\nobar\data_driven_controller\linear_motor\OPCUA')
 ip='192.168.188.21';
 sInfo = opcuaserverinfo(ip); % SPS Name
 % sInfo = opcuaserverinfo('192.168.188.21'); % SPS Name
@@ -18,20 +18,21 @@ write_OPCUA(uaObj,'arrDemPos', r);
 write_OPCUA(uaObj,'arrShowPos', r);
 pause(1);
 %%
+s = tf('s');
 Kp = 0.44262;
 Tp = 0.070983;
 Td = 0.001;
 Gp_x = Kp/(1 * Tp *s) * 1/s * exp(-Td*s);
-F=0.0002;
+F=0.001;
 
 actPos_all=[];
 actVel_all=[];
 actCur_all=[];
 r_all=[];
 t_all=[];
-for D=10:1:90
-    for P=500:100:18000
-        disp(exe)
+for D=10:10:90
+    for P=500:500:12000
+        disp(D)
         C=P+D*s/(F*s+1);
         CLsys = feedback(Gp_x*C,1);
         [Gm,Pm,Wcg,Wcp] = margin(CLsys);
@@ -69,7 +70,7 @@ for D=10:1:90
         exp_data.actCur_all=actCur_all;
         exp_data.r_all=r_all;
         exp_data.t_all=t_all;
-        save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data.mat','exp_data')
+        save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_feasible.mat','exp_data')
     end
 end
 %%
