@@ -99,6 +99,8 @@ D_infeasible=[];
 % u_offset=-0.2100;
 sampleTs=0.001;
 step_high=40;
+y_high_all=[];
+t_high_all=[];
 for exper=1:length(exp_data.P)
     exper
     if exp_data.t_all(1,exper)~=-1
@@ -121,6 +123,8 @@ for exper=1:length(exp_data.P)
         reference=10;
         y_high=ytmp(10:end);
         t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+        y_high_all=[y_high_all,y_high];
+        t_high_all=[t_high_all,t_high];
         S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
         st=S.SettlingTime;
         if isnan(st)
@@ -168,3 +172,78 @@ legend([h_feasible,h_infeasible],{"feasible","infeasible (PM<20)"})
 xlim([500,12000])
 ylim([10,90])
 xticks([500, 2000:2000:12000])
+%%
+close
+figure(2)
+hold on
+% scatter(exp_data.P,exp_data.D,"filled","k")
+scatter(P_infeasible,D_infeasible,"filled","r");
+h=surf(P_feasible,D_feasible,perf_Data_feasible(:,3));
+% legend([h_feasible,h_infeasible],{"feasible","infeasible (PM<20)"})
+xlim([500,12000])
+ylim([10,90])
+xticks([500, 2000:2000:12000])
+xlabel("P")
+ylabel("D")
+%%
+close
+figure(2)
+subplot(2,2,1)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,3);
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "settling time"})
+%
+subplot(2,2,2)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,2);
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "rise time"})
+%
+subplot(2,2,3)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,1);
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "overshoot"})
+%
+subplot(2,2,4)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g"); 
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,4);
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "ITAE"})
