@@ -102,3 +102,27 @@ disconnect_OPCUA(uaObj)
 %         end
 %     end
 % end
+
+
+%%
+t = (0.001:0.001:7);
+r= 10.*(t>2)+30-10.*(t>5);
+
+% % set reference input
+write_OPCUA(uaObj,'arrDemPos', r);
+write_OPCUA(uaObj,'arrShowPos', r);
+pause(1);
+%%
+
+P_all=[];
+D_all=[];
+for D=10:1:90
+    for P=500:100:18000
+        P_all=[P_all,P];
+        D_all=[D_all,D];
+    end
+end
+load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_feasible.mat','exp_data')
+exp_data.P=P_all;
+exp_data.D=D_all;
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_feasible_2.mat','exp_data')
