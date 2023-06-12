@@ -97,6 +97,7 @@ P_feasible=[];
 D_feasible=[];
 P_infeasible=[];
 D_infeasible=[];
+objective_feasible=[];
 % y_offset=30.0300;
 % u_offset=-0.2100;
 sampleTs=0.001;
@@ -140,6 +141,8 @@ for exper=1:length(exp_data.P)
         ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
         e_ss=abs(y_final-reference);
         perf_Data=[ov,Tr,st,ITAE,e_ss];
+        objective = ObjFun(perf_Data);
+        objective_feasible=[objective_feasible;objective];
         perf_Data_feasible=[perf_Data_feasible;perf_Data];
         P_feasible=[P_feasible;exp_data.P(exper)];
         D_feasible=[D_feasible;exp_data.D(exper)];
@@ -282,4 +285,57 @@ clabel(c,h);
 xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "relative percentage absolute ss error"])
+%%
+close
+figure(9)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=objective_feasible;
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):2:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi,100);
+clabel(c,h);
+% h=surf(xi,yi,zi);
+set(gca,'Zscale','log')
+set(gca,'ColorScale','log')
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "objective"])
 
+%% functions
+function objective = ObjFun(perf_Data)
+% TODO only use first experiment per gains
+ov=abs(perf_Data(1,1));
+st=perf_Data(1,3);
+Tr=perf_Data(1,2);
+ITAE = perf_Data(1,4);
+e_ss = perf_Data(1,5);
+
+if isnan(ov) || isinf(ov) || ov>1
+    ov=1;
+end
+
+if isnan(st) || isinf(st) || st>1e5
+    st=3;
+end
+
+if isnan(Tr) || isinf(Tr) || Tr>1e5
+    Tr=3;
+end
+
+if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
+    ITAE=1e5;
+end
+
+% w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
+
+w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0079, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
+% w_importance=[1.1, 0.95, 1.2, 1];
+w_importance=[1.02, 1.02, 0.98, 1, 1.02];
+w=w_importance./w_mean_grid;
+w=w./sum(w);
+objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
+end
