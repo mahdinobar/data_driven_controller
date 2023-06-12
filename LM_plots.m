@@ -12,18 +12,15 @@ hc = colorbar;
 cb = linspace(1,200,200);
 set(hc, 'YTick',cb, 'YTickLabel',cb)
 
-
 figure(2)
 hold on
 plot(exp_data.t_all(:,1),exp_data.actVel_all);
 xlabel('Time [s]'); ylabel('Vel [m/s]')
 
-
 figure(3)
 hold on
 plot(exp_data.t_all(:,1),exp_data.actCur_all);
 xlabel('Time [s]'); ylabel('Cur')
-
 
 %%
 perf_Data_all=[];
@@ -94,6 +91,7 @@ close all;
 load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_feasible.mat','exp_data')
 perf_Data_feasible=[];
 P_feasible=[];
+PM_feasible=[];
 D_feasible=[];
 P_infeasible=[];
 D_infeasible=[];
@@ -146,6 +144,7 @@ for exper=1:length(exp_data.P)
         perf_Data_feasible=[perf_Data_feasible;perf_Data];
         P_feasible=[P_feasible;exp_data.P(exper)];
         D_feasible=[D_feasible;exp_data.D(exper)];
+        PM_feasible=[PM_feasible;exp_data.PGM_all(1,exper)];
     else
         P_infeasible=[P_infeasible;exp_data.P(exper)];
         D_infeasible=[D_infeasible;exp_data.D(exper)];
@@ -294,16 +293,36 @@ h_feasible=scatter(P_feasible,D_feasible,"filled","g");
 x=P_feasible;
 y=D_feasible;
 z=objective_feasible;
-[xi,yi] = meshgrid(min(x):1:max(x), min(y):2:max(y));
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
 [c,h]=contour(xi,yi,zi,100);
 clabel(c,h);
-% h=surf(xi,yi,zi);
+% h=surf(xi,yi,zi,'EdgeColor', 'none');
 set(gca,'Zscale','log')
 set(gca,'ColorScale','log')
 xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "objective"])
+
+%%
+close
+figure(10)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=PM_feasible;
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi,10);
+clabel(c,h);
+% h=surf(xi,yi,zi,'EdgeColor', 'none');
+% set(gca,'Zscale','log')
+% set(gca,'ColorScale','log')
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "PM"])
 
 %% functions
 function objective = ObjFun(perf_Data)
@@ -327,7 +346,11 @@ if isnan(Tr) || isinf(Tr) || Tr>1e5
 end
 
 if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-    ITAE=1e5;
+    ITAE=30;
+end
+
+if isnan(e_ss) || isinf(e_ss) || e_ss>1e5
+    e_ss=10;
 end
 
 % w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
@@ -337,5 +360,8 @@ w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0079, 0.4968]; %grid mean of feasible set
 w_importance=[1.02, 1.02, 0.98, 1, 1.02];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
-objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
+objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
+
+%%
+

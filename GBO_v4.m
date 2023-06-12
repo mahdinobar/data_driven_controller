@@ -191,6 +191,7 @@ for expr=1:1:N_expr
 %     Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
     range_kp=Kp_max-Kp_min;
     range_ki=Ki_max-Ki_min;
+
     Kp_min_N0=0.5464-range_kp/20;  
     Kp_max_N0=0.5464+range_kp/20;
     Ki_min_N0=1.1617-range_ki/20;

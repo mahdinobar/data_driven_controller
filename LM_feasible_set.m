@@ -32,6 +32,7 @@ actVel_all=[];
 actCur_all=[];
 r_all=[];
 t_all=[];
+PGM_all=[];
 for D=10:10:90
     for P=500:500:12000
         C=P+D*s/(F*s+1);
@@ -51,28 +52,33 @@ for D=10:10:90
 %             actPos = read_OPCUA(uaObj,'arrActPos')';
 %             actVel = read_OPCUA(uaObj,'arrActVel')';
 %             actCur = read_OPCUA(uaObj,'arrActCur')';
-            t = (0.001:0.001:7);
-            r= 10.*(t>2)+30-10.*(t>5);
+%             t = (0.001:0.001:7);
+%             r= 10.*(t>2)+30-10.*(t>5);
+            PGM=[Pm;Gm];
+
         else
             disp(Pm)
 %             actPos=-1.*ones(7000,1);
 %             actVel=-1.*ones(7000,1);
 %             actCur=-1.*ones(7000,1);
-            r=-1.*ones(1,7000);
-            t=-1.*ones(1,7000);
+%             r=-1.*ones(1,7000);
+%             t=-1.*ones(1,7000);
+            PGM=[-1;-1];
         end
 
 %         actPos_all=[actPos_all,actPos];
 %         actVel_all=[actVel_all,actVel];
 %         actCur_all=[actCur_all,actCur];
-        r_all=[r_all,r'];
-        t_all=[t_all,t'];
+%         r_all=[r_all,r'];
+%         t_all=[t_all,t'];
+        PGM_all=[PGM_all,PGM];
 %         exp_data.actPos_all=actPos_all;
 %         exp_data.actVel_all=actVel_all;
 %         exp_data.actCur_all=actCur_all;
-        exp_data.r_all=r_all;
-        exp_data.t_all=t_all;
-        save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_33.mat','exp_data')
+%         exp_data.r_all=r_all;
+%         exp_data.t_all=t_all;
+        exp_data.PGM_all=PGM_all;
+        save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_35.mat','exp_data')
     end
 end
 %%

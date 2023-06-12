@@ -33,7 +33,7 @@ npG2=2;
 
 %% load gain limits (feasible set)
 if sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'KpKi_bounds_new_2.mat');
+    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'LM_KpKd_bounds.mat');
 end
 load(dir_gains)
 
@@ -77,7 +77,7 @@ opt.resume_trace=true;
 
 %% We define the function we would like to optimize
 if isGBO==true
-    fun = @(X, surrogate)ObjFun_Guided_v4ObjFun_Guided_v4(X, surrogate, sampleTs, npG2);
+    fun = @(X, surrogate)ObjFun_Guided_v4(X, surrogate, sampleTs, npG2);
 else
     fun = @(X) ObjFun(exp_Data, G2, X); % CBO needs a function handle whose sole parameter is a vector of the parameters to optimize over.
 end
@@ -103,16 +103,10 @@ for expr=1:1:N_expr
     G2_post_sigma2s=[];
     % create initial dataset per experiment
     RAND=RAND_all_expr(:,expr);
-    %     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
-    %     Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
     range_kp=Kp_max-Kp_min;
-    range_ki=Ki_max-Ki_min;
-    Kp_min_N0=0.5464-range_kp/20;
-    Kp_max_N0=0.5464+range_kp/20;
-    Ki_min_N0=1.1617-range_ki/20;
-    Ki_max_N0=1.1617+range_ki/20;
-    Kp_ltn = (Kp_max_N0-Kp_min_N0).*RAND + Kp_min_N0;
-    Ki_ltn = (Ki_max_N0-Ki_min_N0).*RAND + Ki_min_N0;
+    range_kd=Kd_max-Kd_min;
+    Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
+    Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
     J_ltn = zeros(N0,1);
     for i=1:N0
         [r,u,y]=LinMotor(Kp_ltn(i), Kd_ltn(i));
@@ -210,40 +204,67 @@ if isempty(G2)==1
     ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
     Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
 else
-    C=tf([X(1), X(1)*X(2)], [1, 0]);
-    CL=feedback(C*G2, 1);
-    ov=abs(stepinfo(CL).Overshoot);
-    st=stepinfo(CL).SettlingTime;
-    [y,t]=step(CL);
-    reference=1;
-    e=abs(y-reference);
-    Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
-    ITAE = trapz(t, t.*abs(e));
+    sample_idx=exp_data.r_all(:,1)==step_high; %LV sampling time=10 ms
+    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    tmp_idx=tmp_idx(tmp_idx_2);
+    ytmp = exp_data.actPos_all((tmp_idx(1)-10):tmp_idx(end),exper)-y_offset;
+    utmp = exp_data.actCur_all((tmp_idx(1)-10):tmp_idx(end),exper)-u_offset;
+    if exist('G2data')
+        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+    else
+        G2data = iddata(ytmp,utmp,sampleTs);
+    end
+    % G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+    %calculate performance data based on experimental step response measurements
+    reference0=0;
+    reference=10;
+    y_high=ytmp(10:end);
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+    S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
+    st=S.SettlingTime;
+    if isnan(st)
+        st=3;
+    end
+    ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
+    Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
+    perf_Data=[ov,Tr,st,ITAE];
+
+
+    ov=abs(perf_Data(1,1));
+    st=perf_Data(1,3);
+    Tr=perf_Data(1,2);
+    ITAE = perf_Data(1,4);
+    e_ss = perf_Data(1,5);
 end
-if isnan(ov) || isinf(ov) || ov>1e3
-    ov=1e3;
+
+if isnan(ov) || isinf(ov) || ov>1
+    ov=1;
 end
+
 if isnan(st) || isinf(st) || st>1e5
-    st=1e5;
+    st=3;
 end
+
 if isnan(Tr) || isinf(Tr) || Tr>1e5
-    Tr=1e5;
+    Tr=3;
 end
+
 if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-    ITAE=1e5;
+    ITAE=30;
 end
-w_mean_grid=[10.5360, 3.8150, 0.6119, 1.1596];
-w_importance=[2, 1, 1, 1];
+
+w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0079, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
+w_importance=[1.02, 1.02, 0.98, 1, 1.02];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4);
-if objective_noise==true
-    noise=0.0035*randn(1,1);
-    objective=objective+noise;
-end
+
 constraints=-1;
 end
-
+%%
 function [objective, N_G2, idx_G2, y_s] = ObjFun_Guided_v4(X, surrogate, sampleTs, npG2)
 global N
 global G2data
@@ -296,11 +317,11 @@ else
     end
 end
 end
-
+%%
 function [r,u,y]=LinMotor(Kp,Kd)
 % % Connect to OPCUA
 % uaObj = connect_OPCUA('192.168.188.21');
-%% Load Trajectory
+% Load Trajectory
 % load("dem_x/dem_x_9_mm.mat")
 t = (0.001:0.001:7);
 r= t>3.5;
@@ -345,8 +366,7 @@ legend('actCur','NomCur')
 
 ExprData = timetable(actNomCur,actCur,actVel,actPos,'SampleRate',1000);
 save('ExprData\Expr_9.mat','ExprData')
-
-%%
+%
 % Disconnect from OPCUA
 disconnect_OPCUA(uaObj)
 end
