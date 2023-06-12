@@ -1,5 +1,7 @@
+%%
 clear all; clc; close all;
 load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data.mat")
+%%
 figure(1)
 hold on
 plot(exp_data.t_all(:,1),exp_data.r_all(:,1),'k');
@@ -174,7 +176,7 @@ ylim([10,90])
 xticks([500, 2000:2000:12000])
 %%
 close
-figure(2)
+figure(6)
 hold on
 % scatter(exp_data.P,exp_data.D,"filled","k")
 scatter(P_infeasible,D_infeasible,"filled","r");
@@ -187,7 +189,7 @@ xlabel("P")
 ylabel("D")
 %%
 close
-figure(2)
+figure(7)
 subplot(2,2,1)
 hold on
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
