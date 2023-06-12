@@ -127,16 +127,19 @@ for exper=1:length(exp_data.P)
         t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
         y_high_all=[y_high_all,y_high];
         t_high_all=[t_high_all,t_high];
-        S = lsiminfo(y_high,t_high,reference,reference0,'SettlingTimeThreshold',0.02);
+        y_init=mean(exp_data.actPos_all((tmp_idx(1)-60):(tmp_idx(1)-10),exper))-y_offset;
+        y_final=mean(exp_data.actPos_all((tmp_idx(end)-60):(tmp_idx(end)-10),exper))-y_offset;
+        S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
         st=S.SettlingTime;
         if isnan(st)
             st=3;
         end
-        ov=max(0,(S.Max-reference0)/(reference-reference0)-1);
-        Tr=t_high(find(y_high>0.6*(reference-reference0),1))-t_high(find(y_high>0.1*(reference-reference0),1));
-        e=abs(y_high-reference);
+        ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+        Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
+        e=abs(y_high-y_final);
         ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
-        perf_Data=[ov,Tr,st,ITAE];
+        e_ss=abs(y_final-reference);
+        perf_Data=[ov,Tr,st,ITAE,e_ss];
         perf_Data_feasible=[perf_Data_feasible;perf_Data];
         P_feasible=[P_feasible;exp_data.P(exper)];
         D_feasible=[D_feasible;exp_data.D(exper)];
@@ -190,7 +193,7 @@ ylabel("D")
 %%
 close
 figure(7)
-subplot(2,2,1)
+subplot(3,2,1)
 hold on
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
 h_feasible=scatter(P_feasible,D_feasible,"filled","g");
@@ -205,7 +208,7 @@ xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "settling time"})
 %
-subplot(2,2,2)
+subplot(3,2,2)
 hold on
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
 h_feasible=scatter(P_feasible,D_feasible,"filled","g");
@@ -220,7 +223,7 @@ xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "rise time"})
 %
-subplot(2,2,3)
+subplot(3,2,3)
 hold on
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
 h_feasible=scatter(P_feasible,D_feasible,"filled","g");
@@ -235,7 +238,7 @@ xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "overshoot"})
 %
-subplot(2,2,4)
+subplot(3,2,4)
 hold on
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
 h_feasible=scatter(P_feasible,D_feasible,"filled","g"); 
@@ -249,3 +252,34 @@ clabel(c,h);
 xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],{"feasible","infeasible (PM<20)", "ITAE"})
+
+subplot(3,2,5)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,5);
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "absolute steady state error"])
+
+subplot(3,2,6)
+hold on
+h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
+h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+x=P_feasible;
+y=D_feasible;
+z=perf_Data_feasible(:,5)./(reference-reference0).*100;
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+zi = griddata(x,y,z,xi,yi);
+[c,h]=contour(xi,yi,zi);
+clabel(c,h);
+xlabel("P")
+ylabel("D")
+legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "relative percentage absolute ss error"])
+
