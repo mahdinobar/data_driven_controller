@@ -292,6 +292,8 @@ legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "relative 
 close
 figure(9)
 hold on
+set(gca,'Zscale','log')
+set(gca,'ColorScale','log')
 h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
 h_feasible=scatter(P_feasible,D_feasible,"filled","g");
 x=P_feasible;
@@ -303,8 +305,7 @@ zi = griddata(x,y,z,xi,yi);
 % [c,h]=contour(xi,yi,zi,100);
 % clabel(c,h);
 h=surf(xi,yi,zi,'EdgeColor', 'none');
-set(gca,'Zscale','log')
-set(gca,'ColorScale','log')
+
 xlabel("P")
 ylabel("D")
 legend([h_feasible,h_infeasible, h],["feasible","infeasible (PM<20)", "objective"])
@@ -360,9 +361,10 @@ end
 
 % w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
 
-w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0079, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
+w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
 % w_mean_grid=[0.5605    0.1030    0.7213    0.3829    2.0497];% normalization values for max of each metric
-w_importance=[1.02, 1.02, 1.0, 1.0, 1];
+% w_importance=[1.02, 1.02, 1.0, 1.0, 1];
+w_importance=[1.2, 1.05, 0.98, 1, 1.1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
 % w=[0.1,0.2,0.3,0.2,0.3];
