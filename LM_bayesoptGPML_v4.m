@@ -1,4 +1,4 @@
-function [minsample,minvalue,botrace] = LM_bayesoptGPML_v4(Obj,opt, N0, y_s, isGBO)
+function [minsample,minvalue,botrace] = LM_bayesoptGPML_v4(Obj,opt, N0, y_s)
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -147,39 +147,33 @@ while i <opt.max_iters-2+1,
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    if isGBO
-        eta1=1;
-        eta2=0.2;
-        %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
-        %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-        % estimate surrogate uncertainty sigma_s
-        SE=0;
-        for i_s=1:length(y_s)
-            SE=SE+(y_s(i_s)-values(i_s))^2;
-        end
-        sigma_s=sqrt(SE/length(y_s));
-        if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
-            %                 if aq_val>max(AQ_vals)*eta
-            surrogate=true; %switch to use surrogate G2 for objective
-            opt.max_iters=opt.max_iters+1;
-            counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
-        elseif surrogate==true
-            if aq_val>max(AQ_vals)*eta2
-                opt.max_iters=opt.max_iters+1;
-                counter = 1; %in server GBO_72 and 74results this was missing
-            elseif counter<3+1
-                counter =counter+1;
-                opt.max_iters=opt.max_iters+1;
-            else
-                surrogate=false;
-            end
-        end
-        [value,~,~, y_s] = Obj(hyper_cand, surrogate);
-    else
-        [r,u,y]=LinMotor(hyper_cand(1), hyper_cand(2));
-        exp_Data=[r,u,y];
-        [value] = Obj(exp_Data);
+    eta1=1; %for BO only change to inf
+    eta2=0.2;
+    %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
+    %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+    % estimate surrogate uncertainty sigma_s
+    SE=0;
+    for i_s=1:length(y_s)
+        SE=SE+(y_s(i_s)-values(i_s))^2;
     end
+    sigma_s=sqrt(SE/length(y_s));
+    if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
+        %                 if aq_val>max(AQ_vals)*eta
+        surrogate=true; %switch to use surrogate G2 for objective
+        opt.max_iters=opt.max_iters+1;
+        counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
+    elseif surrogate==true
+        if aq_val>max(AQ_vals)*eta2
+            opt.max_iters=opt.max_iters+1;
+            counter = 1; %in server GBO_72 and 74results this was missing
+        elseif counter<3+1
+            counter =counter+1;
+            opt.max_iters=opt.max_iters+1;
+        else
+            surrogate=false;
+        end
+    end
+    [value,~,~, y_s] = Obj(hyper_cand, surrogate);
     times(end+1) = toc;
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     values(end+1,1) = value;
@@ -335,14 +329,14 @@ else
     n_ch = num_hypers(covfunc{1},opt);
 end
 
-if ~isfield(botrace, 'hyp_GP_mean') 
+if ~isfield(botrace, 'hyp_GP_mean')
     botrace.hyp_GP_mean=zeros(n_mh,1);
     botrace.hyp_GP_cov=zeros(n_ch,1)';
     botrace.hyp_GP_lik=log(0.1);
 end
 % stop optimizing prior hyperparameters after certain iterations
 if length(botrace.hyp_GP_mean)<50
-%     calculate hyp: the optimum hyperparameters of prior model
+    %     calculate hyp: the optimum hyperparameters of prior model
     hyp = [];
     hyp.mean = zeros(n_mh,1);
     hyp.cov = zeros(n_ch,1);

@@ -135,7 +135,7 @@ for exper=1:length(exp_data.P)
         end
         ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
         Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
-        e=abs(y_high-y_final);
+        e=abs(y_high-reference);
         ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
         e_ss=abs(y_final-reference);
         perf_Data=[ov,Tr,st,ITAE,e_ss];
@@ -150,20 +150,24 @@ for exper=1:length(exp_data.P)
         D_infeasible=[D_infeasible;exp_data.D(exper)];
     end
 end
+%%
 figure(5)
-subplot(4,1,1)
-plot(perf_Data_feasible(:,1))
+subplot(5,1,1)
+plot(perf_Data_feasible(:,1)./mean(perf_Data_feasible(:,1)),"o")
 ylabel('overshoot')
-subplot(4,1,2)
-plot(perf_Data_feasible(:,2))
-ylim([0,0.02])
+subplot(5,1,2)
+plot(perf_Data_feasible(:,2)./mean(perf_Data_feasible(:,2)),"o")
+% ylim([0,0.02])
 ylabel('rise time')
-subplot(4,1,3)
-plot(perf_Data_feasible(:,3))
+subplot(5,1,3)
+plot(perf_Data_feasible(:,3)./mean(perf_Data_feasible(:,3)),"o")
 ylabel('settling time')
-subplot(4,1,4)
-plot(perf_Data_feasible(:,4))
+subplot(5,1,4)
+plot(perf_Data_feasible(:,4)./mean(perf_Data_feasible(:,4)),"o")
 ylabel('ITAE')
+subplot(5,1,5)
+plot(perf_Data_feasible(:,5)./mean(perf_Data_feasible(:,5)),"o")
+ylabel('|e_ss|')
 save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/Data_feasible.mat","perf_Data_feasible","P_feasible","D_feasible")
 save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/Data_infeasible.mat","P_infeasible","D_infeasible")
 %%
@@ -293,11 +297,12 @@ h_feasible=scatter(P_feasible,D_feasible,"filled","g");
 x=P_feasible;
 y=D_feasible;
 z=objective_feasible;
+% plot3(x,y,z,"ok")
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
-[c,h]=contour(xi,yi,zi,100);
-clabel(c,h);
-% h=surf(xi,yi,zi,'EdgeColor', 'none');
+% [c,h]=contour(xi,yi,zi,100);
+% clabel(c,h);
+h=surf(xi,yi,zi,'EdgeColor', 'none');
 set(gca,'Zscale','log')
 set(gca,'ColorScale','log')
 xlabel("P")
@@ -356,10 +361,11 @@ end
 % w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
 
 w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0079, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
-% w_importance=[1.1, 0.95, 1.2, 1];
-w_importance=[1.02, 1.02, 0.98, 1, 1.02];
+% w_mean_grid=[0.5605    0.1030    0.7213    0.3829    2.0497];% normalization values for max of each metric
+w_importance=[1.02, 1.02, 1.0, 1.0, 1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
+% w=[0.1,0.2,0.3,0.2,0.3];
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 
