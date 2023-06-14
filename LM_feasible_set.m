@@ -2,6 +2,7 @@
 clear all; clc;close all
 %%
 addpath('C:\Users\nobar\data_driven_controller\linear_motor')
+addpath('C:\Users\nobar\data_driven_controller\linear_motor\OPCUA')
 ip='192.168.188.21';
 sInfo = opcuaserverinfo(ip); % SPS Name
 % sInfo = opcuaserverinfo('192.168.188.21'); % SPS Name
@@ -26,7 +27,6 @@ Td = 0.001;
 Gp_x = Kp/(1 * Tp *s) * 1/s * exp(-Td*s);
 F=0.001;
 %%
-load('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_feasible.mat','exp_data')
 actPos_all=[];
 actVel_all=[];
 actCur_all=[];
@@ -35,6 +35,7 @@ t_all=[];
 PGM_all=[];
 for D=10:10:90
     for P=500:500:12000
+        disp(D)
         C=P+D*s/(F*s+1);
         CLsys = feedback(Gp_x*C,1);
         [Gm,Pm,Wcg,Wcp] = margin(CLsys);
