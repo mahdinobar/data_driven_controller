@@ -30,20 +30,36 @@ actVel_all=[];
 actCur_all=[];
 r_all=[];
 t_all=[];
-PGM_all=[];
-%   first round
-for D=41:1:54
-    for P=5300:60:6120
-%   second round
+P_all=[];
+D_all=[];
+exper=0;
+% %   first round
+% for D=41:1:54
+%     for P=5300:60:6120
+% %   second round
 % for D=41.5:1:54.5
 %     for P=5330:60:6150
-%   third round
+% %   third round
 % for D=41.25:1:54.25
 %     for P=5315:60:6135
-%   forth round
+% %   forth round
 % for D=41.75:1:54.75
 %     for P=5345:60:6165
-            Set P and D gain
+% %   fifth round
+% for D=41.375:1:54.375
+%     for P=5322.5:60:6142.5
+% %     sixth round
+% for D=41.625:1:54.625
+%     for P=5337.5:60:6157.5  
+% % %     seventh round
+% for D=41.825:1:54.825
+%     for P=5352.5:60:6172.5
+% %     eigth round
+for D=41.125:1:54.125
+    for P=5307.5:60:6127.5        
+exper=exper+1;
+            disp(exper)
+%             Set P and D gain
             write_OPCUA(uaObj,'LQR_P_x', P);
             write_OPCUA(uaObj,'LQR_D_v', D);
             pause(0.2);
@@ -68,13 +84,15 @@ for D=41:1:54
         exp_data.actCur_all=actCur_all;
         exp_data.P_all=P_all;
         exp_data.D_all=D_all;
-        save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_1.mat','exp_data')
+%         save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_1_rest.mat','exp_data')
 %         % second round
 %         save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_2.mat','exp_data')
 %         % second round
 %         save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_3.mat','exp_data')
-%         % second round
+% %         % second round
 %         save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_4.mat','exp_data')
+        save('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_8.mat','exp_data')
+
     end
 end
 %%
