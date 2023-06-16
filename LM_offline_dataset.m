@@ -36,9 +36,9 @@ offset=STEPS(2); %4, 6, ..., 16
 Dmin=40+offset;
 Dmax=54+offset;
 Pmin=5120+60*offset;
-Pmax=6120+60*offset
-for D=40:1:54
-    for P=5120:60:6120
+Pmax=6120+60*offset;
+for D=Dmin:1:Dmax
+    for P=Pmin:60:Pmax
         Set P and D gain
         write_OPCUA(uaObj,'LQR_P_x', P);
         write_OPCUA(uaObj,'LQR_D_v', D);
