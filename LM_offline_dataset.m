@@ -31,31 +31,27 @@ actCur_all=[];
 r_all=[];
 t_all=[];
 PGM_all=[];
-%   first round
+STEPS=linspace(0,1,17);
+offset=STEPS(2); %4, 6, ..., 16
+Dmin=40+offset;
+Dmax=54+offset;
+Pmin=5120+60*offset;
+Pmax=6120+60*offset
 for D=40:1:54
     for P=5120:60:6120
-%   second round
-% for D=40.5:1:54.5
-%     for P=5150:60:6150
-%   third round
-% for D=40.25:1:54.25
-%     for P=5135:60:6135
-%   forth round
-% for D=40.75:1:54.75
-%     for P=5165:60:6165
-            Set P and D gain
-            write_OPCUA(uaObj,'LQR_P_x', P);
-            write_OPCUA(uaObj,'LQR_D_v', D);
-            pause(0.2);
+        Set P and D gain
+        write_OPCUA(uaObj,'LQR_P_x', P);
+        write_OPCUA(uaObj,'LQR_D_v', D);
+        pause(0.2);
 
-            % perform experiment
-            write_OPCUA(uaObj,'Go', 1); % Perform Experiment
-            pause(7.5);
+        % perform experiment
+        write_OPCUA(uaObj,'Go', 1); % Perform Experiment
+        pause(7.5);
 
-            % read the results
-            actPos = read_OPCUA(uaObj,'arrActPos')';
-            actVel = read_OPCUA(uaObj,'arrActVel')';
-            actCur = read_OPCUA(uaObj,'arrActCur')';
+        % read the results
+        actPos = read_OPCUA(uaObj,'arrActPos')';
+        actVel = read_OPCUA(uaObj,'arrActVel')';
+        actCur = read_OPCUA(uaObj,'arrActCur')';
 
         P_all=[P_all,P];
         D_all=[D_all,D];
@@ -68,13 +64,7 @@ for D=40:1:54
         exp_data.actCur_all=actCur_all;
         exp_data.P_all=P_all;
         exp_data.D_all=D_all;
-        save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_offline_dataset_1.mat','exp_data')
-%         % second round
-%         save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_offline_dataset_2.mat','exp_data')
-%         % second round
-%         save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_offline_dataset_3.mat','exp_data')
-%         % second round
-%         save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_offline_dataset_4.mat','exp_data')
+        save(append('C:\Users\nobar\data_driven_controller\linear_motor\exp_data_offline_dataset_',string(idx+100),'.mat'),'exp_data')
     end
 end
 %%
