@@ -227,12 +227,12 @@ x=P_feasible;
 y=D_feasible;
 z=objective_feasible;
 % plot3(x,y,z,"ok")
-[xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
+[xi,yi] = meshgrid(min(x):60:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
-% [c,h]=contour(xi,yi,zi,100);
-% clabel(c,h);
-h=surf(xi,yi,zi,'EdgeColor', 'none');
-colorbar
+[c,h]=contour(xi,yi,zi,10);
+clabel(c,h);
+% h=surf(xi,yi,zi,'EdgeColor', 'none');
+% colorbar
 xlabel("P")
 ylabel("D")
 zlabel("J")
