@@ -221,22 +221,26 @@ figure(3)
 hold on
 set(gca,'Zscale','log')
 set(gca,'ColorScale','log')
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
+h_infeasible=scatter3(P_infeasible,D_infeasible,max(objective_feasible).*ones(size(D_infeasible)),20,"filled","r");
+h_feasible=scatter3(P_feasible,D_feasible,max(objective_feasible).*ones(size(D_feasible)),20,"filled","g");
+[m,I]=min(objective_feasible);
+h_min=scatter3(P_feasible(I),D_feasible(I),max(objective_feasible),300,"pentagram","filled","y");
+
 x=P_feasible;
 y=D_feasible;
 z=objective_feasible;
 % plot3(x,y,z,"ok")
-[xi,yi] = meshgrid(min(x):60:max(x), min(y):1:max(y));
+[xi,yi] = meshgrid(min(x):1:max(x), min(y):0.0167:max(y));
 zi = griddata(x,y,z,xi,yi);
-[c,h]=contour(xi,yi,zi,10);
-clabel(c,h);
-% h=surf(xi,yi,zi,'EdgeColor', 'none');
-% colorbar
+% [c,h]=contour(xi,yi,zi,10);
+% clabel(c,h);
+h=surf(xi,yi,zi,'EdgeColor', 'none');
+colorbar
 xlabel("P")
 ylabel("D")
 zlabel("J")
-legend([h_feasible,h_infeasible, h],["feasible","experimental failure", "objective"])
+legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective"])
+
 
 %% functions
 function objective = ObjFun(perf_Data)
