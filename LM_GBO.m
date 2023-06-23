@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'LM_1';
+idName= 'LM_0';
 sys='DC_motor';
-isGBO=true;
+isGBO=false;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -17,14 +17,12 @@ end
 if not(isfolder(dir))
     mkdir(dir)
 end
-% load LM offline dataset
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
-global P_safe D_safe exp_data_safe
+
 %% set hyperparameters
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=50;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -37,6 +35,19 @@ if sys=="DC_motor"
     dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'LM_KpKd_bounds.mat');
 end
 load(dir_gains)
+%% load and prepare LM offline dataset
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
+global P_crop_safe D_crop_safe exp_data_crop_safe
+idx_crop_safe=logical((P_safe<Kp_max).*(P_safe>Kp_min).*(D_safe<Kd_max).*(D_safe>Kd_min));
+P_crop_safe=P_safe(idx_crop_safe);
+D_crop_safe=D_safe(idx_crop_safe);
+
+exp_data_crop_safe=exp_data_safe;
+exp_data_crop_safe.actPos_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.actCur_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.actVel_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.P(~idx_crop_safe)=[];
+exp_data_crop_safe.D(~idx_crop_safe)=[];
 %% build initial dataset (N0)
 if initRant=="latin"
     if isGBO==true
@@ -58,7 +69,8 @@ opt.covfunc={@covMaternard, 5};
 opt.dims = 2; % Number of parameters.
 opt.mins = [Kp_min, Kd_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
 opt.maxes = [Kp_max, Kd_max]; % Vector of maximum values for each parameter.
-opt.grid_size = 20000;
+% opt.grid_size = 20000;
+opt.grid=[P_crop_safe,D_crop_safe]; %use grid for offline LM dataset
 opt.lt_const = lt_const;
 opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
 opt.save_trace = 0;
@@ -93,6 +105,19 @@ for expr=1:1:N_expr
     Kd_max=51;
     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
     Kd_ltn = (Kd_max-Kd_min).*RAND + Kd_min;
+
+    [~,I_tmp]=min((P_crop_safe-Kp_ltn).^2+(D_crop_safe-Kd_ltn).^2);
+    Kp_ltn=P_crop_safe(I_tmp);
+    Kd_ltn=D_crop_safe(I_tmp);
+%     i=find((exp_data_crop_safe.P==Kp_ltn).*(exp_data_crop_safe.D==Kd_ltn));
+%     exp_data.actPos=exp_data_crop_safe.actPos_all(:,i);
+%     exp_data.actVel=exp_data_crop_safe.actVel_all(:,i);
+%     exp_data.actCur=exp_data_crop_safe.actCur_all(:,i);
+%     exp_data.r=exp_data_crop_safe.r;
+%     exp_data.t=exp_data_crop_safe.t;
+%     exp_data.P=exp_data_crop_safe.P(i);
+%     exp_data.D=exp_data_crop_safe.D(i);
+
     J_ltn = zeros(N0,1);
     for i=1:N0
         exp_data=LinMotor(Kp_ltn(i), Kd_ltn(i));
@@ -313,19 +338,13 @@ end
 end
 %%
 function exp_data=LinMotor(Kp,Kd)
-global P_safe D_safe exp_data_safe
-% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_test.mat")
-
-% replace with closest safe point in offline dataset (TODO for N0>1)
-[~,I_tmp]=min((P_safe-Kp).^2+(D_safe-Kd).^2);
-P=P_safe(I_tmp);
-D=D_safe(I_tmp);
-i=find((exp_data_safe.P==P).*(exp_data_safe.D==D));
-exp_data.actPos=exp_data_safe.actPos_all(:,i);
-exp_data.actVel=exp_data_safe.actVel_all(:,i);
-exp_data.actCur=exp_data_safe.actCur_all(:,i);
-exp_data.r=exp_data_safe.r;
-exp_data.t=exp_data_safe.t;
-exp_data.P=exp_data_safe.P(i);
-exp_data.D=exp_data_safe.D(i);
+global exp_data_crop_safe
+i=find((exp_data_crop_safe.P==Kp).*(exp_data_crop_safe.D==Kd));
+exp_data.actPos=exp_data_crop_safe.actPos_all(:,i);
+exp_data.actVel=exp_data_crop_safe.actVel_all(:,i);
+exp_data.actCur=exp_data_crop_safe.actCur_all(:,i);
+exp_data.r=exp_data_crop_safe.r;
+exp_data.t=exp_data_crop_safe.t;
+exp_data.P=exp_data_crop_safe.P(i);
+exp_data.D=exp_data_crop_safe.D(i);
 end

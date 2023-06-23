@@ -1,4 +1,5 @@
 function [minsample,minvalue,botrace] = LM_bayesoptGPML_v4(Obj,opt, N0)
+global P_crop_safe D_crop_safe
 % ms - best parameter setting found
 % mv - best function value for that setting L(ms)
 % Trace  - Trace of all settings tried, their function values, and constraint values.
@@ -42,6 +43,7 @@ end
 if isfield(opt,'grid')
     hyper_grid = scale_point(opt.grid,opt.mins,opt.maxes);
     opt.grid_size = size(hyper_grid,1);
+    hyper_grid_record = hyper_grid;
 else
     sobol = sobolset(opt.dims);
     hyper_grid = sobol(1:opt.grid_size,:); %creates random values from sobolset in [0,1]
@@ -118,7 +120,6 @@ else
     if DO_CBO,
         con_values = [con_values;con1;con2];
     end
-
     % Remove first two samples from grid
     hyper_grid = hyper_grid(incomplete,:);
     incomplete = logical(ones(size(hyper_grid,1),1));
@@ -148,7 +149,7 @@ while i <opt.max_iters-2+1
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    eta1=3.7803e-06; %for BO only change to inf
+    eta1=inf;%3.7803e-06; %for BO only change to inf
     eta2=0.2;
     %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
     %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
