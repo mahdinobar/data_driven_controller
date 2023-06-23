@@ -1,30 +1,33 @@
-% Linear Motor
-% GBO version 4
+% Linear Motor (offline dataset)
+% GBO version 4 
 %% clean, set directories, start OPC server
 clear all; clc; close all;
 addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'LM_test';
+idName= 'LM_1';
 sys='DC_motor';
-dir=append(tmp_dir,'/', idName, '/');
+isGBO=true;
+if isGBO==true
+    dir=append(tmp_dir,'/', idName, '/GBO/');
+else
+    dir=append(tmp_dir,'/', idName, '/BO/');
+end
 if not(isfolder(dir))
     mkdir(dir)
 end
-% Connect to OPC server
-connect(uaObj,'tm','sX7Cswc34wjvwq'); % SPS Loggin
+% load LM offline dataset
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
+global P_safe D_safe exp_data_safe
 %% set hyperparameters
-objective_noise=true;
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
 N_expr=2;
 N_iter=50;
 N_iter=N_iter+N0;
-Nsample=150;
-sampleTf=2.5; %based on the min and max settling time equal to 1.3 and 19 seconds inside the feasible set "KpKi_bounds_new_2.mat" we choose 1.5 for DC motor plant with speed sensor pole 9.918e-5
-sampleTs=sampleTf/(Nsample-1);
+sampleTs=0.001;
 sampleTinit=0.0;
 lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
@@ -36,6 +39,9 @@ end
 load(dir_gains)
 %% build initial dataset (N0)
 if initRant=="latin"
+    if isGBO==true
+        load(append(tmp_dir,'/', idName, '/RAND_ltn_all.mat'))
+    else
     % latin hypercube samples
     % sample from latin (denoted as ltn) hypercube
     RAND_all_expr=zeros(N0,N_expr);
@@ -43,14 +49,15 @@ if initRant=="latin"
         RAND = sort(lhsdesign(N0,1));
         RAND_all_expr(:,expr)=RAND;
     end
-    save(append(dir,'RAND_ltn_all.mat'),'RAND_all_expr')
+    save(append(tmp_dir,'/', idName, '/RAND_ltn_all.mat'),'RAND_all_expr')
+    end
 end
 %% Setup the Gaussian Process (GP) Library
 opt.meanfunc={@meanConst};
 opt.covfunc={@covMaternard, 5};
 opt.dims = 2; % Number of parameters.
-opt.mins = [Kp_min, Ki_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
-opt.maxes = [Kp_max, Ki_max]; % Vector of maximum values for each parameter.
+opt.mins = [Kp_min, Kd_min]; % Minimum value for each of the parameters. Should be 1-by-opt.dims
+opt.maxes = [Kp_max, Kd_max]; % Vector of maximum values for each parameter.
 opt.grid_size = 20000;
 opt.lt_const = lt_const;
 opt.do_cbo = 0; % Do CBO -- use the constraint output from F as well.
@@ -64,13 +71,10 @@ global N
 global idx
 global G2data
 global N_G2
-global y_s
 global idx_G2
 step_high=40;
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
-    expr_G2rmse=[];
-    y_s=[];
     fprintf('>>>>>experiment: %d \n', expr);
     N=0;
     idx=[];
@@ -83,18 +87,24 @@ for expr=1:1:N_expr
     RAND=RAND_all_expr(:,expr);
     range_kp=Kp_max-Kp_min;
     range_kd=Kd_max-Kd_min;
+    Kp_min=5.1238e+03;
+    Kp_max=6.1362e+03;
+    Kd_min=40.0625;
+    Kd_max=51;
     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
-    Ki_ltn = (Ki_max-Ki_min).*RAND + Ki_min;
+    Kd_ltn = (Kd_max-Kd_min).*RAND + Kd_min;
     J_ltn = zeros(N0,1);
     for i=1:N0
-        exp_Data=LinMotor(Kp_ltn(i), Kd_ltn(i));
-        J_ltn(i) = ObjFun(exp_Data,[],[]);
-        sample_idx=exp_Data.r(:,3)==step_high; %LV sampling time=10 ms
+        exp_data=LinMotor(Kp_ltn(i), Kd_ltn(i));
+        J_ltn(i) = ObjFun(exp_data,[],[]);
+        sample_idx=exp_data.r==step_high; %LV sampling time=10 ms
         tmp_idx=find(sample_idx>0);
         tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
         tmp_idx=tmp_idx(tmp_idx_2);
-        ytmp = exp_Data.actPos((tmp_idx(1)-10):tmp_idx(end),4)-y_offset;
-        utmp = exp_Data.actCur((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
+        y_offset=exp_data.actPos(tmp_idx(1)-10);
+        u_offset=exp_data.actCur(tmp_idx(1)-10);
+        ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(end))-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(end))-u_offset;
         if i==1
             G2data = iddata(ytmp,utmp,sampleTs);
         else
@@ -106,17 +116,21 @@ for expr=1:1:N_expr
         Options = tfestOptions('Display','off');
         Options.InitialCondition = 'backcast';
         Options.EnforceStability=1;
-        G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
-        surrogate_objective=ObjFun([Kp_ltn(i), Ki_ltn(i)], G2, [Kp,Kd]);
-        y_s=[y_s;surrogate_objective];
-        load(append(dir, 'botrace0.mat'))
-        opt.resume_trace_data = botrace0;
-        clear botrace0
+        G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
     end
+    % set initial dataset
+    X_ltn=[Kp_ltn, Kd_ltn];
+    y_ltn=J_ltn;
+    botrace0.samples=X_ltn;
+    botrace0.values=y_ltn;
+    % todo need to correct time?
+    botrace0.times=RAND';
+    opt.resume_trace_data = botrace0;
+    clear botrace0
     idx_G2=[];
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
-    [ms,mv,Trace_tmp] = LM_bayesoptGPML_v4(fun,opt,N0,y_s);
+    [ms,mv,Trace_tmp] = LM_bayesoptGPML_v4(fun,opt,N0);
     G2_samples=Trace_tmp.samples(idx_G2,:);
     G2_values=Trace_tmp.values(idx_G2);
     G2_post_mus=Trace_tmp.post_mus(idx_G2);
@@ -135,18 +149,18 @@ for expr=1:1:N_expr
     Trace_tmp.hyp_GP_lik(idx_G2)=[];
     Trace_tmp.hyp_GP_cov(idx_G2,:)=[];
     Trace_tmp.hyp_GP_mean(idx_G2,:)=[];
-    Trace_tmp.y_s=y_s;
     Trace(expr)=Trace_tmp;
     clearvars Trace_tmp
     save(append(dir, 'trace_file.mat'),'Trace')
     save(append(dir, 'idx_G2.mat'),'idx_G2')
-    save(append(dir, 'G2rmse_', num2str(expr),'.mat'),'expr_G2rmse')
 end
-disconnect_OPCUA(uaObj)
+
 %%
 function [objective] = ObjFun(exp_data, G2, gains)
+step_high=40;
+sampleTs=0.001;
 if isempty(G2)==1
-    sample_idx=exp_data.r(:,1)==step_high; %LV sampling time=10 ms
+    sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     tmp_idx=tmp_idx(tmp_idx_2);
@@ -163,10 +177,8 @@ if isempty(G2)==1
     reference=10;
     y_high=ytmp(10:end);
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
-    y_high_all=[y_high_all,y_high];
-    t_high_all=[t_high_all,t_high];
-    y_init=mean(exp_data.actPos_all((tmp_idx(1)-60):(tmp_idx(1)-10),exper))-y_offset;
-    y_final=mean(exp_data.actPos_all((tmp_idx(end)-60):(tmp_idx(end)-10),exper))-y_offset;
+    y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
+    y_final=mean(exp_data.actPos((tmp_idx(end)-60):(tmp_idx(end)-10)))-y_offset;
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     st=S.SettlingTime;
     if isnan(st)
@@ -199,8 +211,8 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     y2=lsim(CL,r,t);
     y_high=y2(t>(.01)); %TODO check pay attention
     t_high=t(t>(.01));%TODO check    
-    y_init=mean(exp_data.actPos_all((tmp_idx(1)-60):(tmp_idx(1)-10),exper));
-    y_final=mean(exp_data.actPos_all((tmp_idx(end)-60):(tmp_idx(end)-10),exper));
+    y_init=0;
+    y_final=mean(y_high(end-60:end-10));
     e_ss=abs(y_final-reference);
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     st=S.SettlingTime;
@@ -210,7 +222,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
     e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000))', t_high(1:ceil(5*Tr*1000)).*abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
 end
 if isnan(ov) || isinf(ov) || ov>1
@@ -235,12 +247,11 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 %%
-function [objective, N_G2, idx_G2, y_s] = ObjFun_Guided_v4(X, surrogate, sampleTs, npG2)
+function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate, sampleTs, npG2)
 global N
 global G2data
 global N_G2
 global idx_G2
-global y_s
 
 N=N+1;
 if surrogate==true
@@ -249,22 +260,23 @@ if surrogate==true
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
-    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
-    objective=ObjFun([], G2, [Kp,Kd]);
+    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    objective=ObjFun([], G2, X);
     N_G2=N_G2+1;
     idx_G2= [idx_G2;N];
 elseif surrogate==false
-    exp_Data=LinMotor(X(1), X(2));
-    objective = ObjFun(exp_Data,[],[]);
-
-    sample_idx=exp_Data.r(:,3)==step_high; %LV sampling time=10 ms
+    exp_data=LinMotor(X(1), X(2));
+    objective = ObjFun(exp_data,[],[]);
+    step_high=40;
+    sampleTs=0.001;
+    sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     tmp_idx=tmp_idx(tmp_idx_2);
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
-    ytmp = exp_Data.actPos((tmp_idx(1)-10):tmp_idx(end),4)-y_offset;
-    utmp = exp_Data.actCur((tmp_idx(1)-10):tmp_idx(end),5)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(end))-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(end))-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 
     %     get data for sigma_surrogate estimation
@@ -273,10 +285,8 @@ elseif surrogate==false
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
-    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', 10e-3);
+    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
     
-    surrogate_objective=ObjFun(X, G2, [Kp,Kd]);
-    y_s=[y_s;surrogate_objective];
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
@@ -303,30 +313,19 @@ end
 end
 %%
 function exp_data=LinMotor(Kp,Kd)
-% %% Load Trajectory
-% % load("dem_x/dem_x_9_mm.mat")
-% t = (0.001:0.001:7);
-% r= 10.*(t>2)+30-10.*(t>5);
-% % % set reference input
-% write_OPCUA(uaObj,'arrDemPos', r);
-% write_OPCUA(uaObj,'arrShowPos', r);
-% pause(1);
-% % Set P and D gain
-% write_OPCUA(uaObj,'LQR_P_x', Kp);
-% write_OPCUA(uaObj,'LQR_D_v', Kd);
-% pause(0.2);
-% % perform experiment
-% write_OPCUA(uaObj,'Go', 1); % Perform Experiment
-% pause(7.5);
-% % read the results
-% actPos = read_OPCUA(uaObj,'arrActPos')';
-% actVel = read_OPCUA(uaObj,'arrActVel')';
-% actCur = read_OPCUA(uaObj,'arrActCur')';
-% exp_data.actPos=actPos;
-% exp_data.actVel=actVel;
-% exp_data.actCur=actCur;
-% exp_data.r=r';
-% exp_data.t=t';
+global P_safe D_safe exp_data_safe
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_test.mat")
 
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_test.mat")
+% replace with closest safe point in offline dataset (TODO for N0>1)
+[~,I_tmp]=min((P_safe-Kp).^2+(D_safe-Kd).^2);
+P=P_safe(I_tmp);
+D=D_safe(I_tmp);
+i=find((exp_data_safe.P==P).*(exp_data_safe.D==D));
+exp_data.actPos=exp_data_safe.actPos_all(:,i);
+exp_data.actVel=exp_data_safe.actVel_all(:,i);
+exp_data.actCur=exp_data_safe.actCur_all(:,i);
+exp_data.r=exp_data_safe.r;
+exp_data.t=exp_data_safe.t;
+exp_data.P=exp_data_safe.P(i);
+exp_data.D=exp_data_safe.D(i);
 end

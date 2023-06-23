@@ -44,16 +44,17 @@ end
 
 %%
 perf_Data_feasible=[];
-P_feasible=[];
+P_safe=[];
 PM_feasible=[];
-D_feasible=[];
-P_infeasible=[];
-D_infeasible=[];
+D_safe=[];
+P_unsafe=[];
+D_unsafe=[];
 objective_feasible=[];
 sampleTs=0.001;
 step_high=40;
 y_high_all=[];
 t_high_all=[];
+idx_unsafe=[];
 for exper=1:length(exp_data_all.P)
     exper
         sample_idx=exp_data_all.r(:)==step_high; %LV sampling time=10 ms
@@ -91,19 +92,29 @@ for exper=1:length(exp_data_all.P)
         e_ss=abs(y_final-reference);
         if ITAE==0 && st==0
             perf_Data=[-1,-1,-1,-1,-1];
-            P_infeasible=[P_infeasible;exp_data_all.P(exper)];
-            D_infeasible=[D_infeasible;exp_data_all.D(exper)];
+            P_unsafe=[P_unsafe;exp_data_all.P(exper)];
+            D_unsafe=[D_unsafe;exp_data_all.D(exper)];
+            idx_unsafe=[idx_unsafe;exper];
         else
             perf_Data=[ov,Tr,st,ITAE,e_ss];
             objective = ObjFun(perf_Data);
             objective_feasible=[objective_feasible;objective];
             perf_Data_feasible=[perf_Data_feasible;perf_Data];
-            P_feasible=[P_feasible;exp_data_all.P(exper)];
-            D_feasible=[D_feasible;exp_data_all.D(exper)];
+            P_safe=[P_safe;exp_data_all.P(exper)];
+            D_safe=[D_safe;exp_data_all.D(exper)];
         
     end
 end
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp.mat")
+% get safe data
+exp_data_safe=exp_data_all;
+exp_data_safe.actPos_all(:,idx_unsafe)=[];
+exp_data_safe.actCur_all(:,idx_unsafe)=[];
+exp_data_safe.actVel_all(:,idx_unsafe)=[];
+exp_data_safe.P(idx_unsafe)=[];
+exp_data_safe.D(idx_unsafe)=[];
+
+% save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp.mat")
+% save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
 %%
 figure(1)
 subplot(5,1,1)
@@ -127,10 +138,10 @@ ylabel('|e_ss|')
 figure(2)
 subplot(3,2,1)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g");
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,3);
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -142,10 +153,10 @@ legend([h_feasible,h_infeasible, h],{"feasible","experimental failure", "settlin
 %
 subplot(3,2,2)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g");
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,2);
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -157,10 +168,10 @@ legend([h_feasible,h_infeasible, h],{"feasible","experimental failure", "rise ti
 %
 subplot(3,2,3)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g");
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,1);
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -172,10 +183,10 @@ legend([h_feasible,h_infeasible, h],{"feasible","experimental failure", "oversho
 %
 subplot(3,2,4)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g"); 
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g"); 
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,4);
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -187,10 +198,10 @@ legend([h_feasible,h_infeasible, h],{"feasible","experimental failure", "ITAE"})
 
 subplot(3,2,5)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g");
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,5);
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -202,10 +213,10 @@ legend([h_feasible,h_infeasible, h],["feasible","experimental failure", "absolut
 
 subplot(3,2,6)
 hold on
-h_infeasible=scatter(P_infeasible,D_infeasible,"filled","r");
-h_feasible=scatter(P_feasible,D_feasible,"filled","g");
-x=P_feasible;
-y=D_feasible;
+h_infeasible=scatter(P_unsafe,D_unsafe,"filled","r");
+h_feasible=scatter(P_safe,D_safe,"filled","g");
+x=P_safe;
+y=D_safe;
 z=perf_Data_feasible(:,5)./(reference-reference0).*100;
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):1:max(y));
 zi = griddata(x,y,z,xi,yi);
@@ -221,13 +232,13 @@ figure(3)
 hold on
 set(gca,'Zscale','log')
 set(gca,'ColorScale','log')
-h_infeasible=scatter3(P_infeasible,D_infeasible,max(objective_feasible).*ones(size(D_infeasible)),20,"filled","r");
-h_feasible=scatter3(P_feasible,D_feasible,max(objective_feasible).*ones(size(D_feasible)),20,"filled","g");
+h_infeasible=scatter3(P_unsafe,D_unsafe,max(objective_feasible).*ones(size(D_unsafe)),20,"filled","r");
+h_feasible=scatter3(P_safe,D_safe,max(objective_feasible).*ones(size(D_safe)),20,"filled","g");
 [m,I]=min(objective_feasible);
-h_min=scatter3(P_feasible(I),D_feasible(I),max(objective_feasible),300,"pentagram","filled","y");
+h_min=scatter3(P_safe(I),D_safe(I),max(objective_feasible),300,"pentagram","filled","y");
 
-x=P_feasible;
-y=D_feasible;
+x=P_safe;
+y=D_safe;
 z=objective_feasible;
 % plot3(x,y,z,"ok")
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):0.0167:max(y));
@@ -239,6 +250,7 @@ colorbar
 xlabel("P")
 ylabel("D")
 zlabel("J")
+ylim([41,51])
 legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective"])
 
 
