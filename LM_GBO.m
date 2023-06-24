@@ -5,10 +5,10 @@ clear all; clc; close all;
 addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
-tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp';
-idName= 'LM_0';
-sys='DC_motor';
-isGBO=false;
+tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
+idName= 'LM_1_debug';
+sys='LM';
+isGBO=true;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,8 +22,8 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=1;
-N_iter=50;
+N_expr=2;
+N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
 sampleTinit=0.0;
@@ -31,8 +31,8 @@ lt_const=0.0;
 initRant="latin"; %build initial set randomnly witith latin hypercubes
 npG2=2;
 %% load gain limits (feasible set)
-if sys=="DC_motor"
-    dir_gains=append(tmp_dir,'/', 'DC_motor_gain_bounds', '/', 'LM_KpKd_bounds.mat');
+if sys=="LM"
+    dir_gains='/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_KpKd_bounds.mat';
 end
 load(dir_gains)
 %% load and prepare LM offline dataset
@@ -77,7 +77,7 @@ opt.save_trace = 0;
 opt.trace_file=append(dir,'trace_file.mat');
 opt.resume_trace=true;
 %% We define the function we would like to optimize
-fun = @(X, surrogate)ObjFun_Guided_v4(X, surrogate, sampleTs, npG2);
+fun = @(X, surrogate)ObjFun_Guided_v4(X, surrogate);
 %% Start the optimization
 global N
 global idx
@@ -128,21 +128,16 @@ for expr=1:1:N_expr
         tmp_idx=tmp_idx(tmp_idx_2);
         y_offset=exp_data.actPos(tmp_idx(1)-10);
         u_offset=exp_data.actCur(tmp_idx(1)-10);
-        ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(end))-y_offset;
-        utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(end))-u_offset;
+        % use 50 ms of data after step high for G2
+        ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
         if i==1
             G2data = iddata(ytmp,utmp,sampleTs);
         else
             G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
         end
-        %     get data for sigma_surrogate estimation
-        npG2=2;
-        nzG2=1;
-        Options = tfestOptions('Display','off');
-        Options.InitialCondition = 'backcast';
-        Options.EnforceStability=1;
-        G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
     end
+    %%
     % set initial dataset
     X_ltn=[Kp_ltn, Kd_ltn];
     y_ltn=J_ltn;
@@ -165,6 +160,7 @@ for expr=1:1:N_expr
     Trace_tmp.G2_values=G2_values;
     Trace_tmp.G2_post_mus=G2_post_mus;
     Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
+    Trace_tmp.idx_G2=idx_G2;
     % remove previos data of older surrogate(G2) model
     Trace_tmp.samples(idx_G2,:)=[];
     Trace_tmp.values(idx_G2)=[];
@@ -177,7 +173,6 @@ for expr=1:1:N_expr
     Trace(expr)=Trace_tmp;
     clearvars Trace_tmp
     save(append(dir, 'trace_file.mat'),'Trace')
-    save(append(dir, 'idx_G2.mat'),'idx_G2')
 end
 
 %%
@@ -191,8 +186,9 @@ if isempty(G2)==1
     tmp_idx=tmp_idx(tmp_idx_2);
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(end))-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(end))-u_offset;
+    % use 50 ms of data after step high for G2
+    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
     if exist('G2data')
         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     else
@@ -203,7 +199,7 @@ if isempty(G2)==1
     y_high=ytmp(10:end);
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
-    y_final=mean(exp_data.actPos((tmp_idx(end)-60):(tmp_idx(end)-10)))-y_offset;
+    y_final=mean(exp_data.actPos((tmp_idx(end)-5):(tmp_idx(end))))-y_offset;
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     st=S.SettlingTime;
     if isnan(st)
@@ -212,7 +208,7 @@ if isempty(G2)==1
     ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
     e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
+    ITAE = trapz(t_high(1:ceil(3*Tr*1000)), t_high(1:ceil(3*Tr*1000))'.*abs(e(1:ceil(3*Tr*1000))));
     e_ss=abs(y_final-reference);
 elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
@@ -222,12 +218,12 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     Ti = inf;
     Td = D/P;
     N=D/(P*F);
-    Ts = 0.001;
+    Ts = sampleTs;
     C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
     CL=feedback(C*G2, 1);
     reference0=0;
     reference=10;
-    t_high=(11*Ts):Ts:(3.01-Ts);
+    t_high=(11*Ts):Ts:(0.060-Ts);
     t_low=0:Ts:(10*Ts);
     step_high=reference.*ones(length(t_high),1);
     step_low=reference0.*ones(length(t_low),1);
@@ -237,7 +233,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     y_high=y2(t>(.01)); %TODO check pay attention
     t_high=t(t>(.01));%TODO check    
     y_init=0;
-    y_final=mean(y_high(end-60:end-10));
+    y_final=mean(y_high(end-5:end));
     e_ss=abs(y_final-reference);
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     st=S.SettlingTime;
@@ -247,9 +243,10 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
     e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(5*Tr*1000))', t_high(1:ceil(5*Tr*1000)).*abs(e(1:ceil(5*Tr*1000))));
+    ITAE = trapz(t_high(1:ceil(3*Tr*1000))', t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
     e_ss=abs(y_final-reference);
 end
+save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_2.mat')
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
@@ -272,7 +269,7 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 %%
-function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate, sampleTs, npG2)
+function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate)
 global N
 global G2data
 global N_G2
@@ -282,10 +279,12 @@ N=N+1;
 if surrogate==true
     npG2=2;
     nzG2=1;
+    sampleTs=0.001;
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_3.mat');
     objective=ObjFun([], G2, X);
     N_G2=N_G2+1;
     idx_G2= [idx_G2;N];
@@ -300,8 +299,9 @@ elseif surrogate==false
     tmp_idx=tmp_idx(tmp_idx_2);
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(end))-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(end))-u_offset;
+    % use 50 ms of data after step high for G2
+    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 
     %     get data for sigma_surrogate estimation
