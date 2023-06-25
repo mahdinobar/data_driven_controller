@@ -23,7 +23,7 @@ clear;
 % dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
-N_iter=50;
+N_iter=30;
 N_expr=50;
 N_iter=N_iter+N0;
 % for expr=1:N_expr
@@ -120,7 +120,7 @@ for k=1:length(eta1_str)
 
     JObservGBO=[];
     JObservBO=[];
-    for i=1:5
+    for i=1:50
         JObservGBO(:,end+1)=TraceGBO(i).values;
         JObservBO(:,end+1) =TraceBO(i).values;
     end
