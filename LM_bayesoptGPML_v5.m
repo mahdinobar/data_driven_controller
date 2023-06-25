@@ -62,7 +62,6 @@ if isfield(opt,'resume_trace') && opt.resume_trace && (exist(opt.trace_file,'fil
     samples = scale_point(botrace.samples,opt.mins,opt.maxes);
     values = botrace.values;
     times = botrace.times;
-    idx_G2_samples=botrace.idx_G2_samples;
     if ~isfield(botrace, 'post_mus')
         post_mus=zeros(size(botrace.values));
         post_sigma2s=zeros(size(botrace.values));
@@ -135,6 +134,7 @@ G2_trigger_counter=0;
 post_mus_record=[];
 post_sigma2s_record=[];
 botrace.hyper_grid_record=unscale_point(hyper_grid_record,opt.mins,opt.maxes);
+botrace.idx_G2_samples=[];
 hyp_GP_mean=[];
 hyp_GP_cov=[];
 hyp_GP_lik=[];
@@ -153,32 +153,21 @@ while i <opt.max_iters-2+1
     tic;
     eta1=2.7832e-06;%3.7803e-06; %for BO only change to inf
     eta2=0.2;
-    %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
-    %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
-    %     % estimate surrogate uncertainty sigma_s
-    %     SE=0;
-    %     for i_s=1:length(y_s)
-    %         SE=SE+(y_s(i_s)-values(i_s))^2;
-    %     end
-    %     sigma_s=sqrt(SE/length(y_s));
-    %     if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
-    if total_G2_after_activation>10 %stop if more than 15 times after last activation used G2
-        surrogate=false;
-        total_G2_after_activation=0;
-    elseif surrogate==false && post_sigma2(hidx)>eta1
+
+    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<11 %also stop if more than 10 times after last activation used G2
         %                 if aq_val>max(AQ_vals)*eta
         surrogate=true; %switch to use surrogate G2 for objective
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
         total_G2_after_activation=total_G2_after_activation+1;
         fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-    elseif surrogate==true
-        if aq_val>max(AQ_vals)*eta2
+    elseif surrogate==true 
+        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<11
             opt.max_iters=opt.max_iters+1;
             counter = 1; %in server GBO_72 and 74results this was missing
             total_G2_after_activation=total_G2_after_activation+1;
             fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-        elseif counter<2+1
+        elseif counter<2+1 && total_G2_after_activation<11
             counter =counter+1;
             opt.max_iters=opt.max_iters+1;
             total_G2_after_activation=total_G2_after_activation+1;
@@ -192,7 +181,7 @@ while i <opt.max_iters-2+1
             %measure performance at the optimum gains of BO with surrogate
             [value_tmp,~] = Obj(unscale_point(sample_tmp,opt.mins,opt.maxes), surrogate);
             % keep index of G2 achieved sample
-            botrace.idx_G2_samples=[idx_G2_samples;length(botrace.samples)];
+            botrace.idx_G2_samples=[botrace.idx_G2_samples;length(botrace.samples)];
             % remove surrogate effect so far and add last data
             times = [times(1:end-total_G2_after_activation),0];
             samples = [samples(1:end-total_G2_after_activation,:);sample_tmp];
@@ -281,6 +270,20 @@ while i <opt.max_iters-2+1
     end
     i=i+1;
 end
+
+% remove remaining unnecessary data from end
+times = times(1:end-total_G2_after_activation);
+samples = samples(1:end-total_G2_after_activation,:);
+values = values(1:end-total_G2_after_activation);
+post_mus = post_mus(1:end-total_G2_after_activation);
+post_sigma2s=post_sigma2s(1:end-total_G2_after_activation);
+AQ_vals=AQ_vals(1:end-total_G2_after_activation);
+botrace.times=times;
+botrace.samples=samples;
+botrace.values=values;
+botrace.post_mus=post_mus;
+botrace.post_sigma2s=post_sigma2s;
+botrace.AQ_vals=AQ_vals;
 
 % Get minvalue and minsample
 if DO_CBO,

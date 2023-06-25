@@ -89,8 +89,8 @@ for k=1:length(eta1_str)
 %     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
 %     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
 %     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1/GBO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_1/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_1/GBO/";
 
 %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
 %     load(append(dirGBOinf,'trace_file.mat'),'Trace')
@@ -120,7 +120,7 @@ for k=1:length(eta1_str)
 
     JObservGBO=[];
     JObservBO=[];
-    for i=1:50
+    for i=1:5
         JObservGBO(:,end+1)=TraceGBO(i).values;
         JObservBO(:,end+1) =TraceBO(i).values;
     end
