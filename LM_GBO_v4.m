@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -99,10 +99,10 @@ for expr=1:1:N_expr
     RAND=RAND_all_expr(:,expr);
     range_kp=Kp_max-Kp_min;
     range_kd=Kd_max-Kd_min;
-    Kp_min=5.1238e+03;
-    Kp_max=6.1362e+03;
-    Kd_min=40.0625;
-    Kd_max=51;
+%     Kp_min=5.1238e+03;
+%     Kp_max=6.1362e+03;
+%     Kd_min=40.0625;
+%     Kd_max=51;
     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
     Kd_ltn = (Kd_max-Kd_min).*RAND + Kd_min;
 
@@ -129,8 +129,8 @@ for expr=1:1:N_expr
         y_offset=exp_data.actPos(tmp_idx(1)-10);
         u_offset=exp_data.actCur(tmp_idx(1)-10);
         % use 50 ms of data after step high for G2
-        ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-        utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
+        ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
         if i==1
             G2data = iddata(ytmp,utmp,sampleTs);
         else
@@ -173,6 +173,8 @@ for expr=1:1:N_expr
     Trace(expr)=Trace_tmp;
     clearvars Trace_tmp
     save(append(dir, 'trace_file.mat'),'Trace')
+%     save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/G2data_100init_',string(expr),'.mat'),"G2data")
+
 end
 
 %%
@@ -187,8 +189,8 @@ if isempty(G2)==1
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
     if exist('G2data')
         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     else
@@ -246,7 +248,6 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     ITAE = trapz(t_high(1:ceil(3*Tr*1000))', t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
     e_ss=abs(y_final-reference);
 end
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_2.mat')
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
@@ -300,8 +301,8 @@ elseif surrogate==false
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 
     %     get data for sigma_surrogate estimation

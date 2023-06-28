@@ -9,7 +9,7 @@
 % function GBO_plots_all_experiments
 close all;
 clc;
-clear;
+clear all;
 % idName=z], idName, '/');
 % idName= 'demo_GBO_v2_0_16';
 % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/', idName, '/');
@@ -84,19 +84,14 @@ convergence_iteration_BO=[];
 convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
-    % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
-    % dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_74_sigma_s_eta2_02_eta1_',eta1_str{k},'/results_1/')
-%     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
-%     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/');
-%     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_',eta1_str{k},'/results_1/')
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_1/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_1/GBO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_4/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_4/GBO/";
 
-%     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
-%     load(append(dirGBOinf,'trace_file.mat'),'Trace')
-%     TraceGBOinf=Trace;
-%     clearvars Trace
-    
+    %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
+    %     load(append(dirGBOinf,'trace_file.mat'),'Trace')
+    %     TraceGBOinf=Trace;
+    %     clearvars Trace
+
     %     dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
     %     dirGBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_75_eta2_02_eta1_',eta1_str{k},'/results_1/')
     % dirBO=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_76_eta2_02_eta1_',eta1_str{k},'/results_1/')
@@ -189,7 +184,7 @@ for k=1:length(eta1_str)
     expr=1;
     while expr<min([length(TraceGBO),length(TraceBO)])+1
         JGBO_all(:,expr)=TraceGBO(expr).values(:);
-%         JGBOinfer_all(:,expr)=TraceGBOinf(expr).values(:);
+        %         JGBOinfer_all(:,expr)=TraceGBOinf(expr).values(:);
         JBO_all(:,expr)=TraceBO(expr).values(:);
         %     try
         JminObservGBO(:,expr)=TraceGBO(expr).values(N0+1:N_iter);
@@ -218,7 +213,7 @@ for k=1:length(eta1_str)
                 JminObservBO(j-N0,expr)=nanmin(TraceBO(expr).values(1:j));
             else
                 [JminObservGBO(j-N0,expr), NDX_GBO]=nanmin(TraceGBO(expr).values(1:j));
-%                 [JminObservGBOinf(j-N0,expr), NDX_GBOinf]=nanmin(TraceGBOinf(expr).values(1:j));
+                %                 [JminObservGBOinf(j-N0,expr), NDX_GBOinf]=nanmin(TraceGBOinf(expr).values(1:j));
                 JminObservGBO_samples(j-N0,expr,:)=TraceGBO(expr).samples(NDX_GBO,:);
                 JminObservGBO_post_sigma2s(j-N0,expr,:)=TraceGBO(expr).post_sigma2s(NDX_GBO,:);
                 [JminObservBO(j-N0,expr), NDX_BO]=nanmin(TraceBO(expr).values(1:j));
@@ -241,8 +236,9 @@ for k=1:length(eta1_str)
     % meanJminObservBO=JminObservBO;%nanmean(JminObservBO(:,idx_acceptable),2);
     % meanJminObservGBO_post_sigma2s=JminObservGBO_post_sigma2s;%nanmean(JminObservGBO_post_sigma2s(:,idx_acceptable),2);
     % meanJminObservBO_post_sigma2s=JminObservBO_post_sigma2s;%nanmean(JminObservBO_post_sigma2s(:,idx_acceptable),2);
+%     JminObservGBO=JminObservGBO-0.001587271365317;
     meanJminObservGBO=nanmean(JminObservGBO(:,:),2);
-%     meanJminObservGBOinf=nanmean(JminObservGBOinf(:,:),2);
+    %     meanJminObservGBOinf=nanmean(JminObservGBOinf(:,:),2);
     meanJminObservBO=nanmean(JminObservBO(:,:),2);
 
 
@@ -318,12 +314,12 @@ for k=1:length(eta1_str)
     ax1.FontName='Times New Roman';
     hold on
     h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 1.5);
-%     h11=semilogy(ax1, JminObservGBOinf./true_objective, ':', 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 1.5);
+    %     h11=semilogy(ax1, JminObservGBOinf./true_objective, ':', 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 1.5);
     h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
     h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 6);
-%     h33=semilogy(ax1, meanJminObservGBOinf./true_objective, 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
+    %     h33=semilogy(ax1, meanJminObservGBOinf./true_objective, 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
     h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 6);
-%     [a,b]=max(meanJminObservGBO<0.9915);
+    %     [a,b]=max(meanJminObservGBO<0.9915);
     % xlabel(ax1, 'Iteration on real plant')
     % ylabel(ax1, 'Minimum observed objective')
     xlabel(ax1, 'Iteration')
@@ -332,11 +328,11 @@ for k=1:length(eta1_str)
     % h5=yline(2.78,'k--', 'LineWidth', 3);
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
-%     ylim([0.45 2.5])
+    %     ylim([0.45 2.5])
     xlim([1, 30])
-%     xticks([1, 5:5:50])
-%     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
-%     h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
+    %     xticks([1, 5:5:50])
+    %     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
+    %     h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
     legend([h3, h4],{'Guided BO with superior surrogate','BO'}, 'Location', 'northeast');
     %     [K,info] = pidtune(G,'PI')
     %
@@ -358,14 +354,14 @@ for k=1:length(eta1_str)
     %                 Stable: 1
     %     CrossoverFrequency: 2.1857
     %            PhaseMargin: 60.0000
-%     legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
+    %     legend([h3, h4, h6, h7],{'Guided BO', 'BO', 'ground truth', 'nominal performance'}, 'Location', 'northeast');
     %     title(append("eta1=",eta1_str{k}))
 
     % convergence_iteration=[convergence_iteration,find(meanJminObservGBO<0.9915,1)]
     % convergence_iteration_BO=[convergence_iteration_BO,find(meanJminObservBO<0.9915,1)]
     % convergence_iteration_diff=[convergence_iteration_diff,find(meanJminObservGBO<0.9915,1)-find(meanJminObservBO<0.9915,1)];
     box on
-%%
+    %%
     J_nom=0.9915;
     J_gt=0.5789;
     converg_iter=[];
@@ -390,7 +386,7 @@ for k=1:length(eta1_str)
     ax1.FontName='Times New Roman';
     hold on
     h3=semilogy(ax1, mean(JGBO_all'), 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 6);
-%     h33=semilogy(ax1, mean(JGBOinfer_all'), 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
+    %     h33=semilogy(ax1, mean(JGBOinfer_all'), 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
     h4=semilogy(ax1, mean(JBO_all'), 'Color', [0, 0, 1, 1], 'LineWidth', 6);
     [a,b]=max(meanJminObservGBO<0.9915);
     % xlabel(ax1, 'Iteration on real plant')
@@ -407,7 +403,7 @@ for k=1:length(eta1_str)
     xticks([1, 5:5:50])
     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
     h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
-%     legend([h3, h33, h4, h6, h7],{'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Ground truth', 'Nominal'}, 'Location', 'northeast');
+    %     legend([h3, h33, h4, h6, h7],{'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Ground truth', 'Nominal'}, 'Location', 'northeast');
     box on
 end
 % a=zeros(50,1);
@@ -683,25 +679,25 @@ box on
 
 
 % for expr=26:26
-    % JObservGBO=TraceGBO(expr).values(N0+1:N_iter);
-    % JObservBO=TraceBO(expr).values(N0+1:N_iter);
-    
-    fig3=figure(3);
-    % title(string(expr))
-    fig3.Position=[200 0 1600 800];
-    ax3=gca;
-    ax3.FontSize=24;
-    ax3.FontName='Times New Roman';
-    edges = [0.5:0.02:0.8,1.1,1.4,1.7,2,2.3,2.6];
-    hist_BO = histogram(JObservBO(:),edges,'FaceColor','b','Normalization','probability');
-    hold on;
-    hist_GBO = histogram(JObservGBO(:),edges,'FaceColor',[0.6350 0.0780 0.1840],'Normalization','probability');
-    xlabel(ax3, 'Cost')
-    ylabel(ax3, 'Percentage of experiments in each cost band')
-    legend([hist_GBO, hist_BO],{'Guided BO','BO'}, 'Location', 'northeast');
-    ytix = get(gca, 'YTick');
-    set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
-    box on 
+% JObservGBO=TraceGBO(expr).values(N0+1:N_iter);
+% JObservBO=TraceBO(expr).values(N0+1:N_iter);
+
+fig3=figure(3);
+% title(string(expr))
+fig3.Position=[200 0 1600 800];
+ax3=gca;
+ax3.FontSize=24;
+ax3.FontName='Times New Roman';
+edges = [0.5:0.02:0.8,1.1,1.4,1.7,2,2.3,2.6];
+hist_BO = histogram(JObservBO(:),edges,'FaceColor','b','Normalization','probability');
+hold on;
+hist_GBO = histogram(JObservGBO(:),edges,'FaceColor',[0.6350 0.0780 0.1840],'Normalization','probability');
+xlabel(ax3, 'Cost')
+ylabel(ax3, 'Percentage of experiments in each cost band')
+legend([hist_GBO, hist_BO],{'Guided BO','BO'}, 'Location', 'northeast');
+ytix = get(gca, 'YTick');
+set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
+box on
 % end
 
 

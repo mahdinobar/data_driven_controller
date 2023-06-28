@@ -115,6 +115,7 @@ exp_data_safe.D(idx_unsafe)=[];
 
 % save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp.mat")
 % save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
+
 %%
 figure(1)
 subplot(5,1,1)
@@ -253,6 +254,81 @@ zlabel("J")
 ylim([41,51])
 legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective"])
 
+%%
+perf_Data_feasible=[];
+P_safe=[];
+PM_feasible=[];
+D_safe=[];
+P_unsafe=[];
+D_unsafe=[];
+objective_feasible=[];
+sampleTs=0.001;
+step_high=40;
+y_high_all=[];
+t_high_all=[];
+idx_unsafe=[];
+for exper=1:length(exp_data_all.P)
+    exper
+        sample_idx=exp_data_all.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 0.2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_offset=exp_data_all.actPos_all(tmp_idx(1)-10,exper);
+        u_offset=exp_data_all.actCur_all(tmp_idx(1)-10,exper);
+        ytmp = exp_data_all.actPos_all((tmp_idx(1)-10):tmp_idx(end),exper)-y_offset;
+        utmp = exp_data_all.actCur_all((tmp_idx(1)-10):tmp_idx(end),exper)-u_offset;
+        %     if exist('G2data')
+        %         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+        %     else
+        %         G2data = iddata(ytmp,utmp,sampleTs);
+        %     end
+        % G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+        %calculate performance data based on experimental step response measurements
+        reference0=0;
+        reference=10;
+        y_high=ytmp(10:end);
+        t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+        y_high_all=[y_high_all,y_high];
+        t_high_all=[t_high_all,t_high];
+        y_init=mean(exp_data_all.actPos_all((tmp_idx(1)-60):(tmp_idx(1)-10),exper))-y_offset;
+        y_final=mean(exp_data_all.actPos_all((tmp_idx(end)-60):(tmp_idx(end)-10),exper))-y_offset;
+        S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
+        st=S.SettlingTime;
+        if isnan(st)
+            st=3;
+        end
+        ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+        Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
+        e=abs(y_high-reference);
+        ITAE = trapz(t_high(1:ceil(5*Tr*1000)), t_high(1:ceil(5*Tr*1000))'.*abs(e(1:ceil(5*Tr*1000))));
+
+        e_ss=abs(y_final-reference);
+        if ITAE==0 && st==0
+            perf_Data=[-1,-1,-1,-1,-1];
+            P_unsafe=[P_unsafe;exp_data_all.P(exper)];
+            D_unsafe=[D_unsafe;exp_data_all.D(exper)];
+            idx_unsafe=[idx_unsafe;exper];
+        else
+            perf_Data=[ov,Tr,st,ITAE,e_ss];
+            objective = ObjFun2(exp_data_all);
+            objective_feasible=[objective_feasible;objective];
+            perf_Data_feasible=[perf_Data_feasible;perf_Data];
+            P_safe=[P_safe;exp_data_all.P(exper)];
+            D_safe=[D_safe;exp_data_all.D(exper)];
+        
+    end
+end
+% get safe data
+exp_data_safe=exp_data_all;
+exp_data_safe.actPos_all(:,idx_unsafe)=[];
+exp_data_safe.actCur_all(:,idx_unsafe)=[];
+exp_data_safe.actVel_all(:,idx_unsafe)=[];
+exp_data_safe.P(idx_unsafe)=[];
+exp_data_safe.D(idx_unsafe)=[];
+
+% save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp.mat")
+% save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
+
 
 %% functions
 function objective = ObjFun(perf_Data)
@@ -296,6 +372,57 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 
+%%
+function [objective] = ObjFun2(exp_data)
+step_high=40;
+sampleTs=0.001;
+    sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    tmp_idx=tmp_idx(tmp_idx_2);
+    y_offset=exp_data.actPos_all(tmp_idx(1)-10);
+    u_offset=exp_data.actCur_all(tmp_idx(1)-10);
+    % use 50 ms of data after step high for G2
+    ytmp = exp_data.actPos_all((tmp_idx(1)-100):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur_all((tmp_idx(1)-100):tmp_idx(1)+50)-u_offset;
+
+    reference0=0;
+    reference=10;
+    y_high=ytmp(10:end);
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
+    y_init=mean(exp_data.actPos_all((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
+    y_final=mean(exp_data.actPos_all((tmp_idx(end)-5):(tmp_idx(end))))-y_offset;
+    S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
+    st=S.SettlingTime;
+    if isnan(st)
+        st=3;
+    end
+    ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+    Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
+    e=abs(y_high-reference);
+    ITAE = trapz(t_high(1:ceil(3*Tr*1000)), t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
+    e_ss=abs(y_final-reference);
+if isnan(ov) || isinf(ov) || ov>1
+    ov=1;
+end
+if isnan(st) || isinf(st) || st>3
+    st=3;
+end
+if isnan(Tr) || isinf(Tr) || Tr>3
+    Tr=3;
+end
+if isnan(ITAE) || isinf(ITAE) || ITAE>30
+    ITAE=30;
+end
+if isnan(e_ss) || isinf(e_ss) || e_ss>10
+    e_ss=10;
+end
+w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
+w_importance=[1.2, 1.05, 0.98, 1, 1.1];
+w=w_importance./w_mean_grid;
+w=w./sum(w);
+objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
+end
 
 
 

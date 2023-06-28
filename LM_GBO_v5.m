@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -98,10 +98,6 @@ for expr=1:1:N_expr
     RAND=RAND_all_expr(:,expr);
     range_kp=Kp_max-Kp_min;
     range_kd=Kd_max-Kd_min;
-    Kp_min=5.1238e+03;
-    Kp_max=6.1362e+03;
-    Kd_min=40.0625;
-    Kd_max=51;
     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
     Kd_ltn = (Kd_max-Kd_min).*RAND + Kd_min;
 
