@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v5_debug';
+idName= 'LM_v5_debug_withdown';
 sys='LM';
-isGBO=true;
+isGBO=false;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -84,6 +84,7 @@ global idx
 global G2data
 global N_G2
 step_high=40;
+step_down=30;
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     fprintf('>>>>>experiment: %d \n', expr);
@@ -115,12 +116,21 @@ for expr=1:1:N_expr
         y_offset=exp_data.actPos(tmp_idx(1)-10);
         u_offset=exp_data.actCur(tmp_idx(1)-10);
         % use 50 ms of data after step high for G2
-        ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-        utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
+        ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+        % for step low response samples
+        sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
+        tmp_idx_down=find(sample_idx_down>0);
+        tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
+        tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
+        y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
+        u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
+        ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
+        utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
         if i==1
-            G2data = iddata(ytmp,utmp,sampleTs);
+            G2data = iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs);
         else
-            G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+            G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
         end
     end
     %%
@@ -145,6 +155,7 @@ end
 %%
 function [objective] = ObjFun(exp_data, G2, gains)
 step_high=40;
+step_down=30;
 sampleTs=0.001;
 if isempty(G2)==1
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
@@ -154,12 +165,21 @@ if isempty(G2)==1
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    % for step low response samples
+    sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
+    tmp_idx_down=find(sample_idx_down>0);
+    tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
+    tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
+    y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
+    u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
+    ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
+    utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
     if exist('G2data')
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+        G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
     else
-        G2data = iddata(ytmp,utmp,sampleTs);
+        G2data = iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs);
     end
     reference0=0;
     reference=10;
@@ -191,11 +211,11 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     reference0=0;
     reference=10;
     t_high=(11*Ts):Ts:(0.060-Ts);
-    t_low=0:Ts:(10*Ts);
+    t_down=0:Ts:(10*Ts);
     step_high=reference.*ones(length(t_high),1);
-    step_low=reference0.*ones(length(t_low),1);
-    t=[t_low,t_high]';
-    r=[step_low;step_high];
+    step_down=reference0.*ones(length(t_down),1);
+    t=[t_down,t_high]';
+    r=[step_down;step_high];
     y2=lsim(CL,r,t);
     y_high=y2(t>(.01)); %TODO check pay attention
     t_high=t(t>(.01));%TODO check    
@@ -213,7 +233,6 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     ITAE = trapz(t_high(1:ceil(3*Tr*1000))', t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
     e_ss=abs(y_final-reference);
 end
-save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_2.mat')
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
@@ -250,13 +269,13 @@ if surrogate==true
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
-    save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_3.mat');
     objective=ObjFun([], G2, X);
     N_G2=N_G2+1;
 elseif surrogate==false
     exp_data=LinMotor(X(1), X(2));
     objective = ObjFun(exp_data,[],[]);
     step_high=40;
+    step_down=30;
     sampleTs=0.001;
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
@@ -265,18 +284,19 @@ elseif surrogate==false
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-10):tmp_idx(1)+50)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-10):tmp_idx(1)+50)-u_offset;
-    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-
-    %     get data for sigma_surrogate estimation
-    npG2=2;
-    nzG2=1;
-    Options = tfestOptions('Display','off');
-    Options.InitialCondition = 'backcast';
-    Options.EnforceStability=1;
-    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
-    
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    % for step low response samples
+    sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
+    tmp_idx_down=find(sample_idx_down>0);
+    tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
+    tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
+    y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
+    u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
+    ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
+    utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
+    G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
+    save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_debug/G2data_withdown.mat","G2data")
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);

@@ -19,7 +19,7 @@ r= 10.*(t>2)+30-10.*(t>5);
 write_OPCUA(uaObj,'arrDemPos', r);
 write_OPCUA(uaObj,'arrShowPos', r);
 pause(1);
-%%
+%% high fidelity model of plant
 s = tf('s');
 Kp = 0.44262;
 Tp = 0.070983;
