@@ -151,7 +151,7 @@ while i <opt.max_iters-2+1
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    eta1=2.7832e-06;%3.7803e-06; %for BO only change to inf
+    eta1=inf;%2.7832e-06;%3.7803e-06; %for BO only change to inf
     eta2=0.2;
 
     if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<11 %also stop if more than 10 times after last activation used G2
@@ -395,7 +395,7 @@ if ~isfield(botrace, 'hyp_GP_mean')
     botrace.hyp_GP_lik=log(0.1);
 end
 % stop optimizing prior hyperparameters after certain iterations
-if length(botrace.hyp_GP_mean)<50
+if length(botrace.hyp_GP_mean)<200 
     %     calculate hyp: the optimum hyperparameters of prior model
     hyp = [];
     hyp.mean = zeros(n_mh,1);

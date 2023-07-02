@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v4_2_6r3';
+idName= 'LM_v4_2_6r3_debug';
 sys='LM';
-isGBO=true;
+isGBO=false;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,8 +22,8 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=50;
-N_iter=30;
+N_expr=10;
+N_iter=200;
 N_iter=N_iter+N0;
 sampleTs=0.001;
 sampleTinit=0.0;

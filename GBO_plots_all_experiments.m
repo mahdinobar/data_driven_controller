@@ -23,8 +23,8 @@ clear all;
 % dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
-N_iter=30;
-N_expr=50;
+N_iter=200;
+N_expr=10;
 N_iter=N_iter+N0;
 % for expr=1:N_expr
 %
@@ -84,8 +84,8 @@ convergence_iteration_BO=[];
 convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3/GBO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3_debug/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3_debug/BO/";
 
     %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
     %     load(append(dirGBOinf,'trace_file.mat'),'Trace')
@@ -115,7 +115,7 @@ for k=1:length(eta1_str)
 
     JObservGBO=[];
     JObservBO=[];
-    for i=1:15
+    for i=1:N_expr
         JObservGBO(:,end+1)=TraceGBO(i).values;
         JObservBO(:,end+1) =TraceBO(i).values;
     end
@@ -329,7 +329,7 @@ for k=1:length(eta1_str)
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
     %     ylim([0.45 2.5])
-    xlim([1, 30])
+    xlim([1, N_iter])
     %     xticks([1, 5:5:50])
     %     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
     %     h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:

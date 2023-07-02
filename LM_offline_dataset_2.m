@@ -197,7 +197,6 @@ zlabel("J_hat")
 ylim([41,51])
 legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective_hat"])
 
-
 %%
 figure(1)
 subplot(5,1,1)
