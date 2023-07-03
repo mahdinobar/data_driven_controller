@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v5_debug_withdown';
+idName= 'LM_v5_101';
 sys='LM';
-isGBO=false;
+isGBO=true;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=1;
+N_expr=50;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -296,7 +296,6 @@ elseif surrogate==false
     ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
     utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
     G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
-    save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_debug/G2data_withdown.mat","G2data")
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
