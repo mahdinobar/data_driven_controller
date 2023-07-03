@@ -1,12 +1,12 @@
 % Linear Motor (offline dataset)
-% GBO version 4 (keep only last surrogate)
+% GBO version 4 
 %% clean, set directories, start OPC server
 clear all; clc; close all;
 addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v4_101';
+idName= 'LM_1_debug';
 sys='LM';
 isGBO=true;
 if isGBO==true
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=50;
+N_expr=1;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -83,8 +83,8 @@ global N
 global idx
 global G2data
 global N_G2
+global idx_G2
 step_high=40;
-step_down=30;
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     fprintf('>>>>>experiment: %d \n', expr);
@@ -99,12 +99,25 @@ for expr=1:1:N_expr
     RAND=RAND_all_expr(:,expr);
     range_kp=Kp_max-Kp_min;
     range_kd=Kd_max-Kd_min;
+%     Kp_min=5.1238e+03;
+%     Kp_max=6.1362e+03;
+%     Kd_min=40.0625;
+%     Kd_max=51;
     Kp_ltn = (Kp_max-Kp_min).*RAND + Kp_min;
     Kd_ltn = (Kd_max-Kd_min).*RAND + Kd_min;
 
     [~,I_tmp]=min((P_crop_safe-Kp_ltn).^2+(D_crop_safe-Kd_ltn).^2);
     Kp_ltn=P_crop_safe(I_tmp);
     Kd_ltn=D_crop_safe(I_tmp);
+%     i=find((exp_data_crop_safe.P==Kp_ltn).*(exp_data_crop_safe.D==Kd_ltn));
+%     exp_data.actPos=exp_data_crop_safe.actPos_all(:,i);
+%     exp_data.actVel=exp_data_crop_safe.actVel_all(:,i);
+%     exp_data.actCur=exp_data_crop_safe.actCur_all(:,i);
+%     exp_data.r=exp_data_crop_safe.r;
+%     exp_data.t=exp_data_crop_safe.t;
+%     exp_data.P=exp_data_crop_safe.P(i);
+%     exp_data.D=exp_data_crop_safe.D(i);
+
     J_ltn = zeros(N0,1);
     for i=1:N0
         exp_data=LinMotor(Kp_ltn(i), Kd_ltn(i));
@@ -116,8 +129,8 @@ for expr=1:1:N_expr
         y_offset=exp_data.actPos(tmp_idx(1)-10);
         u_offset=exp_data.actCur(tmp_idx(1)-10);
         % use 50 ms of data after step high for G2
-        ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-        utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+        ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
         if i==1
             G2data = iddata(ytmp,utmp,sampleTs);
         else
@@ -130,23 +143,43 @@ for expr=1:1:N_expr
     y_ltn=J_ltn;
     botrace0.samples=X_ltn;
     botrace0.values=y_ltn;
-    botrace0.idx_G2_samples=[];
     % todo need to correct time?
     botrace0.times=RAND';
     opt.resume_trace_data = botrace0;
     clear botrace0
+    idx_G2=[];
     % todo check concept of max_iters?
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter-1;
     [ms,mv,Trace_tmp] = LM_bayesoptGPML_v4(fun,opt,N0);
+    G2_samples=Trace_tmp.samples(idx_G2,:);
+    G2_values=Trace_tmp.values(idx_G2);
+    G2_post_mus=Trace_tmp.post_mus(idx_G2);
+    G2_post_sigma2s=Trace_tmp.post_sigma2s(idx_G2);
+    % keep surrogate model data seperately for plots
+    Trace_tmp.G2_samples=G2_samples;
+    Trace_tmp.G2_values=G2_values;
+    Trace_tmp.G2_post_mus=G2_post_mus;
+    Trace_tmp.G2_post_sigma2s=G2_post_sigma2s;
+    Trace_tmp.idx_G2=idx_G2;
+    % remove previos data of older surrogate(G2) model
+    Trace_tmp.samples(idx_G2,:)=[];
+    Trace_tmp.values(idx_G2)=[];
+    Trace_tmp.post_mus(idx_G2)=[];
+    Trace_tmp.post_sigma2s(idx_G2)=[];
+    Trace_tmp.times(idx_G2)=[];
+    Trace_tmp.hyp_GP_lik(idx_G2)=[];
+    Trace_tmp.hyp_GP_cov(idx_G2,:)=[];
+    Trace_tmp.hyp_GP_mean(idx_G2,:)=[];
     Trace(expr)=Trace_tmp;
     clearvars Trace_tmp
     save(append(dir, 'trace_file.mat'),'Trace')
+%     save(append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/G2data_100init_',string(expr),'.mat'),"G2data")
+
 end
 
 %%
 function [objective] = ObjFun(exp_data, G2, gains)
 step_high=40;
-step_down=30;
 sampleTs=0.001;
 if isempty(G2)==1
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
@@ -156,8 +189,8 @@ if isempty(G2)==1
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
     if exist('G2data')
         G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     else
@@ -183,51 +216,22 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
     D=gains(2);
     F=0.001;
-
-    s = tf('s');
-    F=0.001;
-    Ptmp=P;
-    Dtmp=D;
-    C=Ptmp+Dtmp*s/(F*s+1);
-
-%     Kp = P;
-%     Ti = inf;
-%     Td = D/P;
-%     N=D/(P*F);
+    Kp = P;
+    Ti = inf;
+    Td = D/P;
+    N=D/(P*F);
     Ts = sampleTs;
-%     C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
-    CL=feedback(d2c(G2)*C, 1);
-    isstable(CL)
+    C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
+    CL=feedback(C*G2, 1);
     reference0=0;
     reference=10;
-    %%
-    t_high=(51*Ts):Ts:(0.120-Ts);
-    t_down=0:Ts:(50*Ts);
+    t_high=(11*Ts):Ts:(0.060-Ts);
+    t_low=0:Ts:(10*Ts);
     step_high=reference.*ones(length(t_high),1);
-    step_down=reference0.*ones(length(t_down),1);
-    t=[t_down,t_high]';
-    r=[step_down;step_high];
+    step_low=reference0.*ones(length(t_low),1);
+    t=[t_low,t_high]';
+    r=[step_low;step_high];
     y2=lsim(CL,r,t);
-%     %%
-%     s = tf('s');
-%     F=0.001;
-%     Ptmp=P;
-%     Dtmp=D;
-%     C22=Ptmp+Dtmp*s/(F*s+1);
-%     C22d = c2d(C22,Ts);
-%     CL22d=feedback(G2*C22d, 1);
-%     isstable(CL22d)
-%     y22d=lsim(CL22d,r,t);
-%     %%
-%     s = tf('s');
-%     F=0.001;
-%     Ptmp=P;
-%     Dtmp=D;
-%     C22=Ptmp+Dtmp*s/(F*s+1);
-%     CL22=feedback(d2c(G2)*C22, 1);
-%     isstable(CL22)
-%     y22=lsim(CL22,r,t);
-    %%
     y_high=y2(t>(.01)); %TODO check pay attention
     t_high=t(t>(.01));%TODO check    
     y_init=0;
@@ -266,10 +270,11 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 %%
-function [objective, N_G2] = ObjFun_Guided_v4(X, surrogate)
+function [objective, N_G2, idx_G2] = ObjFun_Guided_v4(X, surrogate)
 global N
 global G2data
 global N_G2
+global idx_G2
 
 N=N+1;
 if surrogate==true
@@ -280,13 +285,14 @@ if surrogate==true
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
     G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    save('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_1_debug/debug_data_3.mat');
     objective=ObjFun([], G2, X);
     N_G2=N_G2+1;
+    idx_G2= [idx_G2;N];
 elseif surrogate==false
     exp_data=LinMotor(X(1), X(2));
     objective = ObjFun(exp_data,[],[]);
     step_high=40;
-    step_down=30;
     sampleTs=0.001;
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
@@ -295,12 +301,41 @@ elseif surrogate==false
     y_offset=exp_data.actPos(tmp_idx(1)-10);
     u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+50)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+50)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+
+    %     get data for sigma_surrogate estimation
+    npG2=2;
+    nzG2=1;
+    Options = tfestOptions('Display','off');
+    Options.InitialCondition = 'backcast';
+    Options.EnforceStability=1;
+    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
+end
+
+function nh = num_hypers(func,opt)
+str = func(1);
+nm = str2num(str);
+if ~isempty(nm)
+    nh = nm;
+else
+    if isequal(str, 'D*1')
+        nh = opt.dims * 1;
+    elseif isequal(str,'(D+1)')
+        nh = opt.dims + 1;
+    elseif isequal(str,'(D+2)')
+        nh = opt.dims + 2;
+    elseif isequal(str,'D')
+        nh = opt.dims ;
+    else
+        error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
+    end
+end
 end
 %%
 function exp_data=LinMotor(Kp,Kd)

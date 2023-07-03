@@ -23,8 +23,8 @@ clear all;
 % dirBO=append(['/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Experiment_3' ...
 %     '/'], idNameBO, '/');
 N0=1; %number of initial data
-N_iter=200;
-N_expr=10;
+N_iter=30;
+N_expr=2;
 N_iter=N_iter+N0;
 % for expr=1:N_expr
 %
@@ -84,8 +84,8 @@ convergence_iteration_BO=[];
 convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3_debug/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_2_6r3_debug/BO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_101/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_101/GBO/";
 
     %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
     %     load(append(dirGBOinf,'trace_file.mat'),'Trace')

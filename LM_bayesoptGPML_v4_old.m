@@ -134,7 +134,6 @@ G2_trigger_counter=0;
 post_mus_record=[];
 post_sigma2s_record=[];
 botrace.hyper_grid_record=unscale_point(hyper_grid_record,opt.mins,opt.maxes);
-botrace.idx_G2_samples=[];
 hyp_GP_mean=[];
 hyp_GP_cov=[];
 hyp_GP_lik=[];
@@ -142,8 +141,6 @@ GP_hypers_mean_record=[];
 GP_hypers_cov_record=[];
 GP_hypers_lik_record=[];
 total_G2_after_activation=0;
-removed_points=[];
-idx_G2_samples=[];
 while i <opt.max_iters-2+1
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
@@ -154,33 +151,42 @@ while i <opt.max_iters-2+1
     tic;
     eta1=2.7832e-06;%3.7803e-06; %for BO only change to inf
     eta2=0.2;
-
-    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<11 %also stop if more than 10 times after last activation used G2
+    %                 fprintf('post_sigma2(hidx)= %d \n', post_sigma2(hidx));
+    %                 fprintf('aq_val/max(AQ_vals)= %d \n', aq_val/max(AQ_vals));
+%     % estimate surrogate uncertainty sigma_s
+%     SE=0;
+%     for i_s=1:length(y_s)
+%         SE=SE+(y_s(i_s)-values(i_s))^2;
+%     end
+%     sigma_s=sqrt(SE/length(y_s));
+%     if surrogate==false && post_sigma2(hidx)/sigma_s>eta1
+    if total_G2_after_activation>10 %stop if more than 15 times after last activation used G2
+        surrogate=false;
+        total_G2_after_activation=0;
+    elseif surrogate==false && post_sigma2(hidx)>eta1
         %                 if aq_val>max(AQ_vals)*eta
         surrogate=true; %switch to use surrogate G2 for objective
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
         total_G2_after_activation=total_G2_after_activation+1;
-%         fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-    elseif surrogate==true 
-        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<11
+        disp(total_G2_after_activation)
+    elseif surrogate==true
+        if aq_val>max(AQ_vals)*eta2
             opt.max_iters=opt.max_iters+1;
             counter = 1; %in server GBO_72 and 74results this was missing
             total_G2_after_activation=total_G2_after_activation+1;
-%             fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-        elseif counter<2+1 && total_G2_after_activation<11
+            disp(total_G2_after_activation)
+        elseif counter<2+1
             counter =counter+1;
             opt.max_iters=opt.max_iters+1;
             total_G2_after_activation=total_G2_after_activation+1;
-%             fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
+            disp(total_G2_after_activation)
         else
             surrogate=false;
-            % put back removed points from hyper_grid when we used surrogate
-            hyper_grid=[hyper_grid;removed_points];
             total_G2_after_activation=0;
         end
     end
-    [value,~] = Obj(hyper_cand, surrogate);
+    [value,~,~] = Obj(hyper_cand, surrogate);
     times(end+1) = toc;
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     values(end+1,1) = value;
@@ -201,11 +207,6 @@ while i <opt.max_iters-2+1
     % Remove this candidate from the grid (I use the incomplete vector like this because I will use this vector for other purposes in the future.)
     if hidx >= 0,
         incomplete(hidx) = false;
-        % keep removed point from hyper_grid when we use surrogate to get them back
-        if surrogate==true
-            removed_points=[removed_points;hyper_grid(~incomplete,:)];
-            idx_G2_samples=[idx_G2_samples;i+2]; %todo why i+2? check
-        end
         hyper_grid = hyper_grid(incomplete,:);
         incomplete = logical(ones(size(hyper_grid,1),1));
     end
@@ -235,22 +236,6 @@ while i <opt.max_iters-2+1
     end
     i=i+1;
 end
-
-% remove surrogate data from D
-times(idx_G2_samples)=[];
-samples(idx_G2_samples,:)=[];
-values(idx_G2_samples)=[];
-post_mus(idx_G2_samples)=[];
-post_sigma2s(idx_G2_samples)=[];
-AQ_vals(idx_G2_samples-1)=[];
-
-botrace.idx_G2_samples=idx_G2_samples;
-botrace.times=times;
-botrace.samples=unscale_point(samples,opt.mins,opt.maxes);
-botrace.values=values;
-botrace.post_mus=post_mus;
-botrace.post_sigma2s=post_sigma2s;
-botrace.AQ_vals=AQ_vals;
 
 % Get minvalue and minsample
 if DO_CBO,
@@ -363,7 +348,7 @@ if ~isfield(botrace, 'hyp_GP_mean')
     botrace.hyp_GP_lik=log(0.1);
 end
 % stop optimizing prior hyperparameters after certain iterations
-if length(botrace.hyp_GP_mean)<200 
+if length(botrace.hyp_GP_mean)<50
     %     calculate hyp: the optimum hyperparameters of prior model
     hyp = [];
     hyp.mean = zeros(n_mh,1);
