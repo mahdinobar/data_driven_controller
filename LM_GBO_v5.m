@@ -84,7 +84,6 @@ global idx
 global G2data
 global N_G2
 step_high=40;
-step_down=30;
 % each experiment is the entire iterations starting with certain initial set
 for expr=1:1:N_expr
     fprintf('>>>>>experiment: %d \n', expr);
@@ -118,19 +117,10 @@ for expr=1:1:N_expr
         % use 50 ms of data after step high for G2
         ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
         utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-        % for step low response samples
-        sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
-        tmp_idx_down=find(sample_idx_down>0);
-        tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
-        tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
-        y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
-        u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
-        ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
-        utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
         if i==1
-            G2data = iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs);
+            G2data = iddata(ytmp,utmp,sampleTs);
         else
-            G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
+            G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
         end
     end
     %%
@@ -155,7 +145,6 @@ end
 %%
 function [objective] = ObjFun(exp_data, G2, gains)
 step_high=40;
-step_down=30;
 sampleTs=0.001;
 if isempty(G2)==1
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
@@ -167,19 +156,10 @@ if isempty(G2)==1
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    % for step low response samples
-    sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
-    tmp_idx_down=find(sample_idx_down>0);
-    tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
-    tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
-    y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
-    u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
-    ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
-    utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
     if exist('G2data')
-        G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
+        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
     else
-        G2data = iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs);
+        G2data = iddata(ytmp,utmp,sampleTs);
     end
     reference0=0;
     reference=10;
@@ -275,7 +255,6 @@ elseif surrogate==false
     exp_data=LinMotor(X(1), X(2));
     objective = ObjFun(exp_data,[],[]);
     step_high=40;
-    step_down=30;
     sampleTs=0.001;
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
@@ -286,41 +265,12 @@ elseif surrogate==false
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    % for step low response samples
-    sample_idx_down=exp_data.r(:)==step_down; %LV sampling time=10 ms
-    tmp_idx_down=find(sample_idx_down>0);
-    tmp_idx_down_2=find(tmp_idx_down>4500); %checkpoint because we know step_down applies no sooner than 5 seconds after step_up
-    tmp_idx_down=tmp_idx_down(tmp_idx_down_2);
-    y_offset_down=exp_data.actPos(tmp_idx_down(1)-10);
-    u_offset_down=exp_data.actCur(tmp_idx_down(1)-10);
-    ytmp_down = exp_data.actPos((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-y_offset_down;
-    utmp_down = exp_data.actCur((tmp_idx_down(1)-50):tmp_idx_down(1)+70)-u_offset_down;
-    G2data = merge(G2data, iddata([ytmp;ytmp_down],[utmp;utmp_down],sampleTs));
+    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
 end
-
-function nh = num_hypers(func,opt)
-str = func(1);
-nm = str2num(str);
-if ~isempty(nm)
-    nh = nm;
-else
-    if isequal(str, 'D*1')
-        nh = opt.dims * 1;
-    elseif isequal(str,'(D+1)')
-        nh = opt.dims + 1;
-    elseif isequal(str,'(D+2)')
-        nh = opt.dims + 2;
-    elseif isequal(str,'D')
-        nh = opt.dims ;
-    else
-        error('bayesopt:unkhyp','Unknown number of hyperparameters asked for by one of the functions');
-    end
-end
-end
-
+%%
 function exp_data=LinMotor(Kp,Kd)
 global exp_data_crop_safe
 i=find((exp_data_crop_safe.P==Kp).*(exp_data_crop_safe.D==Kd));

@@ -6,7 +6,7 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v4_101';
+idName= 'LM_v4_102';
 sys='LM';
 isGBO=true;
 if isGBO==true
@@ -266,7 +266,7 @@ w=w./sum(w);
 objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
 end
 %%
-function [objective, N_G2] = ObjFun_Guided_v4(X, surrogate)
+function [objective] = ObjFun_Guided_v4(X, surrogate)
 global N
 global G2data
 global N_G2

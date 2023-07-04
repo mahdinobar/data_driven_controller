@@ -144,6 +144,7 @@ GP_hypers_lik_record=[];
 total_G2_after_activation=0;
 removed_points=[];
 idx_G2_samples=[];
+i_tmp=0;
 while i <opt.max_iters-2+1
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
@@ -161,7 +162,25 @@ while i <opt.max_iters-2+1
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
         total_G2_after_activation=total_G2_after_activation+1;
-%         fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
+        %         fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
+
+        % remove older surrogate data from D
+        times(idx_G2_samples)=[];
+        samples(idx_G2_samples,:)=[];
+        values(idx_G2_samples)=[];
+        post_mus(idx_G2_samples)=[];
+        post_sigma2s(idx_G2_samples)=[];
+        AQ_vals(idx_G2_samples-1)=[];
+        botrace.idx_G2_samples=idx_G2_samples;
+        botrace.times=times;
+        botrace.samples=unscale_point(samples,opt.mins,opt.maxes);
+        botrace.values=values;
+        botrace.post_mus=post_mus;
+        botrace.post_sigma2s=post_sigma2s;
+        botrace.AQ_vals=AQ_vals;
+        i_tmp=i_tmp+length(idx_G2_samples);
+        idx_G2_samples=[];
+
     elseif surrogate==true 
         if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<11
             opt.max_iters=opt.max_iters+1;
@@ -180,7 +199,7 @@ while i <opt.max_iters-2+1
             total_G2_after_activation=0;
         end
     end
-    [value,~] = Obj(hyper_cand, surrogate);
+    value = Obj(hyper_cand, surrogate);
     times(end+1) = toc;
     samples = [samples;scale_point(hyper_cand,opt.mins,opt.maxes)];
     values(end+1,1) = value;
@@ -204,7 +223,7 @@ while i <opt.max_iters-2+1
         % keep removed point from hyper_grid when we use surrogate to get them back
         if surrogate==true
             removed_points=[removed_points;hyper_grid(~incomplete,:)];
-            idx_G2_samples=[idx_G2_samples;i+2]; %todo why i+2? check
+            idx_G2_samples=[idx_G2_samples;i+2-i_tmp]; %todo why i+2? check
         end
         hyper_grid = hyper_grid(incomplete,:);
         incomplete = logical(ones(size(hyper_grid,1),1));
