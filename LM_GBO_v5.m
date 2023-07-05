@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v5_101';
+idName= 'LM_v5_102_debug_2';
 sys='LM';
-isGBO=true;
+isGBO=false;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=50;
+N_expr=1;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -152,16 +152,8 @@ if isempty(G2)==1
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     tmp_idx=tmp_idx(tmp_idx_2);
     y_offset=exp_data.actPos(tmp_idx(1)-10);
-    u_offset=exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    if exist('G2data')
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    else
-        G2data = iddata(ytmp,utmp,sampleTs);
-    end
-    reference0=0;
     reference=10;
     y_high=ytmp(10:end);
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
@@ -181,17 +173,18 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
     D=gains(2);
     F=0.001;
-    Kp = P;
-    Ti = inf;
-    Td = D/P;
-    N=D/(P*F);
+    s = tf('s');
+    F=0.001;
+    Ptmp=P;
+    Dtmp=D;
+    C=Ptmp+Dtmp*s/(F*s+1);
     Ts = sampleTs;
-    C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
-    CL=feedback(C*G2, 1);
+    CL=feedback(d2c(G2)*C, 1);
+    isstable(CL)
     reference0=0;
     reference=10;
-    t_high=(11*Ts):Ts:(0.060-Ts);
-    t_down=0:Ts:(10*Ts);
+    t_high=(51*Ts):Ts:(0.120-Ts);
+    t_down=0:Ts:(50*Ts);
     step_high=reference.*ones(length(t_high),1);
     step_down=reference0.*ones(length(t_down),1);
     t=[t_down,t_high]';
@@ -266,6 +259,7 @@ elseif surrogate==false
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
     G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+%     save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_debug/G2data.mat","G2data")
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);

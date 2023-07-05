@@ -116,7 +116,7 @@ exp_data_safe.D(idx_unsafe)=[];
 % save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
 %% plot J_hat vs gains using surrogate
 load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_debug/G2data.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_debug/G2data.mat")
 npG2=2;
 nzG2=1;
 sampleTs=0.001;
@@ -131,27 +131,25 @@ for k=1:length(P_safe)
     P=P_safe(k);
     D=D_safe(k);
     F=0.001;
-    Kp = P;
-    Ti = inf;
-    Td = D/P;
-    N=D/(P*F);
+    s = tf('s');
+    F=0.001;
+    Ptmp=P;
+    Dtmp=D;
+    C=Ptmp+Dtmp*s/(F*s+1);
     Ts = sampleTs;
-    C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
-    CL=feedback(C*G2, 1);
+    CL=feedback(d2c(G2)*C, 1);
+    isstable(CL)
     reference0=0;
     reference=10;
-    t_high=(11*Ts):Ts:(0.060-Ts);
-    t_low=0:Ts:(10*Ts);
+    t_high=(51*Ts):Ts:(0.120-Ts);
+    t_down=0:Ts:(50*Ts);
     step_high=reference.*ones(length(t_high),1);
-    step_low=reference0.*ones(length(t_low),1);
-    t=[t_low,t_high]';
-    r=[step_low;step_high];
+    step_down=reference0.*ones(length(t_down),1);
+    t=[t_down,t_high]';
+    r=[step_down;step_high];
     y2=lsim(CL,r,t);
     y_high=y2(t>(.01)); %TODO check pay attention
-    
-    
-    
-    t_high=t(t>(.01));%TODO check
+    t_high=t(t>(.01));%TODO check    
     y_init=0;
     y_final=mean(y_high(end-5:end));
     e_ss=abs(y_final-reference);
@@ -171,15 +169,16 @@ for k=1:length(P_safe)
     objective_hat = ObjFun(perf_Data_hat);
     objective_feasible_hat=[objective_feasible_hat;objective_hat];
 end
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_debug/debug.mat")
 %%
-figure(30)
+% figure(30)
 hold on
-set(gca,'Zscale','log')
-set(gca,'ColorScale','log')
-h_infeasible=scatter3(P_unsafe,D_unsafe,max(objective_feasible_hat).*ones(size(D_unsafe)),20,"filled","r");
-h_feasible=scatter3(P_safe,D_safe,max(objective_feasible_hat).*ones(size(D_safe)),20,"filled","g");
-[m,I]=min(objective_feasible_hat);
-h_min=scatter3(P_safe(I),D_safe(I),max(objective_feasible_hat),300,"pentagram","filled","y");
+% set(gca,'Zscale','log')
+% set(gca,'ColorScale','log')
+% h_infeasible=scatter3(P_unsafe,D_unsafe,max(objective_feasible_hat).*ones(size(D_unsafe)),20,"filled","r");
+% h_feasible=scatter3(P_safe,D_safe,max(objective_feasible_hat).*ones(size(D_safe)),20,"filled","g");
+% [m,I]=min(objective_feasible_hat);
+% h_min=scatter3(P_safe(I),D_safe(I),max(objective_feasible_hat),300,"pentagram","filled","y");
 
 x=P_safe;
 y=D_safe;
@@ -189,14 +188,14 @@ z=objective_feasible_hat;
 zi = griddata(x,y,z,xi,yi);
 % [c,h]=contour(xi,yi,zi,10);
 % clabel(c,h);
-h=surf(xi,yi,zi,'EdgeColor', 'none');
-colorbar
+h_hat=surf(xi,yi,zi,'EdgeColor', 'none');
+
+% colorbar
 xlabel("P")
 ylabel("D")
 zlabel("J_hat")
 ylim([41,51])
-legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective_hat"])
-
+% legend([h_feasible,h_infeasible, h_min, h_hat],["feasible","experimental failure", "optimum", "objectiveHAT"])
 %%
 figure(1)
 subplot(5,1,1)
@@ -332,7 +331,7 @@ xlabel("P")
 ylabel("D")
 zlabel("J")
 ylim([41,51])
-legend([h_feasible,h_infeasible, h_min, h],["feasible","experimental failure", "optimum", "objective"])
+legend([h_feasible,h_infeasible, h_min, h, h_hat],["feasible","experimental failure", "optimum", "objective", "objective_{hat}"])
 
 %%
 perf_Data_feasible=[];
