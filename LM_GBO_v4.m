@@ -262,7 +262,7 @@ global N_G2
 N=N+1;
 if surrogate==true
     npG2=2;
-    nzG2=1;
+    nzG2=1; 
     sampleTs=0.001;
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
