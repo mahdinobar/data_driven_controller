@@ -442,25 +442,18 @@ e_ss = perf_Data(1,5);
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
-
-if isnan(st) || isinf(st) || st>1e5
-    st=3;
+if isnan(st) || isinf(st) || st>70e-3
+    st=70e-3;
 end
-
-if isnan(Tr) || isinf(Tr) || Tr>1e5
-    Tr=3;
+if isnan(Tr) || isinf(Tr) || Tr>70e-3
+    Tr=70e-3;
 end
-
-if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-    ITAE=30;
+if isnan(ITAE) || isinf(ITAE) || ITAE>1
+    ITAE=1;
 end
-
-if isnan(e_ss) || isinf(e_ss) || e_ss>1e5
+if isnan(e_ss) || isinf(e_ss) || e_ss>10
     e_ss=10;
 end
-
-% w_mean_grid=[0.272170491516590,3.10390673875809,0.368857250362635,31.5501121520996]; %based on mean values of 10 initial dataset performance measurements at C:\mahdi\data_driven_controller\Data\objective_w_gains_estimation\
-
 w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339];%[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
 % w_mean_grid=[0.5605    0.1030    0.7213    0.3829    2.0497];% normalization values for max of each metric
 % w_importance=[1.02, 1.02, 1.0, 1.0, 1];
@@ -504,14 +497,14 @@ e_ss=abs(y_final-reference);
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
-if isnan(st) || isinf(st) || st>3
-    st=3;
+if isnan(st) || isinf(st) || st>70e-3
+    st=70e-3;
 end
-if isnan(Tr) || isinf(Tr) || Tr>3
-    Tr=3;
+if isnan(Tr) || isinf(Tr) || Tr>70e-3
+    Tr=70e-3;
 end
-if isnan(ITAE) || isinf(ITAE) || ITAE>30
-    ITAE=30;
+if isnan(ITAE) || isinf(ITAE) || ITAE>1
+    ITAE=1;
 end
 if isnan(e_ss) || isinf(e_ss) || e_ss>10
     e_ss=10;

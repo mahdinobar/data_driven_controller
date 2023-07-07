@@ -6,7 +6,7 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v4_102';
+idName= 'LM_v4_111_debug';
 sys='LM';
 isGBO=true;
 if isGBO==true
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=50;
+N_expr=2;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -119,10 +119,12 @@ for expr=1:1:N_expr
         % use 50 ms of data after step high for G2
         ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
         utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+        vtmp = diff(ytmp((50+3):end))./sampleTs;
+        utmp = utmp((50+3):(end-1));
         if i==1
-            G2data = iddata(ytmp,utmp,sampleTs);
+            G2data = iddata(vtmp,utmp,sampleTs);
         else
-            G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+            G2data = merge(G2data, iddata(vtmp,utmp,sampleTs));
         end
     end
     %%
@@ -146,10 +148,9 @@ end
 
 %%
 function [objective] = ObjFun(exp_data, G2, gains)
-step_high=40;
-step_down=30;
 sampleTs=0.001;
 if isempty(G2)==1
+    step_high=40;
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
@@ -159,29 +160,27 @@ if isempty(G2)==1
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    if exist('G2data')
-        G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
-    else
-        G2data = iddata(ytmp,utmp,sampleTs);
-    end
     reference0=0;
     reference=10;
-    y_high=ytmp(10:end);
+    y_high=ytmp(50:end); %todo check
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
     y_final=mean(exp_data.actPos((tmp_idx(end)-60):(tmp_idx(end)-10)))-y_offset;
-    S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     % manually calculate settling time for server because server lsiminfo is wrong
-    i_st =max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
+    i_st = max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
     st=t_high(i_st+1);
     if isnan(st)
         st=3;
     end
-    ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+    if max(y_high)>reference
+        ov=max(0,(max(y_high)-y_init)/(y_final-y_init)-1);
+    else
+        ov=0;
+    end
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
-    e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(3*Tr*1000)), t_high(1:ceil(3*Tr*1000))'.*abs(e(1:ceil(3*Tr*1000))));
-    e_ss=abs(y_final-reference);
+    e=y_high-reference;
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
+    e_ss=abs(y_final-reference);    
 elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
     D=gains(2);
@@ -196,7 +195,6 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     isstable(CL)
     reference0=0;
     reference=10;
-    %%
     t_high=(51*Ts):Ts:(0.120-Ts);
     t_down=0:Ts:(50*Ts);
     step_high=reference.*ones(length(t_high),1);
@@ -204,40 +202,52 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     t=[t_down,t_high]';
     r=[step_down;step_high];
     y2=lsim(CL,r,t);
-    y_high=y2(t>(.01)); %TODO check pay attention
-    t_high=t(t>(.01));%TODO check    
+    y_high=y2(t>(50*Ts)); %TODO check pay attention
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=0;
     y_final=mean(y_high(end-5:end));
-    e_ss=abs(y_final-reference);
-    S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
     % manually calculate settling time for server because server lsiminfo is wrong
-    i_st =max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
+    i_st = max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
     st=t_high(i_st+1);
     if isnan(st)
         st=3;
     end
-    ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+    if max(y_high)>reference
+        ov=max(0,(max(y_high)-y_init)/(y_final-y_init)-1);
+    else
+        ov=0;
+    end
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
-    e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(3*Tr*1000))', t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
+    e=y_high-reference;
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
 end
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
-if isnan(st) || isinf(st) || st>3
-    st=3;
+if isnan(st) || isinf(st) || st>70e-3
+    st=70e-3;
 end
-if isnan(Tr) || isinf(Tr) || Tr>3
-    Tr=3;
+if isnan(Tr) || isinf(Tr) || Tr>70e-3
+    Tr=70e-3;
 end
-if isnan(ITAE) || isinf(ITAE) || ITAE>30
-    ITAE=30;
+if isnan(ITAE) || isinf(ITAE) || ITAE>1
+    ITAE=1;
 end
 if isnan(e_ss) || isinf(e_ss) || e_ss>10
     e_ss=10;
 end
-w_mean_grid=[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
+if Tr==0
+    Tr=sampleTs;
+end
+if ITAE==0
+    ITAE=sampleTs*(reference-reference0);
+end
+if st==0
+    st=sampleTs;
+end
+
+w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339];%[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
 w_importance=[1.2, 1.05, 0.98, 1, 1.1];
 w=w_importance./w_mean_grid;
 w=w./sum(w);
@@ -257,7 +267,9 @@ if surrogate==true
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
     Options.EnforceStability=1;
-    G2 = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    G2v = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+    z = tf('z',sampleTs);
+    G2 = G2v * sampleTs/2 * (z+1)/(z-1);
     objective=ObjFun([], G2, X);
     N_G2=N_G2+1;
 elseif surrogate==false
@@ -275,7 +287,9 @@ elseif surrogate==false
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    G2data = merge(G2data, iddata(ytmp,utmp,sampleTs));
+    vtmp = diff(ytmp((50+3):end))./sampleTs;
+    utmp = utmp((50+3):(end-1));
+    G2data = merge(G2data, iddata(vtmp,utmp,sampleTs));
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);
