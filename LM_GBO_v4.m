@@ -48,6 +48,7 @@ exp_data_crop_safe.actCur_all(:,~idx_crop_safe)=[];
 exp_data_crop_safe.actVel_all(:,~idx_crop_safe)=[];
 exp_data_crop_safe.P(~idx_crop_safe)=[];
 exp_data_crop_safe.D(~idx_crop_safe)=[];
+
 %% build initial dataset (N0)
 if initRant=="latin"
     if isGBO==true
@@ -168,9 +169,11 @@ if isempty(G2)==1
     y_high=ytmp(10:end);
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
-    y_final=mean(exp_data.actPos((tmp_idx(end)-5):(tmp_idx(end))))-y_offset;
+    y_final=mean(exp_data.actPos((tmp_idx(end)-60):(tmp_idx(end)-10)))-y_offset;
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
-    st=S.SettlingTime;
+    % manually calculate settling time for server because server lsiminfo is wrong
+    i_st =max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
+    st=t_high(i_st+1);
     if isnan(st)
         st=3;
     end
@@ -183,19 +186,12 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
     D=gains(2);
     F=0.001;
-
     s = tf('s');
     F=0.001;
     Ptmp=P;
     Dtmp=D;
     C=Ptmp+Dtmp*s/(F*s+1);
-
-%     Kp = P;
-%     Ti = inf;
-%     Td = D/P;
-%     N=D/(P*F);
     Ts = sampleTs;
-%     C = pidstd(Kp,Ti,Td,N,Ts,'IFormula','Trapezoidal');
     CL=feedback(d2c(G2)*C, 1);
     isstable(CL)
     reference0=0;
@@ -208,33 +204,15 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     t=[t_down,t_high]';
     r=[step_down;step_high];
     y2=lsim(CL,r,t);
-%     %%
-%     s = tf('s');
-%     F=0.001;
-%     Ptmp=P;
-%     Dtmp=D;
-%     C22=Ptmp+Dtmp*s/(F*s+1);
-%     C22d = c2d(C22,Ts);
-%     CL22d=feedback(G2*C22d, 1);
-%     isstable(CL22d)
-%     y22d=lsim(CL22d,r,t);
-%     %%
-%     s = tf('s');
-%     F=0.001;
-%     Ptmp=P;
-%     Dtmp=D;
-%     C22=Ptmp+Dtmp*s/(F*s+1);
-%     CL22=feedback(d2c(G2)*C22, 1);
-%     isstable(CL22)
-%     y22=lsim(CL22,r,t);
-    %%
     y_high=y2(t>(.01)); %TODO check pay attention
     t_high=t(t>(.01));%TODO check    
     y_init=0;
     y_final=mean(y_high(end-5:end));
     e_ss=abs(y_final-reference);
     S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
-    st=S.SettlingTime;
+    % manually calculate settling time for server because server lsiminfo is wrong
+    i_st =max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
+    st=t_high(i_st+1);
     if isnan(st)
         st=3;
     end
