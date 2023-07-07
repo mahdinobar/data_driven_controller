@@ -184,7 +184,6 @@ if isempty(G2)==1
 elseif isempty(G2)==0 %when we use surrogate to estimate objective
     P=gains(1);
     D=gains(2);
-    F=0.001;
     s = tf('s');
     F=0.001;
     Ptmp=P;
@@ -262,7 +261,7 @@ global N_G2
 N=N+1;
 if surrogate==true
     npG2=2;
-    nzG2=1; 
+    nzG2=1;
     sampleTs=0.001;
     Options = tfestOptions('Display','off');
     Options.InitialCondition = 'backcast';
