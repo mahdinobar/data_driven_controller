@@ -8,7 +8,7 @@ startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
 idName= 'LM_v4_111_debug';
 sys='LM';
-isGBO=true;
+isGBO=false;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=2;
+N_expr=1;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -54,14 +54,14 @@ if initRant=="latin"
     if isGBO==true
         load(append(tmp_dir,'/', idName, '/RAND_ltn_all.mat'))
     else
-    % latin hypercube samples
-    % sample from latin (denoted as ltn) hypercube
-    RAND_all_expr=zeros(N0,N_expr);
-    for expr=1:N_expr
-        RAND = sort(lhsdesign(N0,1));
-        RAND_all_expr(:,expr)=RAND;
-    end
-    save(append(tmp_dir,'/', idName, '/RAND_ltn_all.mat'),'RAND_all_expr')
+        % latin hypercube samples
+        % sample from latin (denoted as ltn) hypercube
+        RAND_all_expr=zeros(N0,N_expr);
+        for expr=1:N_expr
+            RAND = sort(lhsdesign(N0,1));
+            RAND_all_expr(:,expr)=RAND;
+        end
+        save(append(tmp_dir,'/', idName, '/RAND_ltn_all.mat'),'RAND_all_expr')
     end
 end
 %% Setup the Gaussian Process (GP) Library
@@ -180,28 +180,8 @@ if isempty(G2)==1
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
     e=y_high-reference;
     ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
-    e_ss=abs(y_final-reference);    
+    e_ss=abs(y_final-reference);
 elseif isempty(G2)==0 %when we use surrogate to estimate objective
-    P=gains(1);
-    D=gains(2);
-    s = tf('s');
-    F=0.001;
-    Ptmp=P;
-    Dtmp=D;
-    C=Ptmp+Dtmp*s/(F*s+1);
-    Ts = sampleTs;
-    CL=feedback(d2c(G2)*C, 1);  
-    isstable(CL)
-    reference0=0;
-    reference=10;
-    t_high=(51*Ts):Ts:(0.120-Ts);
-    t_down=0:Ts:(50*Ts);
-    step_high=reference.*ones(length(t_high),1);
-    step_down=reference0.*ones(length(t_down),1);
-    t=[t_down,t_high]';
-    r=[step_down;step_high];
-    y2=lsim(CL,r,t);
-%%
     F=0.001;
     P=gains(1)/512;
     D=gains(2)/768;
@@ -211,7 +191,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     G2c=d2c(G2);
     G2_num=G2c.Numerator{1};
     G2_den=G2c.Denominator{1};
-    
+
     mdlWks = get_param('DT','ModelWorkspace');
     assignin(mdlWks,'sampleTs',sampleTs)
     assignin(mdlWks,'P',P)
@@ -222,56 +202,17 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     assignin(mdlWks,'reference',reference)
     assignin(mdlWks,'G2_den',G2_den)
     assignin(mdlWks,'G2_num',G2_num)
+    simOut = sim("DT.slx");
 
-    simOut = sim("DT");
     y2=simOut.yout{1}.Values.Data(1:10:end-1);
-%%
-    exp_data=LinMotor(gains(1),gains(2));
-    step_high=40;
-    sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-    tmp_idx=find(sample_idx>0);
-    tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-    tmp_idx=tmp_idx(tmp_idx_2);
-    y_offset=exp_data.actPos(tmp_idx(1)-10);
-    u_offset=exp_data.actCur(tmp_idx(1)-10);
-    % use 50 ms of data after step high for G2
-    ytmp = exp_data.actPos((tmp_idx(1)-49):tmp_idx(1)+70)-y_offset;
-    utmp = exp_data.actCur((tmp_idx(1)-49):tmp_idx(1)+70)-u_offset;
-    reference0=0;
-    reference=10;
-    figure(2); hold on; plot(simOut.yout{3}.Values.Data,"k");plot(simOut.yout{2}.Values.Data(1:10:end),"b");plot(simOut.yout{1}.Values.Data(1:10:end),"r");
-    plot(ytmp,"g")
-    plot(utmp,"m")
-% %%
-%     CLu=feedback(C, d2c(G2));
-%     u2=lsim(CLu,r,t);
-%     u_high=u2(t>(50*Ts));
-%%
-    y_high=y2(t>(50*Ts)); %TODO check pay attention
+    t=simOut.tout(1:10:end-1);
+    y_high=y2(t>(50*sampleTs)); %TODO check pay attention
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=0;
     y_final=mean(y_high(end-5:end));
     % manually calculate settling time for server because server lsiminfo is wrong
     i_st = max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
     st=t_high(i_st+1);
-
-%     %% debug
-%     exp_data=LinMotor(gains(1),gains(2));
-%     step_high=40;
-%     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-%     tmp_idx=find(sample_idx>0);
-%     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-%     tmp_idx=tmp_idx(tmp_idx_2);
-%     y_offset=exp_data.actPos(tmp_idx(1)-10);
-%     u_offset=exp_data.actCur(tmp_idx(1)-10);
-%     % use 50 ms of data after step high for G2
-%     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-%     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-%     reference0=0;
-%     reference=10;
-%     y_high_gt=ytmp(50:end); %todo check
-%     plot(y_high); hold on; plot(y_high_gt,"g")
-    %%
     if isnan(st)
         st=3;
     end
@@ -284,6 +225,39 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     e=y_high-reference;
     ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
+
+    %% debug
+    %     exp_data=LinMotor(gains(1),gains(2));
+    %     step_high=40;
+    %     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+    %     tmp_idx=find(sample_idx>0);
+    %     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    %     tmp_idx=tmp_idx(tmp_idx_2);
+    %     y_offset=exp_data.actPos(tmp_idx(1)-10);
+    %     u_offset=exp_data.actCur(tmp_idx(1)-10);
+    %     % use 50 ms of data after step high for G2
+    %     ytmp = exp_data.actPos((tmp_idx(1)-49):tmp_idx(1)+70)-y_offset;
+    %     utmp = exp_data.actCur((tmp_idx(1)-49):tmp_idx(1)+70)-u_offset;
+    %     reference0=0;
+    %     reference=10;
+    %     figure(2); hold on; plot(t,simOut.yout{3}.Values.Data(1:end-1),"k");plot(t,simOut.yout{2}.Values.Data(1:10:end-1),"b");plot(t,y2,"r");
+    %     plot(t,ytmp,"g")
+    %     plot(t,utmp,"--g")
+    %     exp_data=LinMotor(gains(1),gains(2));
+    %     step_high=40;
+    %     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+    %     tmp_idx=find(sample_idx>0);
+    %     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    %     tmp_idx=tmp_idx(tmp_idx_2);
+    %     y_offset=exp_data.actPos(tmp_idx(1)-10);
+    %     u_offset=exp_data.actCur(tmp_idx(1)-10);
+    %     % use 50 ms of data after step high for G2
+    %     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
+    %     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    %     reference0=0;
+    %     reference=10;
+    %     y_high_gt=ytmp(50:end); %todo check
+    %     plot(y_high); hold on; plot(y_high_gt,"g")
 end
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
@@ -353,6 +327,7 @@ elseif surrogate==false
     vtmp = diff(ytmp((50+3):end))./sampleTs;
     utmp = utmp((50+3):(end-1));
     G2data = merge(G2data, iddata(vtmp,utmp,sampleTs));
+    save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111_debug/G2data.mat","G2data")
 end
 fprintf('N= %d \n', N);
 fprintf('N_G2= %d \n', N_G2);

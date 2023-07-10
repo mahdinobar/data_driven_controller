@@ -113,52 +113,85 @@ save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data
 save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
 %% plot J_hat vs gains using surrogate
 load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_debug/G2data.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111_debug/G2data.mat")
 npG2=2;
 nzG2=1;
 sampleTs=0.001;
 Options = tfestOptions('Display','off');
 Options.InitialCondition = 'backcast';
 Options.EnforceStability=1;
-G2 = tfest(getexp(G2data,[1:31]), npG2,nzG2,Options, 'Ts', sampleTs);
+G2v = tfest(G2data, npG2,nzG2,Options, 'Ts', sampleTs);
+z = tf('z',sampleTs);
+G2 = G2v * sampleTs/2 * (z+1)/(z-1);
 objective_feasible_hat=[];
 perf_Data_feasible_hat=[];
 for k=1:length(P_safe)
     k
-    P=P_safe(k);
-    D=D_safe(k);
+%     P=P_safe(k);
+%     D=D_safe(k);
+%     F=0.001;
+%     s = tf('s');
+%     F=0.001;
+%     Ptmp=P;
+%     Dtmp=D;
+%     C=Ptmp+Dtmp*s/(F*s+1);
+%     Ts = sampleTs;
+%     CL=feedback(d2c(G2)*C, 1);
+%     isstable(CL)
+%     reference0=0;
+%     reference=10;
+%     t_high=(51*Ts):Ts:(0.120-Ts);
+%     t_down=0:Ts:(50*Ts);
+%     step_high=reference.*ones(length(t_high),1);
+%     step_down=reference0.*ones(length(t_down),1);
+%     t=[t_down,t_high]';
+%     r=[step_down;step_high];
+%     y2=lsim(CL,r,t);
+%     y_high=y2(t>(.01)); %TODO check pay attention
+%     t_high=t(t>(.01));%TODO check 
+
     F=0.001;
-    s = tf('s');
-    F=0.001;
-    Ptmp=P;
-    Dtmp=D;
-    C=Ptmp+Dtmp*s/(F*s+1);
-    Ts = sampleTs;
-    CL=feedback(d2c(G2)*C, 1);
-    isstable(CL)
+    P=P_safe(k)/512;
+    D=D_safe(k)/768;
+    I=0;
     reference0=0;
     reference=10;
-    t_high=(51*Ts):Ts:(0.120-Ts);
-    t_down=0:Ts:(50*Ts);
-    step_high=reference.*ones(length(t_high),1);
-    step_down=reference0.*ones(length(t_down),1);
-    t=[t_down,t_high]';
-    r=[step_down;step_high];
-    y2=lsim(CL,r,t);
-    y_high=y2(t>(.01)); %TODO check pay attention
-    t_high=t(t>(.01));%TODO check    
+    G2c=d2c(G2);
+    G2_num=G2c.Numerator{1};
+    G2_den=G2c.Denominator{1};
+
+    mdlWks = get_param('DT','ModelWorkspace');
+    assignin(mdlWks,'sampleTs',sampleTs)
+    assignin(mdlWks,'P',P)
+    assignin(mdlWks,'D',D)
+    assignin(mdlWks,'I',I)
+    assignin(mdlWks,'F',F)
+    assignin(mdlWks,'reference0',reference0)
+    assignin(mdlWks,'reference',reference)
+    assignin(mdlWks,'G2_den',G2_den)
+    assignin(mdlWks,'G2_num',G2_num)
+    simOut = sim("DT.slx");
+
+    y2=simOut.yout{1}.Values.Data(1:10:end-1);
+    t=simOut.tout(1:10:end-1);
+    y_high=y2(t>(50*sampleTs)); %TODO check pay attention
+    t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=0;
     y_final=mean(y_high(end-5:end));
-    e_ss=abs(y_final-reference);
-    S = lsiminfo(y_high,t_high,y_final,y_init,'SettlingTimeThreshold',0.02);
-    st=S.SettlingTime;
+    % manually calculate settling time for server because server lsiminfo is wrong
+    i_st = max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
+    st=t_high(i_st+1);
     if isnan(st)
         st=3;
     end
-    ov=max(0,(S.Max-y_init)/(y_final-y_init)-1);
+    if max(y_high)>reference
+        ov=max(0,(max(y_high)-y_init)/(y_final-y_init)-1);
+    else
+        ov=0;
+    end
     Tr=t_high(find(y_high>0.6*(y_final-y_init),1))-t_high(find(y_high>0.1*(y_final-y_init),1));
-    e=abs(y_high-reference);
-    ITAE = trapz(t_high(1:ceil(3*Tr*1000))', t_high(1:ceil(3*Tr*1000)).*abs(e(1:ceil(3*Tr*1000))));
+    e=y_high-reference;
+    ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
 
     perf_Data_hat=[ov,Tr,st,ITAE,e_ss];
@@ -166,7 +199,7 @@ for k=1:length(P_safe)
     objective_hat = ObjFun(perf_Data_hat);
     objective_feasible_hat=[objective_feasible_hat;objective_hat];
 end
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_debug/debug.mat")
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111_debug/debug.mat")
 %%
 % figure(30)
 hold on
@@ -190,7 +223,7 @@ h_hat=surf(xi,yi,zi,'EdgeColor', 'none');
 % colorbar
 xlabel("P")
 ylabel("D")
-zlabel("J_hat")
+zlabel("J")
 ylim([41,51])
 % legend([h_feasible,h_infeasible, h_min, h_hat],["feasible","experimental failure", "optimum", "objectiveHAT"])
 %%
@@ -351,7 +384,7 @@ zlabel("J")
 ylim([41,51])
 legend([h_min, h],["optimum", "objective"])
 view(3)
-% legend([h_feasible,h_infeasible, h_min, h, h_hat],["feasible","experimental failure", "optimum", "objective", "objective_{hat}"])
+legend([h_min, h, h_hat],["optimum", "ground truth J", "J_{hat}"])
 
 %%
 perf_Data_feasible=[];
@@ -454,6 +487,7 @@ end
 if isnan(e_ss) || isinf(e_ss) || e_ss>10
     e_ss=10;
 end
+
 w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339];%[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
 % w_mean_grid=[0.5605    0.1030    0.7213    0.3829    2.0497];% normalization values for max of each metric
 % w_importance=[1.02, 1.02, 1.0, 1.0, 1];
