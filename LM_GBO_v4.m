@@ -190,7 +190,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     Dtmp=D;
     C=Ptmp+Dtmp*s/(F*s+1);
     Ts = sampleTs;
-    CL=feedback(d2c(G2)*C, 1);
+    CL=feedback(d2c(G2)*C, 1);  
     isstable(CL)
     reference0=0;
     reference=10;
@@ -201,6 +201,35 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     t=[t_down,t_high]';
     r=[step_down;step_high];
     y2=lsim(CL,r,t);
+%%
+    F=0.001;
+    P=gains(1);
+    D=gains(2);
+    I=0;
+    reference0=0;
+    reference=10;
+    G2c=d2c(G2);
+    G2_num=G2c.Numerator{1};
+    G2_den=G2c.Denominator{1};
+    
+    mdlWks = get_param('DT','ModelWorkspace');
+    assignin(mdlWks,'sampleTs',sampleTs)
+    assignin(mdlWks,'P',P)
+    assignin(mdlWks,'D',P)
+    assignin(mdlWks,'I',P)
+    assignin(mdlWks,'F',P)
+    assignin(mdlWks,'reference0',reference0)
+    assignin(mdlWks,'reference',reference)
+    assignin(mdlWks,'G2_den',G2_den)
+    assignin(mdlWks,'G2_num',G2_num)
+
+    simOut = sim("DT");
+
+%%
+    CLu=feedback(C, d2c(G2));
+    u2=lsim(CLu,r,t);
+    u_high=u2(t>(50*Ts));
+%%
     y_high=y2(t>(50*Ts)); %TODO check pay attention
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=0;
@@ -208,6 +237,24 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     % manually calculate settling time for server because server lsiminfo is wrong
     i_st = max(find(abs(y_high-y_final)>0.02*(y_final-y_init)));
     st=t_high(i_st+1);
+
+    %% debug
+    exp_data=LinMotor(gains(1),gains(2));
+    step_high=40;
+    sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+    tmp_idx=find(sample_idx>0);
+    tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+    tmp_idx=tmp_idx(tmp_idx_2);
+    y_offset=exp_data.actPos(tmp_idx(1)-10);
+    u_offset=exp_data.actCur(tmp_idx(1)-10);
+    % use 50 ms of data after step high for G2
+    ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
+    utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
+    reference0=0;
+    reference=10;
+    y_high_gt=ytmp(50:end); %todo check
+    plot(y_high); hold on; plot(y_high_gt,"g")
+    %%
     if isnan(st)
         st=3;
     end

@@ -1,7 +1,12 @@
 server_data/
 *.asv
+
 gpml/
 gpml_orig/
 tmp/
 
 linear_motor/
+
+*.autosave
+*.slxc
+slprj/
