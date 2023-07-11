@@ -153,17 +153,15 @@ while i <opt.max_iters-2+1
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    eta1=inf;%2.5056e-05;%inf %for BO only change to inf
+    eta1=2.5056e-05;%inf %for BO only change to inf
     eta2=0.2;
-
+    fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
     if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<11 %also stop if more than 10 times after last activation used G2
         %                 if aq_val>max(AQ_vals)*eta
         surrogate=true; %switch to use surrogate G2 for objective
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
         total_G2_after_activation=total_G2_after_activation+1;
-        %         fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-
         % remove older surrogate data from D
         times(idx_G2_samples)=[];
         samples(idx_G2_samples,:)=[];
@@ -186,12 +184,10 @@ while i <opt.max_iters-2+1
             opt.max_iters=opt.max_iters+1;
             counter = 1; %in server GBO_72 and 74results this was missing
             total_G2_after_activation=total_G2_after_activation+1;
-%             fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
         elseif counter<2+1 && total_G2_after_activation<11
             counter =counter+1;
             opt.max_iters=opt.max_iters+1;
             total_G2_after_activation=total_G2_after_activation+1;
-%             fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
         else
             surrogate=false;
             % put back removed points from hyper_grid when we used surrogate

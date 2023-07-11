@@ -84,8 +84,8 @@ convergence_iteration_BO=[];
 convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_leta1/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v5_102_leta1/GBO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111/GBO/";
 
     %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
     %     load(append(dirGBOinf,'trace_file.mat'),'Trace')

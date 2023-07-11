@@ -6,9 +6,9 @@ addpath ./gpml/
 addpath("/home/mahdi/ETHZ/HaW/linear_motor")
 startup;
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_v4_111_debug';
+idName= 'LM_v4_111';
 sys='LM';
-isGBO=false;
+isGBO=true;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
 else
@@ -22,7 +22,7 @@ end
 % set seed of all random generations
 rng(1,'twister');
 N0=1; %number of initial data
-N_expr=1;
+N_expr=2;
 N_iter=30;
 N_iter=N_iter+N0;
 sampleTs=0.001;
@@ -226,38 +226,32 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
 
-    %% debug
-    %     exp_data=LinMotor(gains(1),gains(2));
-    %     step_high=40;
-    %     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-    %     tmp_idx=find(sample_idx>0);
-    %     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-    %     tmp_idx=tmp_idx(tmp_idx_2);
-    %     y_offset=exp_data.actPos(tmp_idx(1)-10);
-    %     u_offset=exp_data.actCur(tmp_idx(1)-10);
-    %     % use 50 ms of data after step high for G2
-    %     ytmp = exp_data.actPos((tmp_idx(1)-49):tmp_idx(1)+70)-y_offset;
-    %     utmp = exp_data.actCur((tmp_idx(1)-49):tmp_idx(1)+70)-u_offset;
-    %     reference0=0;
-    %     reference=10;
-    %     figure(2); hold on; plot(t,simOut.yout{3}.Values.Data(1:end-1),"k");plot(t,simOut.yout{2}.Values.Data(1:10:end-1),"b");plot(t,y2,"r");
-    %     plot(t,ytmp,"g")
-    %     plot(t,utmp,"--g")
-    %     exp_data=LinMotor(gains(1),gains(2));
-    %     step_high=40;
-    %     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-    %     tmp_idx=find(sample_idx>0);
-    %     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-    %     tmp_idx=tmp_idx(tmp_idx_2);
-    %     y_offset=exp_data.actPos(tmp_idx(1)-10);
-    %     u_offset=exp_data.actCur(tmp_idx(1)-10);
-    %     % use 50 ms of data after step high for G2
-    %     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
-    %     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    %     reference0=0;
-    %     reference=10;
-    %     y_high_gt=ytmp(50:end); %todo check
-    %     plot(y_high); hold on; plot(y_high_gt,"g")
+%     %% debug
+%     exp_data=LinMotor(gains(1),gains(2));
+%     step_high=40;
+%     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+%     tmp_idx=find(sample_idx>0);
+%     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+%     tmp_idx=tmp_idx(tmp_idx_2);
+%     y_offset=exp_data.actPos(tmp_idx(1)-10);
+%     u_offset=exp_data.actCur(tmp_idx(1)-10);
+%     % use 50 ms of data after step high for G2
+%     ytmp = exp_data.actPos((tmp_idx(1)-49):tmp_idx(1)+70)-y_offset;
+%     utmp = exp_data.actCur((tmp_idx(1)-49):tmp_idx(1)+70)-u_offset;
+%     reference0=0;
+%     reference=10;
+%     close(figure(200))
+%     figure(200); 
+%     set(gcf, 'Position', get(0, 'Screensize'));
+%     hold on; 
+%     plot(t,simOut.yout{3}.Values.Data(1:end-1),"k");
+%     plot(t,simOut.yout{2}.Values.Data(1:10:end-1),"b");
+%     plot(t,y2,"r");
+%     plot(t,ytmp,"g");
+%     plot(t,utmp,"--g");
+%     RMSE=sqrt(sum((ytmp(50:end)-y2(50:end)).^2));
+%     title(append("RMSE=",string(RMSE)))
+%     pause;
 end
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
