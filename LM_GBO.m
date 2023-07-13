@@ -13,7 +13,7 @@ isGBO=true;
 N0=1; %TODO if N0~=1
 N_batch=50;
 N_iter=50;
-eta1=1.8629e-07;
+eta1=7.5827e-08;
 eta2=0.2;
 debugging=false;
 sampleTs=0.001;
