@@ -92,7 +92,7 @@ while i <opt.max_iters-2+1
     tic;
     eta1=opt.eta1;
     eta2=opt.eta2;
-    limit_total_G2_after_activation=5;
+    limit_total_G2_after_activation=20;
     fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
     if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<limit_total_G2_after_activation+1 %also stop if more than 10 times after last activation used G2
         surrogate=true; %switch to use surrogate G2 for objective

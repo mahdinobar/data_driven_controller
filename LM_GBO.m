@@ -22,6 +22,9 @@ sampleTs=0.001;
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
     load(append(tmp_dir,'/', idName, '/N0_RAND_all.mat'))
+    if not(isfolder(dir))
+        mkdir(dir)
+    end
 else
     eta1=inf;
     dir=append(tmp_dir,'/', idName, '/BO/');
