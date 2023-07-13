@@ -7,32 +7,33 @@ metric_gt_all=[];
 metric_hat_all=[];
 %% user manual iputs
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_201_debug';
+idName= 'LM_201';
 sys='LM';
 isGBO=true;
 N0=1; %TODO if N0~=1
-N_batch=1;
+N_batch=50;
 N_iter=50;
-eta1=7.4194e-6;
+eta1=1.8629e-07;
 eta2=0.2;
-debugging=true;
+debugging=false;
 sampleTs=0.001;
 %% misc settings and N0 settings
+
 if isGBO==true
     dir=append(tmp_dir,'/', idName, '/GBO/');
     load(append(tmp_dir,'/', idName, '/N0_RAND_all.mat'))
 else
     eta1=inf;
     dir=append(tmp_dir,'/', idName, '/BO/');
+    if not(isfolder(dir))
+        mkdir(dir)
+    end
     N0_RAND_all=zeros(N0,N_batch);
     for batch=1:N_batch
         RAND = sort(lhsdesign(N0,1));
         N0_RAND_all(:,batch)=RAND;
     end
     save(append(tmp_dir,'/', idName, '/N0_RAND_all.mat'),'N0_RAND_all')
-end
-if not(isfolder(dir))
-    mkdir(dir)
 end
 % set seed of all random generations
 rng(1,'twister');
@@ -193,7 +194,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     assignin(mdlWks,'reference',reference)
     assignin(mdlWks,'G2_den',G2_den)
     assignin(mdlWks,'G2_num',G2_num)
-    simOut = sim("DT.slx");
+    simOut = sim("DT.slx")
 
     y2=simOut.yout{1}.Values.Data(1:10:end-1);
     t=simOut.tout(1:10:end-1);
