@@ -194,8 +194,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     assignin(mdlWks,'reference',reference)
     assignin(mdlWks,'G2_den',G2_den)
     assignin(mdlWks,'G2_num',G2_num)
-    simOut = sim("DT.slx")
-
+    simOut = sim("DT.slx");
     y2=simOut.yout{1}.Values.Data(1:10:end-1);
     t=simOut.tout(1:10:end-1);
     y_high=y2(t>(50*sampleTs)); %TODO check pay attention
