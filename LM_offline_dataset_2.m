@@ -57,6 +57,7 @@ t_high_all=[];
 idx_unsafe=[];
 for exper=1:1:length(exp_data_all.P)
     exper
+    step_high=40;
     sample_idx=exp_data_all.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
@@ -87,6 +88,7 @@ for exper=1:1:length(exp_data_all.P)
     e=y_high-reference;
     ITAE = trapz(t_high(1:ceil(5*Tr*1000)), abs(e(1:ceil(5*Tr*1000))));
     e_ss=abs(y_final-reference);
+    
     if ITAE==0 || st==0
         perf_Data=[-1,-1,-1,-1,-1];
         P_unsafe=[P_unsafe;exp_data_all.P(exper)];
@@ -109,11 +111,32 @@ exp_data_safe.actVel_all(:,idx_unsafe)=[];
 exp_data_safe.P(idx_unsafe)=[];
 exp_data_safe.D(idx_unsafe)=[];
 
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp.mat")
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp_3.mat")
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data_3.mat","exp_data_all","P_safe","D_safe","exp_data_safe","idx_unsafe","P_unsafe","D_unsafe")
+%% debug
+clear all; clc
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_KpKd_bounds.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_KpKd_bounds.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data_3.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/offline_data_tmp_3.mat")
+
+idx_crop_safe=logical((P_safe<Kp_max).*(P_safe>Kp_min).*(D_safe<Kd_max).*(D_safe>Kd_min));
+P_crop_safe=P_safe(idx_crop_safe);
+D_crop_safe=D_safe(idx_crop_safe);
+exp_data_crop_safe=exp_data_safe;
+exp_data_crop_safe.objective_feasible=objective_feasible;
+exp_data_crop_safe.perf_Data_feasible=perf_Data_feasible;
+exp_data_crop_safe.acrtPos_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.actCur_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.actVel_all(:,~idx_crop_safe)=[];
+exp_data_crop_safe.P(~idx_crop_safe)=[];
+exp_data_crop_safe.D(~idx_crop_safe)=[];
+exp_data_crop_safe.objective_feasible(~idx_crop_safe)=[];
+exp_data_crop_safe.perf_Data_feasible(~idx_crop_safe,:)=[];
+% save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/exp_data_crop_safe.mat")
 %% plot J_hat vs gains using surrogate
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
-load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111_debug/G2data.mat")
+% load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/linear_motor/LM_offline_data.mat")
+load("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_201_debug/G2data.mat")
 npG2=2;
 nzG2=1;
 sampleTs=0.001;
@@ -125,7 +148,7 @@ z = tf('z',sampleTs);
 G2 = G2v * sampleTs/2 * (z+1)/(z-1);
 objective_feasible_hat=[];
 perf_Data_feasible_hat=[];
-for k=1:length(P_safe)
+for k=1:length(exp_data_crop_safe.P)
     k
 %     P=P_safe(k);
 %     D=D_safe(k);
@@ -151,8 +174,8 @@ for k=1:length(P_safe)
 %     t_high=t(t>(.01));%TODO check 
 
     F=0.001;
-    P=P_safe(k)/512;
-    D=D_safe(k)/768;
+    P=exp_data_crop_safe.P(k)/512;
+    D=exp_data_crop_safe.D(k)/768;
     I=0;
     reference0=0;
     reference=10;
@@ -199,7 +222,7 @@ for k=1:length(P_safe)
     objective_hat = ObjFun(perf_Data_hat);
     objective_feasible_hat=[objective_feasible_hat;objective_hat];
 end
-save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_v4_111_debug/debug.mat")
+save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_201_debug/debug.mat")
 %%
 % figure(30)
 hold on
@@ -210,15 +233,15 @@ hold on
 % [m,I]=min(objective_feasible_hat);
 % h_min=scatter3(P_safe(I),D_safe(I),max(objective_feasible_hat),300,"pentagram","filled","y");
 
-x=P_safe;
-y=D_safe;
+x=P_crop_safe;
+y=D_crop_safe;
 z=objective_feasible_hat;
 % plot3(x,y,z,"ok")
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):0.0167:max(y));
 zi = griddata(x,y,z,xi,yi);
 % [c,h]=contour(xi,yi,zi,10);
 % clabel(c,h);
-h_hat=surf(xi,yi,zi,'EdgeColor', 'none');
+h_hat=surf(xi,yi,zi);
 
 % colorbar
 xlabel("P")
@@ -363,20 +386,20 @@ figure(3)
 hold on
 set(gca,'Zscale','log')
 set(gca,'ColorScale','log')
-h_infeasible=scatter3(P_unsafe,D_unsafe,max(objective_feasible).*ones(size(D_unsafe)),20,"filled","r");
+% h_infeasible=scatter3(P_unsafe,D_unsafe,max(objective_feasible).*ones(size(D_unsafe)),20,"filled","r");
 % h_feasible=scatter3(P_safe,D_safe,max(objective_feasible).*ones(size(D_safe)),20,"filled","g");
-[m,I]=min(objective_feasible);
+[m,I]=min(exp_data_crop_safe.objective_feasible);
 
-x=P_safe;
-y=D_safe;
-z=objective_feasible;
+x=exp_data_crop_safe.P;
+y=exp_data_crop_safe.D;
+z=exp_data_crop_safe.objective_feasible;
 % plot3(x,y,z,"ok")
 [xi,yi] = meshgrid(min(x):1:max(x), min(y):0.0167:max(y));
 zi = griddata(x,y,z,xi,yi);
 % [c,h]=contour(xi,yi,zi,10);
 % clabel(c,h);
 h=surf(xi,yi,zi,'EdgeColor', 'none');
-h_min=scatter3(P_safe(I),D_safe(I),objective_feasible(I),450,"pentagram","filled","y");
+h_min=scatter3(exp_data_crop_safe.P(I),exp_data_crop_safe.D(I),exp_data_crop_safe.objective_feasible(I),450,"pentagram","filled","y");
 colorbar
 xlabel("P")
 ylabel("D")
@@ -384,7 +407,7 @@ zlabel("J")
 ylim([41,51])
 legend([h_min, h],["optimum", "objective"])
 view(3)
-legend([h_min, h, h_hat],["optimum", "ground truth J", "J_{hat}"])
+% legend([h_min, h, h_hat],["optimum", "ground truth J", "J_{hat}"])
 
 %%
 perf_Data_feasible=[];
@@ -471,7 +494,6 @@ st=perf_Data(1,3);
 Tr=perf_Data(1,2);
 ITAE = perf_Data(1,4);
 e_ss = perf_Data(1,5);
-
 if isnan(ov) || isinf(ov) || ov>1
     ov=1;
 end
@@ -487,15 +509,24 @@ end
 if isnan(e_ss) || isinf(e_ss) || e_ss>10
     e_ss=10;
 end
+if Tr==0
+    Tr=sampleTs;
+end
+if ITAE==0
+    ITAE=sampleTs*(reference-reference0);
+end
+if st==0
+    st=sampleTs;
+end
 
-w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339];%[0.1506, 0.0178, 0.0940, 0.0190, 0.4968]; %grid mean of feasible set mean(perf_Data_feasible)
-% w_mean_grid=[0.5605    0.1030    0.7213    0.3829    2.0497];% normalization values for max of each metric
-% w_importance=[1.02, 1.02, 1.0, 1.0, 1];
-w_importance=[1.2, 1.05, 0.98, 1, 1.1];
-w=w_importance./w_mean_grid;
+% w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339]; %grid mean of feasible set mean(perf_Data_feasible)
+% w_importance=[1.2, 1.05, 0.98, 1, 1.1];
+w_mean_grid=[0.0425, 0.0117, 0.2044]; %grid mean of feasible set mean(perf_Data_feasible)
+w_importance=[1.05, 1.1, 1];
+w=w_importance./w_mean_grid; 
 w=w./sum(w);
-% w=[0.1,0.2,0.3,0.2,0.3];
-objective=ov*w(1)+st*w(2)+Tr*w(3)+ITAE*w(4)+e_ss*w(5);
+objective=st*w(1)+Tr*w(2)+ITAE*w(3);
+
 end
 
 %%

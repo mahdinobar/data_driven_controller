@@ -153,38 +153,38 @@ while i <opt.max_iters-2+1
 
     % Evaluate the candidate with the highest EI to get the actual function value, and add this function value and the candidate to our set.
     tic;
-    eta1=2.5056e-05;%inf %for BO only change to inf
+    eta1=7.4194e-6;%2.5056e-05;%inf %for BO only change to inf
     eta2=0.2;
     fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<11 %also stop if more than 10 times after last activation used G2
+    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<6 %also stop if more than 10 times after last activation used G2
         %                 if aq_val>max(AQ_vals)*eta
         surrogate=true; %switch to use surrogate G2 for objective
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
         total_G2_after_activation=total_G2_after_activation+1;
-        % remove older surrogate data from D
-        times(idx_G2_samples)=[];
-        samples(idx_G2_samples,:)=[];
-        values(idx_G2_samples)=[];
-        post_mus(idx_G2_samples)=[];
-        post_sigma2s(idx_G2_samples)=[];
-        AQ_vals(idx_G2_samples-1)=[];
-        botrace.idx_G2_samples=idx_G2_samples;
-        botrace.times=times;
-        botrace.samples=unscale_point(samples,opt.mins,opt.maxes);
-        botrace.values=values;
-        botrace.post_mus=post_mus;
-        botrace.post_sigma2s=post_sigma2s;
-        botrace.AQ_vals=AQ_vals;
-        i_tmp=i_tmp+length(idx_G2_samples);
+%         % remove older surrogate data from D
+%         times(idx_G2_samples)=[];
+%         samples(idx_G2_samples,:)=[];
+%         values(idx_G2_samples)=[];
+%         post_mus(idx_G2_samples)=[];
+%         post_sigma2s(idx_G2_samples)=[];
+%         AQ_vals(idx_G2_samples-1)=[];
+%         botrace.idx_G2_samples=idx_G2_samples;
+%         botrace.times=times;
+%         botrace.samples=unscale_point(samples,opt.mins,opt.maxes);
+%         botrace.values=values;
+%         botrace.post_mus=post_mus;
+%         botrace.post_sigma2s=post_sigma2s;
+%         botrace.AQ_vals=AQ_vals;
+%         i_tmp=i_tmp+length(idx_G2_samples);
         idx_G2_samples=[];
 
     elseif surrogate==true 
-        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<11
+        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<6
             opt.max_iters=opt.max_iters+1;
             counter = 1; %in server GBO_72 and 74results this was missing
             total_G2_after_activation=total_G2_after_activation+1;
-        elseif counter<2+1 && total_G2_after_activation<11
+        elseif counter<1+1 && total_G2_after_activation<6
             counter =counter+1;
             opt.max_iters=opt.max_iters+1;
             total_G2_after_activation=total_G2_after_activation+1;
@@ -378,7 +378,7 @@ if ~isfield(botrace, 'hyp_GP_mean')
     botrace.hyp_GP_lik=log(0.1);
 end
 % stop optimizing prior hyperparameters after certain iterations
-if length(botrace.hyp_GP_mean)<200 
+if length(botrace.hyp_GP_mean)<200e10 
     %     calculate hyp: the optimum hyperparameters of prior model
     hyp = [];
     hyp.mean = zeros(n_mh,1);
