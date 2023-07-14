@@ -84,8 +84,8 @@ convergence_iteration_BO=[];
 convergence_iteration_std_BO=[];
 convergence_iteration_diff=[];
 for k=1:length(eta1_str)
-    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_204/BO/";
-    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_204/GBO/";
+    dirBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_203/BO/";
+    dirGBO="/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/LM_203/GBO/";
 
     %     dirGBOinf=append('/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data/GBO_72_eta2_02_eta1_3_inferiorsurrogate/results_1/');
     %     load(append(dirGBOinf,'trace_file.mat'),'Trace')
@@ -681,14 +681,15 @@ box on
 % for expr=26:26
 % JObservGBO=TraceGBO(expr).values(N0+1:N_iter);
 % JObservBO=TraceBO(expr).values(N0+1:N_iter);
-
+%%
 fig3=figure(3);
 % title(string(expr))
 fig3.Position=[200 0 1600 800];
 ax3=gca;
 ax3.FontSize=24;
 ax3.FontName='Times New Roman';
-edges = [0.5:0.02:0.8,1.1,1.4,1.7,2,2.3,2.6];
+% edges = [0.5:0.02:0.8,1.1,1.4,1.7,2,2.3,2.6];
+edges = linspace(0.0225,0.0279,8);
 hist_BO = histogram(JObservBO(:),edges,'FaceColor','b','Normalization','probability');
 hold on;
 hist_GBO = histogram(JObservGBO(:),edges,'FaceColor',[0.6350 0.0780 0.1840],'Normalization','probability');
@@ -699,5 +700,28 @@ ytix = get(gca, 'YTick');
 set(gca, 'YTick',ytix, 'YTickLabel',ytix*100)
 box on
 % end
+%%
+close all
+fig3=figure(3);
+fig3.Position=[200 0 1200 800];
+ax3=gca;
+ax3.FontSize=24;
+ax3.FontName='Times';
+edges = linspace(0.0225,0.0279,9);
+
+h1 = histcounts(JObservBO(:),edges, 'Normalization', "count");
+h2 = histcounts(JObservGBO(:),edges, 'Normalization', "count");
+b=bar(ax3, edges(1:end-1),[h1; h2]',"histc");
+% set(gca,'YScale','log')
+
+box on
+ytix = get(gca, 'YTick');
+xlabel(ax3, 'Cost')
+ylabel(ax3, 'Number of experiments in each cost band')
+set(b, {'DisplayName'}, {'BO','Guided BO'}')
+legend()
+ax3.FontSize=24;
+ax3.FontName='Times';
+
 
 
