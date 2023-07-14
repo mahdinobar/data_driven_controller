@@ -83,6 +83,9 @@ total_G2_after_activation=0;
 removed_points=[];
 idx_G2_samples=[];
 i_tmp=0;
+real_counter=0;
+real_counter_limit=5;
+limit_total_G2_after_activation=20;
 while i <opt.max_iters-2+1
     hidx = -1;
     % samples and hyper_grid should be scaled to [0,1] but hyper_cand is unscaled already
@@ -92,9 +95,8 @@ while i <opt.max_iters-2+1
     tic;
     eta1=opt.eta1;
     eta2=opt.eta2;
-    limit_total_G2_after_activation=20;
     fprintf('total_G2_after_activation= %d \n', total_G2_after_activation);
-    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<limit_total_G2_after_activation+1 %also stop if more than 10 times after last activation used G2
+    if surrogate==false && post_sigma2(hidx)>eta1 && total_G2_after_activation<limit_total_G2_after_activation+1 && real_counter<real_counter_limit+1%also stop if more than 10 times after last activation used G2
         surrogate=true; %switch to use surrogate G2 for objective
         opt.max_iters=opt.max_iters+1;
         counter=1; %to switch if for consecutive iterations on surrogate G2 we do not satisfy the improvement condition
@@ -116,18 +118,18 @@ while i <opt.max_iters-2+1
         i_tmp=i_tmp+length(idx_G2_samples);
         idx_G2_samples=[];
     elseif surrogate==true
-        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<limit_total_G2_after_activation+1
+        if aq_val>max(AQ_vals)*eta2 && total_G2_after_activation<limit_total_G2_after_activation+1 && real_counter<real_counter_limit+1
             opt.max_iters=opt.max_iters+1;
             counter = 1; %in server GBO_72 and 74results this was missing
             total_G2_after_activation=total_G2_after_activation+1;
-        elseif counter<1+1 && total_G2_after_activation<limit_total_G2_after_activation+1
+        elseif counter<1+1 && total_G2_after_activation<limit_total_G2_after_activation+1 && real_counter<real_counter_limit+1
             counter =counter+1;
             opt.max_iters=opt.max_iters+1;
             total_G2_after_activation=total_G2_after_activation+1;
         else
             surrogate=false;
             % put back removed points from hyper_grid when we used surrogate
-            hyper_grid=[hyper_grid;removed_points];
+            hyper_grid=[hyper_grid;removed_points]; %check if you need to reset removed_points
             total_G2_after_activation=0;
         end
     end
@@ -154,6 +156,8 @@ while i <opt.max_iters-2+1
         if surrogate==true
             removed_points=[removed_points;hyper_grid(~incomplete,:)];
             idx_G2_samples=[idx_G2_samples;i+2-i_tmp]; %todo why i+2? check
+        elseif surrogate==false
+            real_counter=real_counter+1;
         end
         hyper_grid = hyper_grid(incomplete,:);
         incomplete = logical(ones(size(hyper_grid,1),1));
