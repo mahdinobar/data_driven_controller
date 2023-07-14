@@ -7,7 +7,7 @@ metric_gt_all=[];
 metric_hat_all=[];
 %% user manual iputs
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_204';
+idName= 'LM_203';
 sys='LM';
 isGBO=true;
 N0=1; %TODO if N0~=1
