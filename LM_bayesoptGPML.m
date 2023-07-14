@@ -84,7 +84,7 @@ removed_points=[];
 idx_G2_samples=[];
 i_tmp=0;
 real_counter=0;
-real_counter_limit=5;
+real_counter_limit=10;
 limit_total_G2_after_activation=20;
 while i <opt.max_iters-2+1
     hidx = -1;
