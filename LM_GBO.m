@@ -7,15 +7,15 @@ metric_gt_all=[];
 metric_hat_all=[];
 %% user manual iputs
 tmp_dir='/home/mahdi/ETHZ/GBO/code/data_driven_controller/server_data';
-idName= 'LM_203';
+idName= 'LM_203_debug';
 sys='LM';
 isGBO=true;
 N0=1; %TODO if N0~=1
-N_batch=50;
-N_iter=50;
+N_batch=1;
+N_iter=30;
 eta1=7.5827e-08;
 eta2=0.2;
-debugging=false;
+debugging=true;
 sampleTs=0.001;
 %% misc settings and N0 settings
 
@@ -140,19 +140,19 @@ end
 function [objective] = ObjFun(exp_data, G2, gains)
 global sampleTs
 global debugging
+reference0=30;
+reference=40;
 if isempty(G2)==1
     step_high=40;
     sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
     tmp_idx=find(sample_idx>0);
     tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
     tmp_idx=tmp_idx(tmp_idx_2);
-    y_offset=exp_data.actPos(tmp_idx(1)-10);
-    u_offset=exp_data.actCur(tmp_idx(1)-10);
+    y_offset=0;%exp_data.actPos(tmp_idx(1)-10);
+    u_offset=0;%exp_data.actCur(tmp_idx(1)-10);
     % use 50 ms of data after step high for G2
     ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+70)-y_offset;
     utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+70)-u_offset;
-    reference0=0;
-    reference=10;
     y_high=ytmp(50:end); %todo check
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
@@ -174,14 +174,13 @@ if isempty(G2)==1
     e_ss=abs(y_final-reference);
 elseif isempty(G2)==0 %when we use surrogate to estimate objective
     F=0.001;
-    P=gains(1)/512;
-    D=gains(2)/768;
-    I=0;
-    reference0=0;
-    reference=10;
-    G2c=d2c(G2);
-    G2_num=G2c.Numerator{1};
-    G2_den=G2c.Denominator{1};
+    Kp=gains(1)/512;
+    Kd=gains(2)/768;
+    Ki=0;
+    %     G2c=d2c(G2);
+    %     G2_num=G2c.Numerator{1};
+    %     G2_den=G2c.Denominator{1};
+    [A,B,C,D]=tf2ss(cell2mat(G2.Numerator),cell2mat(G2.Denominator));
     try
         mdlWks = get_param('DT','ModelWorkspace');
     catch
@@ -189,17 +188,22 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         mdlWks = get_param('DT','ModelWorkspace');
     end
     assignin(mdlWks,'sampleTs',sampleTs)
-    assignin(mdlWks,'P',P)
-    assignin(mdlWks,'D',D)
-    assignin(mdlWks,'I',I)
+    assignin(mdlWks,'Kp',Kp)
+    assignin(mdlWks,'Kd',Kd)
+    assignin(mdlWks,'Ki',Ki)
     assignin(mdlWks,'F',F)
     assignin(mdlWks,'reference0',reference0)
     assignin(mdlWks,'reference',reference)
-    assignin(mdlWks,'G2_den',G2_den)
-    assignin(mdlWks,'G2_num',G2_num)
+        assignin(mdlWks,'G2_den',G2_den)
+        assignin(mdlWks,'G2_num',G2_num)
+    assignin(mdlWks,'A',A)
+    assignin(mdlWks,'B',B)
+    assignin(mdlWks,'C',C)
+    assignin(mdlWks,'D',D)
+    assignin(mdlWks,'reference0',reference0)
     simOut = sim("DT.slx");
-    y2=simOut.yout{1}.Values.Data(1:10:end-1);
-    t=simOut.tout(1:10:end-1);
+    y2=simOut.yout{1}.Values.Data(1:1:end-1);
+    t=simOut.yout{1}.Values.Time(1:1:end-1);
     y_high=y2(t>(50*sampleTs)); %TODO check pay attention
     t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
     y_init=0;
@@ -228,13 +232,11 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         tmp_idx=find(sample_idx>0);
         tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
         tmp_idx=tmp_idx(tmp_idx_2);
-        y_offset=exp_data.actPos(tmp_idx(1)-10);
-        u_offset=exp_data.actCur(tmp_idx(1)-10);
+        y_offset=0;%exp_data.actPos(tmp_idx(1)-10);
+        u_offset=0;%exp_data.actCur(tmp_idx(1)-10);
         % use 50 ms of data after step high for G2
-        ytmp = exp_data.actPos((tmp_idx(1)-49):tmp_idx(1)+70)-y_offset;
-        utmp = exp_data.actCur((tmp_idx(1)-49):tmp_idx(1)+70)-u_offset;
-        reference0=0;
-        reference=10;
+        ytmp = exp_data.actPos((tmp_idx(1)-50):tmp_idx(1)+69)-y_offset;
+        utmp = exp_data.actCur((tmp_idx(1)-50):tmp_idx(1)+69)-u_offset;
         % visualize
         close(figure(200))
         figure(200);
@@ -248,8 +250,6 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         RMSE=sqrt(sum((ytmp(50:end)-y2(50:end)).^2));
         title(append("RMSE=",string(RMSE),", P=",string(gains(1)),", D=",string(gains(2))))
 %         for metrics
-        reference0=0;
-        reference=10;
         y_high=ytmp(50:end); %todo check
         t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
         y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
@@ -301,10 +301,10 @@ if st==0
     st=sampleTs;
 end
 
-% w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044, 0.0339]; %grid mean of feasible set mean(perf_Data_feasible)
+w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044];%, 0.0339]; %grid mean of feasible set mean(perf_Data_feasible)
 % w_importance=[1.2, 1.05, 0.98, 1, 1.1];
-w_mean_grid=[0.0425, 0.0117, 0.2044]; %grid mean of feasible set mean(perf_Data_feasible)
-w_importance=[1.05, 1.1, 1];
+% w_mean_grid=[0.0425, 0.0117, 0.2044]; %grid mean of feasible set mean(perf_Data_feasible)
+w_importance=[1, 1.05, 1.1, 1];
 w=w_importance./w_mean_grid; 
 w=w./sum(w);
 objective=st*w(1)+Tr*w(2)+ITAE*w(3);
