@@ -176,7 +176,7 @@ for k=1:length(eta1_str)
 
     % true_objective DC motor numeric
     % true_objective=3.1672;
-    true_objective = 1; %0.5449;%0148;%4.1000;
+    true_objective = 0.0226; %0.5449;%0148;%4.1000;
     % ms_true=[0.6119, 1.6642];
     % true_objective=65.9974;
     % true_objective=17.8676;
@@ -313,27 +313,28 @@ for k=1:length(eta1_str)
     ax1.FontSize=24;
     ax1.FontName='Times New Roman';
     hold on
-    h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 1.5);
+    h1=semilogy(ax1, JminObservGBO./true_objective, ':', 'Color', [0.8500 0.3250 0.0980, .5], 'LineWidth', 1.5);
     %     h11=semilogy(ax1, JminObservGBOinf./true_objective, ':', 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 1.5);
-    h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0, 0, 1, .5], 'LineWidth', 1.5);
-    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.6350 0.0780 0.1840], 'LineWidth', 6);
+    h2=semilogy(ax1, JminObservBO/true_objective, ':', 'Color', [0.4940 0.1840 0.5560, .5], 'LineWidth', 1.5);
+    h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.8500 0.3250 0.0980, 1], 'LineWidth', 6);
     %     h33=semilogy(ax1, meanJminObservGBOinf./true_objective, 'Color', [0.9290 0.6940 0.1250], 'LineWidth', 6);
-    h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0, 0, 1, 1], 'LineWidth', 6);
+    h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0.4940 0.1840 0.5560, 1], 'LineWidth', 6);
     %     [a,b]=max(meanJminObservGBO<0.9915);
     % xlabel(ax1, 'Iteration on real plant')
     % ylabel(ax1, 'Minimum observed objective')
-    xlabel(ax1, 'Iteration')
-    ylabel(ax1, 'Minimum observed cost')
+    xlabel(ax1, 'Experiments')
+    ylabel(ax1, 'Optimality ratio')
     % legend([h3, h4],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation'}, 'Location', 'northeast');
     % h5=yline(2.78,'k--', 'LineWidth', 3);
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
     %     ylim([0.45 2.5])
     xlim([1, N_iter])
+    xlim([1,25])
     %     xticks([1, 5:5:50])
     %     h6=yline(ax1,[0.5449],'--','Color',[0.4660 0.6740 0.1880], 'LineWidth',4);
     %     h7=yline(ax1,[0.9989],'--','LineWidth',4); %MATLAB PI auto-tuner  with GM=60 degrees See:
-    legend([h3, h4],{'Guided BO with superior surrogate','BO'}, 'Location', 'northeast');
+    legend([h3, h4],{'Guided BO','BO'}, 'Location', 'northeast');
     %     [K,info] = pidtune(G,'PI')
     %
     % K =
@@ -708,7 +709,7 @@ ax3=gca;
 ax3.FontSize=28;
 ax3.FontName='Times';
 % edges = linspace(0.0225,0.0279,9);
-edges = linspace(1,1.18,9);
+edges = linspace(1,1.022,4);
 true_objective=0.0226;
 JObservBO=JObservBO(:,1:25);
 JObservGBO=JObservGBO(:,1:25);
@@ -721,12 +722,12 @@ b(2).FaceColor=[0.8500 0.3250 0.0980];
 box off
 ytix = get(gca, 'YTick');
 xlabel(ax3, 'Optimality ratio')
-ylabel(ax3, 'Number of experiments in each cost band')
+ylabel(ax3, 'Number of experiments')
 % set(b, {'DisplayName'}, {'BO','Guided BO'}')
 % legend()
 ax3.FontSize=28;
 ax3.FontName='Times';
 title("Histogram")
-xticks([1:0.04:1.18])
-xlim([min(edges),1.17])
+% xticks([1:0.04:1.18])
+% xlim([min(edges),1.17])
 
