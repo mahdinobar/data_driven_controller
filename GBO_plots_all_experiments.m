@@ -665,7 +665,7 @@ h3inferior=plot(time, step_low+(step_high-step_low)*y_GBO_inferior, 	'Color', [0
 h4=plot(time, step_low+(step_high-step_low)*y_BO, 'b', 'LineWidth', 3);
 h5=stairs([0,Tf/2,Tf], [step_high,step_low,step_low],'--k', 'LineWidth', 3);
 
-legend([h1, h2, h3, h3inferior, h4, h5],{'Ground truth', 'Nominal PGM', 'Guided BO with superior surrogate', 'Guided BO with inferior surrogate', 'BO', 'Reference input'}, 'Location', 'northeast');
+legend([h1, h2, h3, h3inferior, h4, h5],{'Ground truth', 'Nominal PGM', 'Guided BO with superior DT', 'Guided BO with inferior DT', 'BO', 'Reference input'}, 'Location', 'northeast');
 grid on
 xlim(ax1, [0 Tf])
 yticks([step_low, step_high])
