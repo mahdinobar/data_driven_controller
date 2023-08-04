@@ -805,7 +805,7 @@ ylabel(ax30, 'Mean absolute evaluated cost error',"Color","m") %mean iteration t
 ax30.YColor="m";
 xlim([0 10.1])
 
-
+%%
 fig=figure(40);
 fig.Position=[200 0 1000 800];
 ax40=axes;
@@ -838,17 +838,18 @@ clearvars Trace
 yyaxis right
 hr=plot(eta1,mean_n_s,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
-xlabel(ax40, '\eta_{1}')
-ylabel(ax40, 'Counted surrogate activation',"Color","#D95319")
+xlabel(ax40, '$\eta_{1}$','Interpreter','Latex')
+ylabel(ax40, 'DT activation',"Color","#D95319")
 xticks([0.1,1:10])
 yyaxis left
 hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"m");
-ylabel(ax40, 'Normalized mean absolute evaluated cost error',"Color","m") %mean iteration to outperform nominal controller
+ylabel(ax40,'$\frac{1}{J^*}\sum_{b=1}^{100}\sum_{i=1}^{50}\left | \hat{J}_{b,i}-J^* \right |$','Interpreter','Latex')
 ax40.YColor="m";
 xlim([0 10.1])
 ylim([0.2,0.81])
 box on
 
+%%
 fig=figure(50);
 fig.Position=[200 0 1000 800];
 ax50=axes;
@@ -884,12 +885,12 @@ yyaxis right
 hr=plot(eta1,mean_GBO_convergance_gt,'.-','Color',"#77AC30", 'MarkerSize',40,'MarkerEdgeColor',"#77AC30",'MarkerFaceColor',"#77AC30");
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax50, '\eta_{1}')
-ylabel(ax50, 'Convergance iteration to ground truth performance',"Color","#7E2F8E")
+ylabel(ax50, 'Experiment',"Color","#7E2F8E")
 ax50.YColor="#77AC30";
 xticks([0.1,1:10])
 yyaxis left
 hl=plot(eta1,mean_GBO_convergance_n,'.-','Color',"k", 'MarkerSize',40,'MarkerEdgeColor',"k",'MarkerFaceColor',"k");
-ylabel(ax50, 'Convergance iteration to nominal performance',"Color","k") %mean iteration to outperform nominal controller
+ylabel(ax50, 'Experiment',"Color","k") %mean iteration to outperform nominal controller
 ax50.YColor="k";
 xlim([0 10.1])
 box on
