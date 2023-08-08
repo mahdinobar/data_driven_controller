@@ -149,7 +149,7 @@ end
 meanJminObservGBO=nanmean(JminObservGBO,2);
 meanJminObservBO=nanmean(JminObservBO,2);
 
-
+%%
 fig=figure(10);
 fig.Position=[200 0 1600 800];
 ax1=axes;
@@ -178,37 +178,45 @@ JGBOd68=mean(JGBO')-1*std(JGBO')/sqrt(n);
 JBOu68=mean(JBO')+1*std(JBO')/sqrt(n);
 JBOd68=mean(JBO')-1*std(JBO')/sqrt(n);
 
+JGBOu99=mean(JGBO')+2.58*std(JGBO')/sqrt(n);
+JGBOd99=mean(JGBO')-2.58*std(JGBO')/sqrt(n);
+JBOu99=mean(JBO')+2.58*std(JBO')/sqrt(n);
+JBOd99=mean(JBO')-2.58*std(JBO')/sqrt(n);
+
 x=1:length(JBOd95);
 
-h1_68=fill([x fliplr(x)],[JGBOu68 fliplr(JGBOd68)],[0.8500 0.3250 0.0980],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
-h2_68=fill([x fliplr(x)],[JBOu68 fliplr(JBOd68)],[0.4940 0.1840 0.5560],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+h1_68=fill([x fliplr(x)],[JGBOu68 fliplr(JGBOd68)],[0.8500 0.3250 0.0980],'FaceAlpha',0.3,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+h2_68=fill([x fliplr(x)],[JBOu68 fliplr(JBOd68)],[0.4940 0.1840 0.5560],'FaceAlpha',0.3,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
 % 
-% h1_90=fill([x fliplr(x)],[JGBOu90 fliplr(JGBOd90)],[1,0,0],'FaceAlpha',0.3,'LineStyle','none');
-% h2_90=fill([x fliplr(x)],[JBOu90 fliplr(JBOd90)],[0,0,1],'FaceAlpha',0.3,'LineStyle','none');
+h1_90=fill([x fliplr(x)],[JGBOu90 fliplr(JGBOd90)],[1,0,0],'FaceAlpha',0.2,'LineStyle','none');
+h2_90=fill([x fliplr(x)],[JBOu90 fliplr(JBOd90)],[0,0,1],'FaceAlpha',0.2,'LineStyle','none');
 
-h1=fill([x fliplr(x)],[JGBOu95 fliplr(JGBOd95)],[0.8500 0.3250 0.0980],'FaceAlpha',0.5,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
-h2=fill([x fliplr(x)],[JBOu95 fliplr(JBOd95)],[0.4940 0.1840 0.5560],'FaceAlpha',0.5,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+h1_95=fill([x fliplr(x)],[JGBOu95 fliplr(JGBOd95)],[0.8500 0.3250 0.0980],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+h2_95=fill([x fliplr(x)],[JBOu95 fliplr(JBOd95)],[0.4940 0.1840 0.5560],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
 
-h3=semilogy(ax1, meanJminObservGBO./true_objective, 'Color', [0.8500 0.3250 0.0980, 1], 'LineWidth', 5);
-h4=semilogy(ax1, meanJminObservBO./true_objective, 'Color', [0.4940 0.1840 0.5560, 1], 'LineWidth', 5);
+h1_99=fill([x fliplr(x)],[JGBOu99 fliplr(JGBOd99)],[0.8500 0.3250 0.0980],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+h2_99=fill([x fliplr(x)],[JBOu99 fliplr(JBOd99)],[0.4940 0.1840 0.5560],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+
+
+h3=semilogy(ax1, meanJminObservGBO(:)./true_objective, 'Color', [0.8500 0.3250 0.0980, 1], 'LineWidth', 5);
+h4=semilogy(ax1, meanJminObservBO(:)./true_objective, 'Color', [0.4940 0.1840 0.5560, 1], 'LineWidth', 5);
+
+% x=[1:50]';
+% x=repmat(x,1,10);
+% h6=scatter(ax1, x(:), JminObservGBO(:)./true_objective, 'MarkerFaceColor', [0.8500 0.3250 0.0980],"MarkerEdgeColor","none");
+% h7=scatter(ax1, x(:), JminObservBO(:)./true_objective, 'MarkerFaceColor', [0.4940 0.1840 0.5560],"MarkerEdgeColor","none");
 
 h5=yline(50.81./true_objective,'k--', 'LineWidth', 3);
 
-legend([h3, h4, h5],{'Guided BO', 'BO', 'Nominal'}, 'Location', 'northeast');
+legend([h3, h4, h5],{'Guided BO', 'BO', 'Nominal'}, 'Location', 'northeast',"NumColumns",1);
 grid on
 % ylim([16.53 200])
 xlim([1, 40])
 ylim([1, 4.5])
 xticks([1, 5:5:50])
-% yticks([16.53, 50.8, 100, 150, 200])
 
-% for nominal at gains_nom= [0.4873, 1.5970]
 grid minor
-% x=1:50;
-% y=TraceGBO.post_mus(2:end);
-% err=TraceGBO.post_sigma2s(2:end);
-% h9=errorbar(x, y, err, '-s','MarkerSize',10,'MarkerEdgeColor','red','MarkerFaceColor','red', 'LineStyle','none');
-
+box on
 
 fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
 fprintf('length(TraceBO)=%d \n',length(TraceBO))
@@ -219,33 +227,6 @@ fprintf('idx_GBO=%d \n',idx)
 fprintf('idx_BO=%d \n',idx)
 
 
-% plot(p, '--p', 'LineWidth', 5)
-% plot(ci(1,:)+meanJminObservBO', '--k', 'LineWidth', 5)
-% plot(ax1, 1.2.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
-% plot(ax1, 1.4.*ones(size(meanJminObservGBO)),'--k', 'LineWidth',2)
-
-% addpath /home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/Violinplot-Matlab-master/
-% fig=figure();
-% boxplot(x, 'PlotStyle','compact', 'OutlierSize', 2)
-% vs = violinplot(x,0.5:49.5);
-
-
-
-
-% group = [    .8:49.8;
-%          1.2:50.2];
-% 
-% boxplot(x,.8:49.8, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','r')
-% hold on
-% boxplot(y,1.2:50.2, 'PlotStyle','compact', 'OutlierSize', 2, 'Colors','b')
-% boxplot(x-y, 'PlotStyle','compact', 'OutlierSize', 2)
-% ylim([1 3])
-% set(gca,'yscale','log')
-
-% boxplot([x,y], 'Notch','on', 'Labels',{1:50,1:50}, 'PlotStyle','compact', 'OutlierSize', 2)
-% ylim([1 3])
-% set(gca,'yscale','log')
-
 xlabel(ax1, 'Experiment')
 ylabel(ax1, 'Optimality ratio')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
@@ -255,73 +236,91 @@ figName=append(dir, idName,'_10_experiments.png');
 saveas(gcf,figName)
 figName=append(dir, idName,'_10_experiments.fig');
 saveas(gcf,figName)
-%%
-fig3=figure(3);
-fig3.Position=[200 0 1200 800];
-ax3=gca;
-ax3.FontSize=28;
-ax3.FontName='Times';
-% edges = linspace(0.0225,0.0279,9);
-edges = linspace(1,3,6);
-JObservBO=JObservBO(:,1:50);
-JObservGBO=JObservGBO(:,1:50);
-h1 = histcounts(JObservBO(:)./true_objective,edges, 'Normalization', "probability");
-h2 = histcounts(JObservGBO(:)./true_objective,edges, 'Normalization', "probability");
-b=bar(ax3, edges(1:end-1),[h1.*100; h2.*100]',"histc");
-% set(gca,'YScale','log')
-b(1).FaceColor=[0.4940 0.1840 0.5560];
-b(2).FaceColor=[0.8500 0.3250 0.0980];
-box off
-ytix = get(gca, 'YTick');
-xlabel(ax3, 'Optimality ratio')
-ylabel(ax3, 'Percentage of experiments (%)')
-% set(b, {'DisplayName'}, {'BO','Guided BO'}')
-% legend()
-ax3.FontSize=28;
-ax3.FontName='Times';
-title("Histogram")
-% xticks([1:0.04:1.18])
-% xlim([min(edges),1.17])
-legend([b(1),b(2)],{'Guided BO', 'BO', 'Nominal'}, 'Location', 'northeast');
-
 
 %%
-function [objective, constraints] = ObjFun(X, G)
+fig=figure(20);
+fig.Position=[200 0 1600 800];
+ax1=axes;
+ax1.FontSize=24;
+ax1.FontName='Times New Roman';
+hold on
+true_objective=16.53;
 
-%     todo move some lines outside with handler@: faster?
-C=tf([X(1), X(1)*X(2)], [1, 0]);
-CL=feedback(C*G, 1);
+% h1=semilogy(ax1, JminObservGBO(:,:)./true_objective, ':', 'Color', [1, 0, 0, .7], 'LineWidth', 1.5);
+% h2=semilogy(ax1, JminObservBO(:,:)./true_objective, ':', 'Color', [0, 0, 1, .7], 'LineWidth', 1.5);
+JGBO=JminObservGBO./true_objective;
+JBO=JminObservBO./true_objective;
+n=size(JBO,2);
+JGBOu95=mean(JGBO')+1.959*std(JGBO')/sqrt(n);
+JGBOd95=mean(JGBO')-1.959*std(JGBO')/sqrt(n);
+JBOu95=mean(JBO')+1.959*std(JBO')/sqrt(n);
+JBOd95=mean(JBO')-1.959*std(JBO')/sqrt(n);
 
-ov=abs(stepinfo(CL).Overshoot);
-st=stepinfo(CL).SettlingTime;
+JGBOu90=mean(JGBO')+1.65*std(JGBO')/sqrt(n);
+JGBOd90=mean(JGBO')-1.65*std(JGBO')/sqrt(n);
+JBOu90=mean(JBO')+1.65*std(JBO')/sqrt(n);
+JBOd90=mean(JBO')-1.65*std(JBO')/sqrt(n);
 
-[y,t]=step(CL);
-reference=1;
-e=abs(y-reference);
-Tr=stepinfo(CL, 'RiseTimeLimits',[0.1,0.6]).RiseTime;
-ITAE = trapz(t, t.*abs(e));
+JGBOu68=mean(JGBO')+1*std(JGBO')/sqrt(n);
+JGBOd68=mean(JGBO')-1*std(JGBO')/sqrt(n);
+JBOu68=mean(JBO')+1*std(JBO')/sqrt(n);
+JBOd68=mean(JBO')-1*std(JBO')/sqrt(n);
 
-if isnan(ov) || isinf(ov) || ov>1e3
-    ov=1e3;
-end
+JGBOu99=mean(JGBO')+2.58*std(JGBO')/sqrt(n);
+JGBOd99=mean(JGBO')-2.58*std(JGBO')/sqrt(n);
+JBOu99=mean(JBO')+2.58*std(JBO')/sqrt(n);
+JBOd99=mean(JBO')-2.58*std(JBO')/sqrt(n);
 
-if isnan(st) || isinf(st) || st>1e5
-    st=1e5;
-end
+x=1:length(JBOd95);
 
-if isnan(Tr) || isinf(Tr) || Tr>1e5
-    Tr=1e5;
-end
+% h1_68=fill([JGBOu68 fliplr(JGBOd68)],[x fliplr(x)],[0.8500 0.3250 0.0980],'FaceAlpha',0.3,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+% h2_68=fill([JGBOu68 fliplr(JGBOd68)],[x fliplr(x)],[0.4940 0.1840 0.5560],'FaceAlpha',0.3,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+% % 
+% h1_90=fill([JGBOu90 fliplr(JGBOd90)],[x fliplr(x)],[1,0,0],'FaceAlpha',0.2,'LineStyle','none');
+% h2_90=fill([JGBOu90 fliplr(JGBOd90)],[x fliplr(x)],[0,0,1],'FaceAlpha',0.2,'LineStyle','none');
+% 
+% h1_95=fill([JGBOu95 fliplr(JGBOd95)],[x fliplr(x)],[0.8500 0.3250 0.0980],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+% h2_95=fill([JGBOu95 fliplr(JGBOd95)],[x fliplr(x)],[0.4940 0.1840 0.5560],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+% 
+% h1_99=fill([JGBOu99 fliplr(JGBOd99)],[x fliplr(x)],[0.8500 0.3250 0.0980],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.8500 0.3250 0.0980]);
+% h2_99=fill([JGBOu99 fliplr(JGBOd99)],[x fliplr(x)],[0.4940 0.1840 0.5560],'FaceAlpha',0.2,'LineStyle',':',"EdgeColor",[0.4940 0.1840 0.5560]);
+% 
+experiments=[1:50];
+h3=plot(ax1, abs(meanJminObservGBO(:)-true_objective)./true_objective,experiments, 'Color', [0.8500 0.3250 0.0980, 1], 'LineWidth', 5);
+h4=plot(ax1, abs(meanJminObservBO(:)-true_objective)./true_objective,experiments, 'Color', [0.4940 0.1840 0.5560, 1], 'LineWidth', 5);
 
-if isnan(ITAE) || isinf(ITAE) || ITAE>1e5
-    ITAE=1e5;
-end
+x=[1:50]';
+x=repmat(x,1,10);
+% h6=scatter(ax1, x(:), JminObservGBO./true_objective, 'MarkerFaceColor', [0.8500 0.3250 0.0980],"MarkerEdgeColor","none");
+% h7=scatter(ax1, x(:), JminObservBO./true_objective, 'MarkerFaceColor', [0.4940 0.1840 0.5560],"MarkerEdgeColor","none");
 
-w=[0.1, 1, 1, 0.5];
-% w=[91.35, 0.34, 0.028, 0.0019];
-% w=[40.	0.10	0.01	0.0002];
+h5=yline(50.81./true_objective,'k--', 'LineWidth', 3);
 
-w=w./sum(w);
-objective=ov/w(1)+st/w(2)+Tr/w(3)+ITAE/w(4);
-constraints=-1;
-end
+legend([h3, h4, h5],{'Guided BO', 'BO', 'Nominal'}, 'Location', 'northeast',"NumColumns",1);
+grid on
+% ylim([16.53 200])
+ylim([1, 40])
+% xlim([1, 4.5])
+xticks([1, 5:5:50])
+
+grid minor
+box on
+
+fprintf('length(TraceGBO)=%d \n',length(TraceGBO))
+fprintf('length(TraceBO)=%d \n',length(TraceBO))
+thr=1.4;
+[~,idx]=max(meanJminObservGBO./true_objective<thr);
+fprintf('idx_GBO=%d \n',idx)
+[~,idx]=max(meanJminObservBO./true_objective<thr);
+fprintf('idx_BO=%d \n',idx)
+
+
+ylabel(ax1, 'Experiment')
+xlabel(ax1, 'Regret')
+% ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+% set(ax1,'xscale','log')
+figName=append(dir, idName,'_10_experiments.png');
+saveas(gcf,figName)
+figName=append(dir, idName,'_10_experiments.fig');
+saveas(gcf,figName)
