@@ -813,8 +813,8 @@ ax40.FontSize=24;
 ax40.FontName='Times New Roman';
 hold on
 grid on
-eta1=[0.1,1:10];
-eta1_str={'01','1','2','3','4','5','6','7','8','9','10'};
+eta1=[1e-6,1:10];
+eta1_str={'000001','1','2','3','4','5','6','7','8','9','10'};
 mean_n_s=[];
 std_n_s=[];
 mean_values_all=[];
@@ -837,17 +837,21 @@ end
 clearvars Trace
 yyaxis right
 hr=plot(eta1,mean_n_s,'.-','Color',"#D95319", 'MarkerSize',40,'MarkerEdgeColor',"#D95319",'MarkerFaceColor',"#D95319");
+set(gca,'yscale','log')
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax40, '$\eta_{1}$','Interpreter','Latex')
 ylabel(ax40, 'DT activation',"Color","#D95319")
-xticks([0.1,1:10])
+ylim([8,220])
 yyaxis left
 hl=plot(eta1,mean_values_all/0.5449,'.-','Color',"m", 'MarkerSize',40,'MarkerEdgeColor',"m",'MarkerFaceColor',"m");
+set(gca,'yscale','log')
 ylabel(ax40,'$\frac{1}{J^*}\sum_{b=1}^{100}\sum_{i=1}^{50}\left | \hat{J}_{b,i}-J^* \right |$','Interpreter','Latex')
 ax40.YColor="m";
 xlim([0 10.1])
-ylim([0.2,0.81])
+ylim([0.28,0.85])
 box on
+xticks([1e-6,1:10])
+xticklabels({'1e-6','1','2','3','4','5','6','7','8','9','10'})
 
 %%
 fig=figure(50);
@@ -857,10 +861,10 @@ ax50.FontSize=24;
 ax50.FontName='Times New Roman';
 hold on
 grid on
-eta1=[0.1,1:10];
-mean_GBO_convergance_gt=[19.0714285714286	21.9000000000000	23.1724137931035	21.3333333333333	22.4545454545455	23.8484848484848	22.5675675675676	25.4285714285714	23.9743589743590	28.6097560975610	29.3250000000000];%	26.6363636363636]; %convergance to gt
-mean_GBO_convergance_n=[1.76000000000000	1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
-eta1_str={'01','1','2','3','4','5','6','7','8','9','10'};
+eta1=[1e-6,1:10];
+mean_GBO_convergance_gt=[22.5, 21.9000000000000	23.1724137931035	21.3333333333333	22.4545454545455	23.8484848484848	22.5675675675676	25.4285714285714	23.9743589743590	28.6097560975610	29.3250000000000];%	26.6363636363636]; %convergance to gt
+mean_GBO_convergance_n=[1.95, 1.68000000000000	2.28000000000000	1.54000000000000	2.28000000000000	2.38000000000000	1.96000000000000	1.80000000000000	2.64000000000000	3.58000000000000	4.26000000000000]; %convergance to nominal controller performance
+eta1_str={'000001','01','1','2','3','4','5','6','7','8','9','10'};
 mean_n_s=[];
 std_n_s=[];
 mean_values_all=[];
@@ -885,12 +889,13 @@ yyaxis right
 hr=plot(eta1,mean_GBO_convergance_gt,'.-','Color',"#77AC30", 'MarkerSize',40,'MarkerEdgeColor',"#77AC30",'MarkerFaceColor',"#77AC30");
 set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
 xlabel(ax50, '\eta_{1}')
-ylabel(ax50, 'Experiment',"Color","#7E2F8E")
+ylabel(ax50, 'Ground truth converging experiment',"Color","#7E2F8E",'Interpreter','latex')
 ax50.YColor="#77AC30";
-xticks([0.1,1:10])
+xticks([1e-6,1:10])
+xticklabels({'1e-6','1','2','3','4','5','6','7','8','9','10'})
 yyaxis left
 hl=plot(eta1,mean_GBO_convergance_n,'.-','Color',"k", 'MarkerSize',40,'MarkerEdgeColor',"k",'MarkerFaceColor',"k");
-ylabel(ax50, 'Experiment',"Color","k") %mean iteration to outperform nominal controller
+ylabel(ax50, 'Nominal outperforming experiment',"Color","k",'Interpreter','latex') %mean iteration to outperform nominal controller
 ax50.YColor="k";
 xlim([0 10.1])
 box on
