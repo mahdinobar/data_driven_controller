@@ -194,8 +194,8 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     assignin(mdlWks,'F',F)
     assignin(mdlWks,'reference0',reference0)
     assignin(mdlWks,'reference',reference)
-        assignin(mdlWks,'G2_den',G2_den)
-        assignin(mdlWks,'G2_num',G2_num)
+%         assignin(mdlWks,'G2_den',G2_den)
+%         assignin(mdlWks,'G2_num',G2_num)
     assignin(mdlWks,'A',A)
     assignin(mdlWks,'B',B)
     assignin(mdlWks,'C',C)
@@ -274,7 +274,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         metric_error_all=[metric_error_all;[(ov-ov_gt)/ov_gt*100, (Tr-Tr_gt)/Tr_gt*100, (st-st_gt)/st_gt*100, (ITAE-ITAE_gt)/ITAE_gt*100,(e_ss-e_ss_gt)/e_ss_gt*100]]
         save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/metric_debug.mat","metric_error_all","metric_gt_all","metric_hat_all")
         pause;
-%%
+% %%
 %         clc
 %         step_high=40;
 %         fw=60;
@@ -335,9 +335,9 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
 %         xlim(ax1, [0,t(end)])
 %         yticks([step_low, step_high])
 %         xlabel(ax1, 'Time (s)')
-%         ylabel(ax1, 'Position (cm)')
+%         ylabel(ax1, 'Position (mm)')
 %         box on
-% 
+
 
     end
 end
