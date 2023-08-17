@@ -1,4 +1,4 @@
-% Guided BO and BO for Linear Motor System 
+% Guided BO and BO for Linear Motor System
 %% clean, set directories, start OPC server
 clear all; clc; close all;
 global P_crop_safe D_crop_safe exp_data_crop_safe sampleTs N idx G2data N_G2 debugging metric_error_all metric_gt_all metric_hat_all
@@ -126,7 +126,7 @@ for batch=1:1:N_batch
     botrace0.samples=X_ltn;
     botrace0.values=y_ltn;
     botrace0.idx_G2_samples=[];
-    botrace0.times=RAND'; %todo 
+    botrace0.times=RAND'; %todo
     opt.resume_trace_data = botrace0;
     clear botrace0
     opt.max_iters = size(opt.resume_trace_data.samples,1)+N_iter;
@@ -194,8 +194,8 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
     assignin(mdlWks,'F',F)
     assignin(mdlWks,'reference0',reference0)
     assignin(mdlWks,'reference',reference)
-%         assignin(mdlWks,'G2_den',G2_den)
-%         assignin(mdlWks,'G2_num',G2_num)
+    %         assignin(mdlWks,'G2_den',G2_den)
+    %         assignin(mdlWks,'G2_num',G2_num)
     assignin(mdlWks,'A',A)
     assignin(mdlWks,'B',B)
     assignin(mdlWks,'C',C)
@@ -240,7 +240,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         % visualize
         close(figure(200))
         figure(200);
-%         set(gcf, 'Position', get(0, 'Screensize'));
+        %         set(gcf, 'Position', get(0, 'Screensize'));
         hold on;
         plot(t,simOut.yout{3}.Values.Data(1:end-1),"k");
         plot(t,simOut.yout{2}.Values.Data(1:10:end-1),"b");
@@ -249,7 +249,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         plot(t,utmp,"--g");
         RMSE=sqrt(sum((ytmp(50:end)-y2(50:end)).^2));
         title(append("RMSE=",string(RMSE),", P=",string(gains(1)),", D=",string(gains(2))))
-%         for metrics
+        %         for metrics
         y_high=ytmp(50:end); %todo check
         t_high=0:sampleTs:((length(y_high)-1)*sampleTs);
         y_init=mean(exp_data.actPos((tmp_idx(1)-60):(tmp_idx(1)-10)))-y_offset;
@@ -274,70 +274,257 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         metric_error_all=[metric_error_all;[(ov-ov_gt)/ov_gt*100, (Tr-Tr_gt)/Tr_gt*100, (st-st_gt)/st_gt*100, (ITAE-ITAE_gt)/ITAE_gt*100,(e_ss-e_ss_gt)/e_ss_gt*100]]
         save("/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/metric_debug.mat","metric_error_all","metric_gt_all","metric_hat_all")
         pause;
-% %%
-%         clc
-%         step_high=40;
-%         fw=60;
-%         bw=10;
-%         gains_gt=[5.341250000000000e+03,49.6875];
-%         exp_data=LinMotor(gains_gt(1),gains_gt(2));
-%         sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-%         tmp_idx=find(sample_idx>0);
-%         tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-%         tmp_idx=tmp_idx(tmp_idx_2);
-%         y_offset=0;%exp_data.actPos(tmp_idx(1)-10);
-%         y_gt = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
-% 
-% %         gains_BO=[5.131250000000000e+03,46.1875];
-%         gains_BO=[6128.75000000000	40.8125000000000];
-%         exp_data=LinMotor(gains_BO(1),gains_BO(2));
-%         sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-%         tmp_idx=find(sample_idx>0);
-%         tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-%         tmp_idx=tmp_idx(tmp_idx_2);
-%         y_BO = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
-% 
-% %         gains_GBO=[5.3375e3,50.6250];
-%         gains_GBO=[5138.75000000000	49.3125000000000];
-%         exp_data=LinMotor(gains_GBO(1),gains_GBO(2));
-%         sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
-%         tmp_idx=find(sample_idx>0);
-%         tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
-%         tmp_idx=tmp_idx(tmp_idx_2);
-%         y_GBO = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
-% 
-%         close(figure(300))
-%         figure(300);
-%         hold on;
-%         t=0:0.001:(length(y_gt)-1)*0.001;
-%         plot(t,y_gt,"g");
-%         plot(t,y_BO,"b");
-%         plot(t,y_GBO,"r");
-% 
-% %%
-%         clc
-%         close(figure(400))
-%         fig=figure(400);
-%         fig.Position=[200 0 1600 800];
-%         ax1=axes;
-%         ax1.FontSize=24;
-%         ax1.FontName='Times New Roman';
-%         hold on
-%         step_high=40;
-%         step_low=30;
-%         h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 2.5);
-%         h3=plot(t, y_GBO, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5);
-%         h4=plot(t, y_BO, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 2.5);
-%         h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 2.5);
-%         grid on
-%         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
-%         grid on
-%         xlim(ax1, [0,t(end)])
-%         yticks([step_low, step_high])
-%         xlabel(ax1, 'Time (s)')
-%         ylabel(ax1, 'Position (mm)')
-%         box on
+        %%
+        clc
+        step_high=40;
+        fw=65;
+        bw=5;
+        gains_gt=[5.341250000000000e+03,49.6875];
+        exp_data=LinMotor(gains_gt(1),gains_gt(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_offset=0;%exp_data.actPos(tmp_idx(1)-10);
+        y_gt = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
 
+
+        i=1; %iteration after N0
+        gains_BO=[5581.25000000000	44.6875000000000];
+        gains_GBO=[5581.25000000000	44.6875000000000];
+
+
+        %         gains_BO=[5.131250000000000e+03,46.1875];
+        %         gains_BO=[6128.75000000000	40.8125000000000];
+        exp_data=LinMotor(gains_BO(1),gains_BO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_BO_1 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        %         gains_GBO=[5.3375e3,50.6250];
+        %         gains_GBO=[5138.75000000000	49.3125000000000];
+        exp_data=LinMotor(gains_GBO(1),gains_GBO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_GBO_1 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        close(figure(300))
+        figure(300);
+        subplot(2,2,1)
+        hold on;
+        t=0:0.001:(length(y_gt)-1)*0.001;
+        plot(t,y_gt,"g");
+        plot(t,y_BO_1,"b");
+        plot(t,y_GBO_1,"r");
+
+        i=2; %iteration after N0
+        gains_BO=[6132.50000000000	50.8250000000000];
+        gains_GBO=[5153.75000000000	50.5625000000000];
+
+
+        %         gains_BO=[5.131250000000000e+03,46.1875];
+        %         gains_BO=[6128.75000000000	40.8125000000000];
+        exp_data=LinMotor(gains_BO(1),gains_BO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_BO_2 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        %         gains_GBO=[5.3375e3,50.6250];
+        %         gains_GBO=[5138.75000000000	49.3125000000000];
+        exp_data=LinMotor(gains_GBO(1),gains_GBO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_GBO_2 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        subplot(1,4,2)
+        hold on;
+        t=0:0.001:(length(y_gt)-1)*0.001;
+        plot(t,y_gt,"g");
+        plot(t,y_BO_2,"b");
+        plot(t,y_GBO_2,"r");
+
+        i=3; %iteration after N0
+        gains_BO=[6125	50.7500000000000];
+        gains_GBO=[5213.75000000000	50.5625000000000];
+
+
+        %         gains_BO=[5.131250000000000e+03,46.1875];
+        %         gains_BO=[6128.75000000000	40.8125000000000];
+        exp_data=LinMotor(gains_BO(1),gains_BO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_BO_3 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        %         gains_GBO=[5.3375e3,50.6250];
+        %         gains_GBO=[5138.75000000000	49.3125000000000];
+        exp_data=LinMotor(gains_GBO(1),gains_GBO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_GBO_3 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        subplot(1,4,3)
+        hold on;
+        t=0:0.001:(length(y_gt)-1)*0.001;
+        plot(t,y_gt,"g");
+        plot(t,y_BO_3,"b");
+        plot(t,y_GBO_3,"r");
+
+        i=4; %iteration after N0
+        gains_BO=[6125	50.7500000000000];
+        gains_GBO=[5412.50000000000	50.8250000000000];
+
+        %         gains_BO=[5.131250000000000e+03,46.1875];
+        %         gains_BO=[6128.75000000000	40.8125000000000];
+        exp_data=LinMotor(gains_BO(1),gains_BO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_BO_4 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        %         gains_GBO=[5.3375e3,50.6250];
+        %         gains_GBO=[5138.75000000000	49.3125000000000];
+        exp_data=LinMotor(gains_GBO(1),gains_GBO(2));
+        sample_idx=exp_data.r(:)==step_high; %LV sampling time=10 ms
+        tmp_idx=find(sample_idx>0);
+        tmp_idx_2=find(tmp_idx>200); %checkpoint because we know step_up applies no sooner than 2 seconds
+        tmp_idx=tmp_idx(tmp_idx_2);
+        y_GBO_4 = exp_data.actPos((tmp_idx(1)-bw):tmp_idx(1)+fw)-y_offset;
+
+        subplot(1,4,4)
+        hold on;
+        t=0:0.001:(length(y_gt)-1)*0.001;
+        plot(t,y_gt,"g");
+        plot(t,y_BO_4,"b");
+        plot(t,y_GBO_4,"r");
+
+        %%
+        clc
+        close(figure(400))
+        fig=figure(400);
+        fig.Position=[100 500 1000 750];
+        ax1=subplot(2,2,1);
+        %         ax1=axes;
+        ax1.FontSize=24;
+        ax1.FontName='Times New Roman';
+        hold on
+        step_high=40;
+        step_low=30;
+        h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
+        h3=plot(t, y_GBO_1, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
+        h4=plot(t, y_BO_1, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
+        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        grid on
+        title("Iteration=1");
+        %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+        grid on
+        xlim(ax1, [0,t(end)])
+        yticks([step_low, step_high])
+        %         xlabel(ax1, 'Time (s)')
+        %         ylabel(ax1, 'Position (mm)')
+        box on
+        p1=get(ax1,'position');
+
+        ax1=subplot(2,2,2);
+        %         ax1=axes;
+        ax1.FontSize=24;
+        ax1.FontName='Times New Roman';
+        hold on
+        step_high=40;
+        step_low=30;
+        h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
+        h3=plot(t, y_GBO_2, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
+        h4=plot(t, y_BO_2, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
+        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        grid on
+        title("Iteration=2");
+        %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+        grid on
+        xlim(ax1, [0,t(end)])
+        yticks([step_low, step_high])
+        %         xlabel(ax1, 'Time (s)')
+        %         ylabel(ax1, 'Position (mm)')
+        box on
+        p2=get(ax1,'position');
+        ax1=subplot(2,2,3);
+        %         ax1=axes;
+        ax1.FontSize=24;
+        ax1.FontName='Times New Roman';
+        hold on
+        step_high=40;
+        step_low=30;
+        h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
+        h3=plot(t, y_GBO_3, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
+        h4=plot(t, y_BO_3, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
+        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        grid on
+        title("Iteration=3");
+        %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+        grid on
+        xlim(ax1, [0,t(end)])
+        yticks([step_low, step_high])
+        %         xlabel(ax1, 'Time (s)')
+        %         ylabel(ax1, 'Position (mm)')
+        box on
+        p3=get(ax1,'position');
+        ax1=subplot(2,2,4);
+        %         ax1=axes;
+        ax1.FontSize=24;
+        ax1.FontName='Times New Roman';
+        hold on
+        step_high=40;
+        step_low=30;
+        h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
+        h3=plot(t, y_GBO_4, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
+        h4=plot(t, y_BO_4, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
+        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        grid on
+        title("Iteration=4");
+        legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
+        grid on
+        xlim(ax1, [0,t(end)])
+        yticks([step_low, step_high])
+        %         xlabel(ax1, 'Time (s)')
+        %         ylabel(ax1, 'Position (mm)')
+        box on
+        p4=get(ax1,'position');
+        height=p1(2)+p1(4)-p4(2);
+        width=p4(1)+p4(3)-p3(1);
+        h5=axes('position',[p3(1) p3(2) width height],'visible','off');
+        h5.XLabel.Visible='on'
+        h5.YLabel.Visible='on'
+        axes(h5)
+        ylabel('Position (mm)')
+        xlabel('Time (s)')
+        set(gca, 'FontName', 'Times New Roman', 'FontSize', 24)
+        % Give common xlabel, ylabel and title to your figure
+        %         han=axes(fig,'visible','off');
+        %         han.Title.Visible='on';
+        %         han.XLabel.Visible='on';
+        %         han.YLabel.Visible='on';
+        %         ylabel(han,'Time (s)',"FontSize",24,"FontName",'Times New Roman');
+        %         xlabel(han,'Position (mm)',"FontSize",24,"FontName",'Times New Roman');
+        %         set(gca,'TickLabelInterpreter','latex');
+        %         xlh.Position(2) = xlh.Position(2) + abs(xlh.Position(2) * 0.01);
+        %         set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+        %                 ax1.FontSize=24;
+        %         ax1.FontName='Times New Roman';
+        %         title(han,'yourTitle');
+        %%
+        figName="/home/mahdi/ETHZ/GBO/LM_response_exp_42_iter_1to4.png";
+        saveas(gcf,figName)
 
     end
 end
@@ -370,7 +557,7 @@ w_mean_grid=[0.0732, 0.0425, 0.0117, 0.2044];%, 0.0339]; %grid mean of feasible 
 % w_importance=[1.2, 1.05, 0.98, 1, 1.1];
 % w_mean_grid=[0.0425, 0.0117, 0.2044]; %grid mean of feasible set mean(perf_Data_feasible)
 w_importance=[1, 1.05, 1.1, 1];
-w=w_importance./w_mean_grid; 
+w=w_importance./w_mean_grid;
 w=w./sum(w);
 objective=st*w(1)+Tr*w(2)+ITAE*w(3);
 end
