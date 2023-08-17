@@ -414,7 +414,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         clc
         close(figure(400))
         fig=figure(400);
-        fig.Position=[100 500 1000 750];
+        fig.Position=[100 500 1200 750];
         ax1=subplot(2,2,1);
         %         ax1=axes;
         ax1.FontSize=24;
@@ -425,9 +425,10 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
         h3=plot(t, y_GBO_1, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
         h4=plot(t, y_BO_1, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
-        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        h5=stairs([0,bw*0.001,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
         grid on
         title("Iteration=1");
+%         set(gca,'yscale','log')
         %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
         grid on
         xlim(ax1, [0,t(end)])
@@ -447,7 +448,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
         h3=plot(t, y_GBO_2, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
         h4=plot(t, y_BO_2, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
-        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        h5=stairs([0,bw*0.001,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
         grid on
         title("Iteration=2");
         %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
@@ -468,7 +469,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
         h3=plot(t, y_GBO_3, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
         h4=plot(t, y_BO_3, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
-        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        h5=stairs([0,bw*0.001,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
         grid on
         title("Iteration=3");
         %         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
@@ -489,7 +490,7 @@ elseif isempty(G2)==0 %when we use surrogate to estimate objective
         h1=plot(t, y_gt, 'Color', [0.4660 0.6740 0.1880], 'LineWidth', 1.5);
         h3=plot(t, y_GBO_4, 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 1.5);
         h4=plot(t, y_BO_4, 'Color', [0.4940 0.1840 0.5560], 'LineWidth', 1.5);
-        h5=stairs([0,0.01,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
+        h5=stairs([0,bw.*0.001,t(end)+0.001], [step_low, step_high,step_low],'--k', 'LineWidth', 1.5);
         grid on
         title("Iteration=4");
         legend([h1, h3, h4, h5],{'Optimum', 'Guided BO', 'BO', 'Reference Input'}, 'Location', 'northeast');
