@@ -2,7 +2,7 @@ close all; clear;clc
 fig=figure(1);
 fig.Position=[200 0 1600 700];
 ax1=axes;
-ax1.FontSize=24;
+ax1.FontSize=32;
 ax1.FontName='Times New Roman';
 hold on
 sys = tf(4,[1 2 10]);
@@ -30,7 +30,7 @@ saveas(gca,"/home/mahdi/ETHZ/GBO/code/data_driven_controller/tmp/metrics_visuali
 fig=figure(2);
 fig.Position=[200 0 1600 300];
 ax2=axes;
-ax2.FontSize=24;
+ax2.FontSize=32;
 ax2.FontName='Times New Roman';
 hold on
 sys = tf(4,[1 2 10]);
