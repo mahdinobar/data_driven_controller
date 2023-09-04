@@ -328,7 +328,8 @@ for k=1:length(eta1_str)
     % h5=yline(2.78,'k--', 'LineWidth', 3);
     % legend([h3, h4, h5],{'Guided BO: Average Minimum Observed Evaluation', 'BO: Average Minimum Observed Evaluation', 'Nominal Controller Threshold'}, 'Location', 'northeast');
     grid on
-    %     ylim([0.45 2.5])
+    ylim([1 1.18])
+    yticks([1:0.03:1.18])
     xlim([1, N_iter])
     xlim([1,25])
     xticks([1,5:5:25])
