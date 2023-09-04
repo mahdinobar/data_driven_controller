@@ -153,7 +153,7 @@ meanJminObservBO=nanmean(JminObservBO,2);
 fig=figure(10);
 fig.Position=[200 0 1600 800];
 ax1=axes;
-ax1.FontSize=24;
+ax1.FontSize=36;
 ax1.FontName='Times New Roman';
 hold on
 true_objective=16.53;
@@ -230,7 +230,7 @@ fprintf('idx_BO=%d \n',idx)
 xlabel(ax1, 'Experiment')
 ylabel(ax1, 'Optimality ratio')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 36)
 set(ax1,'yscale','log')
 figName=append(dir, idName,'_10_experiments.png');
 saveas(gcf,figName)
@@ -241,7 +241,7 @@ saveas(gcf,figName)
 fig=figure(20);
 fig.Position=[200 0 1600 800];
 ax1=axes;
-ax1.FontSize=24;
+ax1.FontSize=36;
 ax1.FontName='Times New Roman';
 hold on
 true_objective=16.53;
@@ -318,7 +318,7 @@ fprintf('idx_BO=%d \n',idx)
 ylabel(ax1, 'Experiment')
 xlabel(ax1, 'Regret')
 % ax1.title(append('Optimality Ratio vs Iteration (N0=',num2str(N0),')'))
-set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 24)
+set(gca, 'DefaultAxesFontName', 'Times New Roman', 'FontSize', 36)
 % set(ax1,'xscale','log')
 figName=append(dir, idName,'_10_experiments.png');
 saveas(gcf,figName)
