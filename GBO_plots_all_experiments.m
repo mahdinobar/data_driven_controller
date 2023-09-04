@@ -707,30 +707,32 @@ box on
 %%
 close(figure(3))
 fig3=figure(3);
-fig3.Position=[200 0 1200 800];
+fig3.Position=[200 0 1200 850];
 ax3=gca;
-ax3.FontSize=28;
+ax3.FontSize=36;
 ax3.FontName='Times';
 % edges = linspace(0.0225,0.0279,9);
-edges = linspace(1,1.22,9);
+edges = linspace(1,1.18,10);
 true_objective=0.0226;
 JObservBO=JObservBO(:,1:25);
 JObservGBO=JObservGBO(:,1:25);
-h1 = histcounts(JObservBO(:)./true_objective,edges, 'Normalization', "count");
-h2 = histcounts(JObservGBO(:)./true_objective,edges, 'Normalization', "count");
-b=bar(ax3, edges(1:end-1),[h1; h2]',"histc");
+h1 = histcounts(JObservBO(:)./true_objective,edges, 'Normalization', "probability");
+h2 = histcounts(JObservGBO(:)./true_objective,edges, 'Normalization', "probability");
+b=bar(ax3, edges(1:end-1),[h1; h2]'.*100,"histc");
 % set(gca,'YScale','log')
 b(1).FaceColor=[0.4940 0.1840 0.5560];
 b(2).FaceColor=[0.8500 0.3250 0.0980];
-box off
+box on
 ytix = get(gca, 'YTick');
 xlabel(ax3, 'Optimality ratio')
-ylabel(ax3, 'Number of experiments')
+ylabel(ax3, 'Percentage of experiments (%)')
 % set(b, {'DisplayName'}, {'BO','Guided BO'}')
 % legend()
-ax3.FontSize=28;
+ax3.FontSize=42;
 ax3.FontName='Times';
 title("Histogram")
-% xticks([1:0.04:1.18])
-% xlim([min(edges),1.17])
+xticks([1:0.03:1.18])
+xlim([min(edges),1.18])
+
+
 
